@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using Domain.Interfaces;
+using Domain.Enums;
 namespace Application.Services
 {
 
@@ -25,6 +26,17 @@ namespace Application.Services
             Registration_Request req =await ToEnity(request);
             await _Repo.AddAsync(req);
             await _Repo.SaveChangesAsync();
+           
+        }
+        public async Task MarkStatus(int id,Boolean status)
+        {
+            Registration_Request ?entity =await _Repo.GetByIdAsync(id);
+            if (entity != null)
+            {
+                entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
+                _Repo.Update(entity);
+                await _Repo.SaveChangesAsync();
+            }
            
         }
 

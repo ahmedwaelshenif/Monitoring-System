@@ -14,6 +14,9 @@ namespace Application.Interfaces
         Task CreateAsync(RegistrationRequestDto request);
         //Task UpdateAsync(RegistrationRequestDto request);
         Task DeleteAsync(int id);
+
+        Task MarkStatus(int id, Boolean status);
+
     }
 }
 
