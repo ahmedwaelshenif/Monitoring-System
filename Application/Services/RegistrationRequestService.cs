@@ -15,10 +15,14 @@ namespace Application.Services
     {
 
         private readonly IRegistrationRequestRepository _Repo;
+        private readonly IEmbeddingService _embeddingService;
+        private readonly IMemberService _memberService;
 
-        public RegistrationRequestService(IRegistrationRequestRepository repo)
+        public RegistrationRequestService(IRegistrationRequestRepository repo, IEmbeddingService embeddingService, IMemberService memberService)
         {
             _Repo = repo;
+            _embeddingService = embeddingService;
+            _memberService = memberService;
         }
 
         public async Task CreateAsync(RegistrationRequestDto request)
@@ -36,8 +40,14 @@ namespace Application.Services
                 entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
                 _Repo.Update(entity);
                 await _Repo.SaveChangesAsync();
-            }
-           
+
+                if (status == true)
+                {
+                    Member member = await RequestToMember(entity);
+                    if (await _memberService.GetByIdAsync(member.Id) == null)    //avoid dublication
+                        await _memberService.CreateAsync(member);
+                }
+            } 
         }
 
         public async Task DeleteAsync(int id)
@@ -81,6 +91,9 @@ namespace Application.Services
 
 
 
+
+
+        //Helper Methods
         public async Task<Registration_Request> ToEnity(RegistrationRequestDto dto)
         {
             Registration_Request ret = new();
@@ -95,7 +108,8 @@ namespace Application.Services
             return ret;
         }
 
-        public  RegistrationRequestDto ToDto(Registration_Request entity)
+       
+        public RegistrationRequestDto ToDto(Registration_Request entity)
         {
             RegistrationRequestDto ret = new();
 
@@ -109,6 +123,7 @@ namespace Application.Services
             return ret;
         }
 
+       
         private async Task<byte[]> ConvertToBytesAsync(IFormFile file)
         {
             using var memoryStream = new MemoryStream();
@@ -127,6 +142,21 @@ namespace Application.Services
                 ContentType = "image/jpeg"
             };
         }
+
+        private async Task<Member> RequestToMember(Registration_Request req) {
+            Member member = new();
+            member.FaceImage = req.FaceImage;
+            member.IdImage = req.IdImage;
+            member.Id = req.MemberId;
+            member.FullName = req.FullName;
+            member.AcademicYear = req.AcademicYear;
+            member.Email = req.Email;
+            member.EmbeddingData = await _embeddingService.ExtractEmbeddingAsync(req.FaceImage);
+            return member;
+        }
+
+
+        
     }
 
 

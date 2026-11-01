@@ -15,6 +15,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+
+builder.Services.AddHttpClient<IEmbeddingService, EmbeddingService>(client =>
+{
+    client.BaseAddress = new Uri("http://127.0.0.1:8000/");
+});
+
+
+//Repositories
+
 builder.Services.AddScoped(
     typeof(IGenericRepository<>),
     typeof(GenericRepository<>));
@@ -24,8 +33,19 @@ builder.Services.AddScoped<
     RegistrationRequestRepository>();
 
 builder.Services.AddScoped<
+    IMemberRepository,
+    MemberRepository>();
+
+
+//Services
+
+builder.Services.AddScoped<
     IRegistrationRequestService,
     RegistrationRequestService>();
+
+builder.Services.AddScoped<
+    IMemberService,
+    MemberService>();
 
 
 
