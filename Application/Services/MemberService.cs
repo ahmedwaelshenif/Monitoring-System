@@ -1,10 +1,10 @@
-﻿using Application.DTOs.ResponseDtos;
+using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Services;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
-using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Application.Services
@@ -16,7 +16,6 @@ namespace Application.Services
         {
             _memberRepository = memberRepository;
         }
-      
 
         public async Task CreateAsync(Member member)
         {
@@ -29,12 +28,11 @@ namespace Application.Services
             return await _memberRepository.GetByIdAsync(id);
         }
 
-
-        public async Task<PagedResponse<MemberResponseDto>> GetAllAsync(int pageNumber,int pageSize)
+        public async Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize)
         {
-            var result = await _memberRepository.GetPagedAsync(pageNumber,pageSize);
+            var result = await _memberRepository.GetPagedAsync(pageNumber, pageSize);
 
-            return new PagedResponse<MemberResponseDto>
+            return new PagedResponse<MemberResponse>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -43,34 +41,20 @@ namespace Application.Services
             };
         }
 
-
-
-
-        //Helper Methods
-        private MemberResponseDto ToDto(Member entity)
+        // Helper Methods
+        private MemberResponse ToDto(Member entity)
         {
             if (entity == null)
                 return null;
-            MemberResponseDto ret = new();
+
+            MemberResponse ret = new();
             ret.AcademicYear = entity.AcademicYear;
             ret.FullName = entity.FullName;
-            ret.FaceImage = ConvertToFormFile(entity.FaceImage, "FaceImage.jpg");
-            ret.IdImage = ConvertToFormFile(entity.IdImage, "IdImage.jpg");
+            ret.FaceImage = entity.FaceImage;
+            ret.IdImage = entity.IdImage;
             ret.Id = entity.Id;
             ret.Email = entity.Email;
             return ret;
-        }
-
-
-        private IFormFile ConvertToFormFile(byte[] bytes, string fileName)
-        {
-            var stream = new MemoryStream(bytes);
-
-            return new FormFile(stream, 0, stream.Length, fileName, fileName)
-            {
-                Headers = new HeaderDictionary(),
-                ContentType = "image/jpeg"
-            };
         }
     }
 }

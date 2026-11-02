@@ -4,6 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Monitoring System Admin</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
+    th { background-color: #f4f4f4; }
+    button { margin: 2px; padding: 6px 12px; cursor: pointer; }
+    .thumb-img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; display: block; }
+    .thumb-img:hover { opacity: 0.85; }
+  </style>
 </head>
 <body>
   <header>
@@ -27,7 +36,7 @@
       <p>Review requests and approve or reject them. The API response must include each request's record ID for these actions.</p>
       <button type="button" data-reload="requests">Refresh requests</button>
       <table>
-        <thead><tr><th>Request ID</th><th>Member ID</th><th>Name</th><th>Email</th><th>Academic year</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Request ID</th><th>Member ID</th><th>Name</th><th>Email</th><th>Academic year</th><th>Face Image</th><th>ID Image</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="requests-rows"></tbody>
       </table>
       <p id="requests-page"></p>
@@ -126,10 +135,26 @@
       return td;
     }
 
-    function fileValue(value) {
-      if (value == null) return "—";
-      if (typeof value === "string") return value.length > 60 ? `${value.slice(0, 60)}…` : value;
-      return value.fileName || value.name || "Attached";
+    function imageCell(row, base64Data, altText) {
+      const td = document.createElement("td");
+      if (!base64Data) {
+        td.textContent = "—";
+      } else {
+        const img = document.createElement("img");
+        img.className = "thumb-img";
+        img.src = base64Data.startsWith("data:") ? base64Data : `data:image/jpeg;base64,${base64Data}`;
+        img.alt = altText || "Image";
+        img.title = "Click to enlarge";
+        img.addEventListener("click", () => {
+          const win = window.open();
+          if (win) {
+            win.document.write(`<title>${altText}</title><img src="${img.src}" style="max-width:100%;height:auto;" alt="${altText}">`);
+          }
+        });
+        td.appendChild(img);
+      }
+      row.appendChild(td);
+      return td;
     }
 
     function updatePaging(section, result) {
@@ -155,6 +180,8 @@
         cell(row, item.fullName);
         cell(row, item.email);
         cell(row, item.academicYear);
+        imageCell(row, item.faceImage, "Face Image");
+        imageCell(row, item.idImage, "ID Image");
         cell(row, item.submittedAt);
         cell(row, item.status);
         const actions = document.createElement("td");
@@ -191,8 +218,12 @@
       rows.replaceChildren();
       for (const item of result.items || []) {
         const row = document.createElement("tr");
-        cell(row, item.id); cell(row, item.fullName); cell(row, item.email);
-        cell(row, item.academicYear); cell(row, fileValue(item.faceImage)); cell(row, fileValue(item.idImage));
+        cell(row, item.id);
+        cell(row, item.fullName);
+        cell(row, item.email);
+        cell(row, item.academicYear);
+        imageCell(row, item.faceImage, "Face Image");
+        imageCell(row, item.idImage, "ID Image");
         rows.appendChild(row);
       }
       updatePaging("members", result);

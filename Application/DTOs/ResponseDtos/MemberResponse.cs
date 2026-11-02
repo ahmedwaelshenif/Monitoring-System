@@ -1,4 +1,3 @@
-﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -6,7 +5,7 @@ using System.Text;
 
 namespace Application.DTOs.ResponseDtos
 {
-    public class MemberResponseDto
+    public class MemberResponse
     {
         public int Id { get; set; }
 
@@ -17,9 +16,8 @@ namespace Application.DTOs.ResponseDtos
         [Range(1, 4)]
         public int AcademicYear { get; set; }
 
-        public IFormFile FaceImage { get; set; }
+        public byte[] FaceImage { get; set; }
    
-        public IFormFile IdImage { get; set; }
-        
+        public byte[] IdImage { get; set; }
     }
 }

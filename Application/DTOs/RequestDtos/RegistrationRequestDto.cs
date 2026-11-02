@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 
-namespace Application.DTOs
+namespace Application.DTOs.RequestDtos
 {
     public class RegistrationRequestDto
     {

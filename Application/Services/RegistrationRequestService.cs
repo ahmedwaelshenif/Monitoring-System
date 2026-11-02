@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+using Application.DTOs.RequestDtos;
 using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
@@ -8,13 +8,13 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
+
 namespace Application.Services
 {
-
     public class RegistrationRequestService : IRegistrationRequestService
     {
-
         private readonly IRegistrationRequestRepository _registrationRequestRepository;
         private readonly IEmbeddingService _embeddingService;
         private readonly IMemberService _memberService;
@@ -28,12 +28,10 @@ namespace Application.Services
 
         public async Task CreateAsync(RegistrationRequestDto request)
         {
-            Registration_Request req =await ToEnity(request);
+            Registration_Request req = await ToEnity(request);
             await _registrationRequestRepository.AddAsync(req);
             await _registrationRequestRepository.SaveChangesAsync();
-           
         }
-        
 
         // change to unitOfWork later
         public async Task MarkStatus(int id, bool status)
@@ -61,14 +59,14 @@ namespace Application.Services
 
                 await _memberService.CreateAsync(member);
             }
-            entity.status = status? RequestStatus.Accepted: RequestStatus.Rejected;
+            entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
             _registrationRequestRepository.Update(entity);
             await _registrationRequestRepository.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            Registration_Request ?entity =await _registrationRequestRepository.GetByIdAsync(id);
+            Registration_Request? entity = await _registrationRequestRepository.GetByIdAsync(id);
             if (entity != null)
             {
                 _registrationRequestRepository.Delete(entity);
@@ -76,14 +74,13 @@ namespace Application.Services
             }
         }
 
-   
-        public async Task<PagedResponse<RegistrationRequestDto>> GetAllAsync(int pageNumber, int pageSize)
+        public async Task<PagedResponse<RegistrationResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
             var result = await _registrationRequestRepository.GetPagedAsync(
                 pageNumber,
                 pageSize);
 
-            return new PagedResponse<RegistrationRequestDto>
+            return new PagedResponse<RegistrationResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -92,34 +89,19 @@ namespace Application.Services
             };
         }
 
-
-        public async Task<RegistrationRequestDto?> GetByIdAsync(int id)
+        public async Task<RegistrationResponseDto?> GetByIdAsync(int id)
         {
             Registration_Request? entity = await _registrationRequestRepository.GetByIdAsync(id);
             return entity != null ? ToDto(entity) : null;
         }
 
-        //public async Task UpdateAsync(RegistrationRequestDto request)
-        //{
-        //    Registration_Request req = await ToEnity(request);
-
-        //    _Repo.Update(req);
-        //    await _Repo.SaveChangesAsync();
-        //}
-
-
-
-
-
-
-
-        //Helper Methods
+        // Helper Methods
         private async Task<Registration_Request> ToEnity(RegistrationRequestDto dto)
         {
             Registration_Request ret = new();
             ret.AcademicYear = dto.AcademicYear;
             ret.Email = dto.Email;
-            ret.FaceImage =  await ConvertToBytesAsync(dto.FaceImage);
+            ret.FaceImage = await ConvertToBytesAsync(dto.FaceImage);
             ret.IdImage = await ConvertToBytesAsync(dto.IdImage);
             ret.FullName = dto.FullName;
             ret.MemberId = dto.MemberId;
@@ -128,46 +110,38 @@ namespace Application.Services
             return ret;
         }
 
-
-        private RegistrationRequestDto ToDto(Registration_Request entity)
+        private RegistrationResponseDto ToDto(Registration_Request entity)
         {
             if (entity == null)
                 return null;
 
-            RegistrationRequestDto ret = new();
+            RegistrationResponseDto ret = new();
 
             ret.AcademicYear = entity.AcademicYear;
             ret.Email = entity.Email;
-            ret.FaceImage = ConvertToFormFile(entity.FaceImage, "FaceImage.jpg");
-            ret.IdImage = ConvertToFormFile(entity.IdImage, "IdImage.jpg");
+            ret.FaceImage = entity.FaceImage;
+            ret.IdImage = entity.IdImage;
             ret.FullName = entity.FullName;
             ret.MemberId = entity.MemberId;
+            ret.Id = entity.Id;
+            ret.status = entity.status;
+            ret.SubmittedAt = entity.SubmittedAt;
 
             return ret;
         }
 
-       
         private async Task<byte[]> ConvertToBytesAsync(IFormFile file)
         {
+            if (file == null || file.Length == 0)
+                return Array.Empty<byte>();
+
             using var memoryStream = new MemoryStream();
-
             await file.CopyToAsync(memoryStream);
-
             return memoryStream.ToArray();
         }
-        private IFormFile ConvertToFormFile(byte[] bytes, string fileName)
+
+        private async Task<Member> RequestToMember(Registration_Request req)
         {
-            var stream = new MemoryStream(bytes);
-
-            return new FormFile(stream, 0, stream.Length, fileName, fileName)
-            {
-                Headers = new HeaderDictionary(),
-                ContentType = "image/jpeg"
-            };
-        }
-
-        private async Task<Member> RequestToMember(Registration_Request req) {
-
             if (req == null)
                 return null;
             Member member = new();
@@ -181,6 +155,4 @@ namespace Application.Services
             return member;
         }
     }
-
-
 }

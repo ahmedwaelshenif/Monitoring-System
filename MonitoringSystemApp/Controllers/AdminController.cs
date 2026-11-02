@@ -1,5 +1,4 @@
-﻿using Application.DTOs;
-using Application.DTOs.ResponseDtos;
+﻿using Application.DTOs.ResponseDtos;
 using Application.DTOs.RequestDtos;
 using Application.Interfaces.Services;
 using Application.Services;
@@ -35,7 +34,7 @@ namespace MonitoringSystemApp.Controllers
 
         [HttpGet("RegistrationRequests")]
 
-        public async Task<ActionResult<PagedResponse<RegistrationRequestDto>>> GetAllRegistrationRequests(
+        public async Task<ActionResult<PagedResponse<RegistrationResponseDto>>> GetAllRegistrationRequests(
             [FromQuery] int pageNumber = 1,[FromQuery] int pageSize = 10)
         {
             var result = await _RegistrationRequestService.GetAllAsync(pageNumber,pageSize);
@@ -53,7 +52,7 @@ namespace MonitoringSystemApp.Controllers
 
         [HttpGet("Members")]
 
-        public async Task<ActionResult<PagedResponse<MemberResponseDto>>> GetAllMembers(
+        public async Task<ActionResult<PagedResponse<MemberResponse>>> GetAllMembers(
             [FromQuery] int pageNumber = 1,[FromQuery] int pageSize = 10)
         {
             var result = await _memberService.GetAllAsync(pageNumber,pageSize);

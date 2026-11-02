@@ -10,6 +10,6 @@ namespace Application.Interfaces.Services
     {
         Task CreateAsync(Member member);
         Task<Member?> GetByIdAsync(int id);
-        Task<PagedResponse<MemberResponseDto>> GetAllAsync(int pageNumber, int pageSize);
+        Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize);
     }
 }
