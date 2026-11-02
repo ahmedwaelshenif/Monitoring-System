@@ -18,9 +18,9 @@ namespace Application.Services
     public class DashboardAccountService : IDashboardAccountService
     {
         private readonly IDashboardAccountRepository _dashboardAccountRepository;
-        private readonly PasswordHasher<DashboardAccount> _passwordHasher;
+        private readonly IPasswordHasher<DashboardAccount> _passwordHasher;
 
-        public DashboardAccountService(IDashboardAccountRepository dashboardAccountRepository, PasswordHasher<DashboardAccount> passwordHasher)
+        public DashboardAccountService(IDashboardAccountRepository dashboardAccountRepository, IPasswordHasher<DashboardAccount> passwordHasher)
         {
             _dashboardAccountRepository = dashboardAccountRepository;
             _passwordHasher = passwordHasher;
