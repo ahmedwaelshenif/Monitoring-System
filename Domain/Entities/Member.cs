@@ -28,5 +28,7 @@ namespace Domain.Entities
         [Required]
         public byte[] EmbeddingData { get; set; }
 
+        public ICollection<Lab> Labs { get; set; } = new List<Lab>();
+
     }
 }

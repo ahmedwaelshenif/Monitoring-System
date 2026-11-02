@@ -53,6 +53,26 @@ namespace Infrastructure.Migrations
                     b.ToTable("DashboardAccounts");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Lab", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Lab");
+                });
+
             modelBuilder.Entity("Domain.Entities.Member", b =>
                 {
                     b.Property<int>("Id")
@@ -128,6 +148,36 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Registration_Requests");
+                });
+
+            modelBuilder.Entity("LabMember", b =>
+                {
+                    b.Property<int>("LabsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MembersId")
+                        .HasColumnType("int");
+
+                    b.HasKey("LabsId", "MembersId");
+
+                    b.HasIndex("MembersId");
+
+                    b.ToTable("LabMember");
+                });
+
+            modelBuilder.Entity("LabMember", b =>
+                {
+                    b.HasOne("Domain.Entities.Lab", null)
+                        .WithMany()
+                        .HasForeignKey("LabsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Member", null)
+                        .WithMany()
+                        .HasForeignKey("MembersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
