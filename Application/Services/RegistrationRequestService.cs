@@ -1,5 +1,4 @@
 ﻿using Application.DTOs;
-using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -8,6 +7,7 @@ using System.Text;
 using System.IO;
 using Domain.Interfaces;
 using Domain.Enums;
+using Application.Interfaces.Services;
 namespace Application.Services
 {
 
@@ -94,7 +94,7 @@ namespace Application.Services
 
 
         //Helper Methods
-        public async Task<Registration_Request> ToEnity(RegistrationRequestDto dto)
+        private async Task<Registration_Request> ToEnity(RegistrationRequestDto dto)
         {
             Registration_Request ret = new();
             ret.AcademicYear = dto.AcademicYear;
@@ -108,8 +108,8 @@ namespace Application.Services
             return ret;
         }
 
-       
-        public RegistrationRequestDto ToDto(Registration_Request entity)
+
+        private RegistrationRequestDto ToDto(Registration_Request entity)
         {
             RegistrationRequestDto ret = new();
 

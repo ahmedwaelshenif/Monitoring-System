@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Domain.Interfaces
+namespace Application.Interfaces.Repositories
 {
     public interface IRegistrationRequestRepository : IGenericRepository<Registration_Request>
     {

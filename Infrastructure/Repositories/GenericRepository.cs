@@ -1,4 +1,5 @@
-﻿using Domain.Interfaces;
+﻿using Application.Common;
+using Application.Interfaces.Repositories;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -29,6 +30,11 @@ namespace Infrastructure.Repositories
             return await _dbSet.ToListAsync();
         }
 
+        public Task<PagedResult<T>> GetPagedAsync(int pageNumber, int pageSize)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
@@ -48,5 +54,7 @@ namespace Infrastructure.Repositories
         {
             return await _context.SaveChangesAsync();
         }
+
+     
     }
 }

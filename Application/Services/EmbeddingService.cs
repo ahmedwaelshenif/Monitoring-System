@@ -1,5 +1,4 @@
-﻿
-using Application.Interfaces;
+﻿using Application.Interfaces.Services;
 using System.Net.Http.Json;
 using System.Text.Json;
 

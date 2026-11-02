@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace Application.Interfaces
+namespace Application.Interfaces.Services
 {
     public interface IRegistrationRequestService
     {

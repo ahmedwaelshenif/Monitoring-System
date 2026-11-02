@@ -1,7 +1,8 @@
-﻿using Application.DTOs;
-using Application.Interfaces;
+﻿using Application.DTOs.ResponseDtos;
+using Application.Interfaces.Services;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -20,7 +21,7 @@ namespace Application.Services
         public async Task CreateAsync(Member member)
         {
             await _memberRepository.AddAsync(member);
-           await _memberRepository.SaveChangesAsync();
+            await _memberRepository.SaveChangesAsync();
         }
 
         public async Task<Member?> GetByIdAsync(int id)
@@ -28,43 +29,42 @@ namespace Application.Services
             return await _memberRepository.GetByIdAsync(id);
         }
 
+        public async Task<IEnumerable<MemberResponseDto>> GetAllAsync()
+        {
+            IEnumerable<Member> members = await _memberRepository.GetAllAsync();
+
+            return members.Select(ToDto);
+        }
+
+
+
 
 
 
 
         //Helper Methods
-        public Member ToEnity(MemberDto dto)
+        private MemberResponseDto ToDto(Member entity)
         {
-            Member ret = new();
-            ret.AcademicYear = dto.AcademicYear;
-            ret.EmbeddingData = dto.EmbeddingData;
-            ret.FullName = dto.FullName;
-            ret.FaceImage = dto.FaceImage;
-            ret.Id = dto.Id;
-            ret.Email = dto.Email;
-            ret.IdImage = dto.IdImage;
-
-            return ret;
-        }
-
-
-        public MemberDto ToDto(Member entity)
-        {
-            MemberDto ret = new();
+            MemberResponseDto ret = new();
             ret.AcademicYear = entity.AcademicYear;
-            ret.EmbeddingData = entity.EmbeddingData;
             ret.FullName = entity.FullName;
-            ret.FaceImage = entity.FaceImage;
+            ret.FaceImage = ConvertToFormFile(entity.FaceImage, "FaceImage.jpg");
+            ret.IdImage = ConvertToFormFile(entity.IdImage, "IdImage.jpg");
             ret.Id = entity.Id;
             ret.Email = entity.Email;
-            ret.IdImage = entity.IdImage;
-
             return ret;
         }
 
-        public Task CreateAsync(MemberDto request)
+
+        private IFormFile ConvertToFormFile(byte[] bytes, string fileName)
         {
-            throw new NotImplementedException();
+            var stream = new MemoryStream(bytes);
+
+            return new FormFile(stream, 0, stream.Length, fileName, fileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "image/jpeg"
+            };
         }
     }
 }
