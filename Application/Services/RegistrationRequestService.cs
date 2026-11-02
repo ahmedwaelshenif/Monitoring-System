@@ -33,22 +33,37 @@ namespace Application.Services
             await _registrationRequestRepository.SaveChangesAsync();
            
         }
-        public async Task MarkStatus(int id,Boolean status)
-        {
-            Registration_Request ?entity =await _registrationRequestRepository.GetByIdAsync(id);
-            if (entity != null)
-            {
-                entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
-                _registrationRequestRepository.Update(entity);
-                await _registrationRequestRepository.SaveChangesAsync();
+        
 
-                if (status == true)
-                {
-                    Member member = await RequestToMember(entity);
-                    if (await _memberService.GetByIdAsync(member.Id) == null)    //avoid dublication
-                        await _memberService.CreateAsync(member);
-                }
-            } 
+        // change to unitOfWork later
+        public async Task MarkStatus(int id, bool status)
+        {
+            Registration_Request? entity =
+                await _registrationRequestRepository.GetByIdAsync(id);
+
+            if (entity == null)
+                throw new KeyNotFoundException("Registration request not found.");
+
+            if (entity.status != RequestStatus.Pending)
+                throw new InvalidOperationException(
+                    "This request has already been processed.");
+
+            if (status)
+            {
+                Member member = await RequestToMember(entity);
+
+                var existingMember =
+                    await _memberService.GetByIdAsync(member.Id);
+
+                if (existingMember != null)
+                    throw new InvalidOperationException(
+                        "A member with this Id already exists.");
+
+                await _memberService.CreateAsync(member);
+            }
+            entity.status = status? RequestStatus.Accepted: RequestStatus.Rejected;
+            _registrationRequestRepository.Update(entity);
+            await _registrationRequestRepository.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
@@ -116,6 +131,9 @@ namespace Application.Services
 
         private RegistrationRequestDto ToDto(Registration_Request entity)
         {
+            if (entity == null)
+                return null;
+
             RegistrationRequestDto ret = new();
 
             ret.AcademicYear = entity.AcademicYear;
@@ -149,6 +167,9 @@ namespace Application.Services
         }
 
         private async Task<Member> RequestToMember(Registration_Request req) {
+
+            if (req == null)
+                return null;
             Member member = new();
             member.FaceImage = req.FaceImage;
             member.IdImage = req.IdImage;
@@ -159,9 +180,6 @@ namespace Application.Services
             member.EmbeddingData = await _embeddingService.ExtractEmbeddingAsync(req.FaceImage);
             return member;
         }
-
-
-        
     }
 
 

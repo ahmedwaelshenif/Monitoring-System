@@ -49,6 +49,8 @@ namespace Application.Services
         //Helper Methods
         private MemberResponseDto ToDto(Member entity)
         {
+            if (entity == null)
+                return null;
             MemberResponseDto ret = new();
             ret.AcademicYear = entity.AcademicYear;
             ret.FullName = entity.FullName;

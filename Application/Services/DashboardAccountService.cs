@@ -36,7 +36,7 @@ namespace Application.Services
 
         public async Task<DashboardAccountResponse?> GetByIdAsync(int id)
         {
-            DashboardAccount entity = await _dashboardAccountRepository.GetByIdAsync(id);
+            DashboardAccount? entity = await _dashboardAccountRepository.GetByIdAsync(id);
             DashboardAccountResponse ret = ToDto(entity);
             return ret;
         }
@@ -85,6 +85,8 @@ namespace Application.Services
         }
         public DashboardAccountResponse ToDto(DashboardAccount entity)
         {
+            if (entity == null)
+                return null;
             DashboardAccountResponse ret = new();
             ret.Id = entity.Id;
             ret.FullName = entity.FullName;

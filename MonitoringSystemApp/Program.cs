@@ -54,6 +54,10 @@ builder.Services.AddScoped<
     IMemberService,
     MemberService>();
 
+builder.Services.AddScoped<
+    IDashboardAccountService,
+    DashboardAccountService>();
+
 
 builder.Services.AddScoped<IPasswordHasher<DashboardAccount>,
     PasswordHasher<DashboardAccount>>();
