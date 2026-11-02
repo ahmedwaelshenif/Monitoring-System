@@ -1,9 +1,12 @@
+using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Services;
-using Domain.Interfaces;
+using Domain.Entities;
 using Infrastructure;
 using Infrastructure.Repositories;
+using Microsoft.AspNetCore.Identity;
 using MonitoringSystemApp.Controllers;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +39,10 @@ builder.Services.AddScoped<
     IMemberRepository,
     MemberRepository>();
 
+builder.Services.AddScoped<
+    IDashboardAccountRepository,
+    DashboardAccountRepository>();
+
 
 //Services
 
@@ -47,6 +54,9 @@ builder.Services.AddScoped<
     IMemberService,
     MemberService>();
 
+
+builder.Services.AddScoped<IPasswordHasher<DashboardAccount>,
+    PasswordHasher<DashboardAccount>>();
 
 
 
