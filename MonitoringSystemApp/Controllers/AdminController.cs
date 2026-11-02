@@ -21,9 +21,16 @@ namespace MonitoringSystemApp.Controllers
         private readonly IRegistrationRequestService _RegistrationRequestService;
         private readonly IDashboardAccountService _DashboardAccountService;
 
-        public AdminController(IRegistrationRequestService RegistrationRequestService, IDashboardAccountService DashboardAccountService) {
+        private readonly IMemberService _memberService;
+
+        public AdminController(
+            IRegistrationRequestService RegistrationRequestService,
+            IDashboardAccountService DashboardAccountService,
+            IMemberService memberService
+            ) {
             _RegistrationRequestService = RegistrationRequestService;
             _DashboardAccountService = DashboardAccountService;
+            _memberService = memberService;
         }
 
         [HttpGet("RegistrationRequests")]
@@ -41,6 +48,15 @@ namespace MonitoringSystemApp.Controllers
             [FromQuery] int pageNumber = 1,[FromQuery] int pageSize = 10)
         {
             var result = await _DashboardAccountService.GetAllAsync(pageNumber,pageSize);
+            return Ok(result);
+        }
+
+        [HttpGet("Members")]
+
+        public async Task<ActionResult<PagedResponse<MemberResponseDto>>> GetAllMembers(
+            [FromQuery] int pageNumber = 1,[FromQuery] int pageSize = 10)
+        {
+            var result = await _memberService.GetAllAsync(pageNumber,pageSize);
             return Ok(result);
         }
 
