@@ -11,26 +11,27 @@ namespace Application.Services
 {
     public class MemberService : IMemberService
     {
-        private readonly IMemberRepository _memberRepository;
-        public MemberService(IMemberRepository memberRepository)
+
+        private readonly IUnitOfWork _unitOfWork;
+        public MemberService(IUnitOfWork unitOfWork)
         {
-            _memberRepository = memberRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task CreateAsync(Member member)
         {
-            await _memberRepository.AddAsync(member);
-            await _memberRepository.SaveChangesAsync();
+            await _unitOfWork.Members.AddAsync(member);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<Member?> GetByIdAsync(int id)
         {
-            return await _memberRepository.GetByIdAsync(id);
+            return await _unitOfWork.Members.GetByIdAsync(id);
         }
 
         public async Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize)
         {
-            var result = await _memberRepository.GetPagedAsync(pageNumber, pageSize);
+            var result = await _unitOfWork.Members.GetPagedAsync(pageNumber, pageSize);
 
             return new PagedResponse<MemberResponse>
             {

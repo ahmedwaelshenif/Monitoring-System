@@ -17,12 +17,13 @@ namespace Application.Services
 {
     public class DashboardAccountService : IDashboardAccountService
     {
-        private readonly IDashboardAccountRepository _dashboardAccountRepository;
         private readonly IPasswordHasher<DashboardAccount> _passwordHasher;
 
-        public DashboardAccountService(IDashboardAccountRepository dashboardAccountRepository, IPasswordHasher<DashboardAccount> passwordHasher)
+        private readonly IUnitOfWork _unitOfWork;
+
+        public DashboardAccountService(IUnitOfWork unitOfWork, IPasswordHasher<DashboardAccount> passwordHasher)
         {
-            _dashboardAccountRepository = dashboardAccountRepository;
+            _unitOfWork = unitOfWork;
             _passwordHasher = passwordHasher;
         }
 
@@ -30,20 +31,20 @@ namespace Application.Services
         public async Task CreateAsync(DashboardAccountRequest account)
         {
             DashboardAccount entity = ToEntity(account);
-            await _dashboardAccountRepository.AddAsync(entity);
-            await _dashboardAccountRepository.SaveChangesAsync();
+            await _unitOfWork.DashboardAccounts.AddAsync(entity);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<DashboardAccountResponse?> GetByIdAsync(int id)
         {
-            DashboardAccount? entity = await _dashboardAccountRepository.GetByIdAsync(id);
+            DashboardAccount? entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
             DashboardAccountResponse ret = ToDto(entity);
             return ret;
         }
 
         public async Task<PagedResponse<DashboardAccountResponse>> GetAllAsync(int pageNumber, int pageSize)
         {
-            var result = await _dashboardAccountRepository.GetPagedAsync(
+            var result = await _unitOfWork.DashboardAccounts.GetPagedAsync(
                 pageNumber,
                 pageSize);
 
@@ -58,16 +59,16 @@ namespace Application.Services
 
         public async Task Deactivate(int id)
         {
-            DashboardAccount entity = await _dashboardAccountRepository.GetByIdAsync(id);
+            DashboardAccount entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
             entity.IsActive = false;
-            await _dashboardAccountRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task Activate(int id)
         {
-            DashboardAccount entity = await _dashboardAccountRepository.GetByIdAsync(id);
+            DashboardAccount entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
             entity.IsActive = true;
-            await _dashboardAccountRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
 

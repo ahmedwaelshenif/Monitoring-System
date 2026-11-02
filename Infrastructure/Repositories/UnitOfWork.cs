@@ -1,0 +1,31 @@
+﻿using Application.Interfaces.Repositories;
+using Infrastructure.Persistence;
+
+namespace Infrastructure.Repositories
+{
+    public class UnitOfWork : IUnitOfWork
+    {
+        private readonly AppDbContext _context;
+
+        public IRegistrationRequestRepository RegistrationRequests { get; }
+        public IMemberRepository Members { get; }
+        public IDashboardAccountRepository DashboardAccounts { get; }
+
+        public UnitOfWork(
+            AppDbContext context,
+            IRegistrationRequestRepository registrationRequests,
+            IMemberRepository members,
+            IDashboardAccountRepository dashboardAccounts)
+        {
+            _context = context;
+            RegistrationRequests = registrationRequests;
+            Members = members;
+            DashboardAccounts = dashboardAccounts;
+        }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
+    }
+}

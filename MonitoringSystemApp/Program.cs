@@ -43,6 +43,10 @@ builder.Services.AddScoped<
     IDashboardAccountRepository,
     DashboardAccountRepository>();
 
+builder.Services.AddScoped<
+    IUnitOfWork,
+    UnitOfWork>();
+
 
 //Services
 

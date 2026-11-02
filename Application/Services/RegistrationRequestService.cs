@@ -15,29 +15,30 @@ namespace Application.Services
 {
     public class RegistrationRequestService : IRegistrationRequestService
     {
-        private readonly IRegistrationRequestRepository _registrationRequestRepository;
         private readonly IEmbeddingService _embeddingService;
-        private readonly IMemberService _memberService;
 
-        public RegistrationRequestService(IRegistrationRequestRepository registrationRequestRepository, IEmbeddingService embeddingService, IMemberService memberService)
+        private readonly IUnitOfWork _unitOfWork;
+
+        public RegistrationRequestService(
+            IEmbeddingService embeddingService,
+            IUnitOfWork unitOfWork
+            )
         {
-            _registrationRequestRepository = registrationRequestRepository;
             _embeddingService = embeddingService;
-            _memberService = memberService;
+            _unitOfWork =unitOfWork;
         }
 
         public async Task CreateAsync(RegistrationRequestDto request)
         {
             Registration_Request req = await ToEnity(request);
-            await _registrationRequestRepository.AddAsync(req);
-            await _registrationRequestRepository.SaveChangesAsync();
+            await _unitOfWork.RegistrationRequests.AddAsync(req);
+            await _unitOfWork.SaveChangesAsync();
         }
 
-        // change to unitOfWork later
         public async Task MarkStatus(int id, bool status)
         {
             Registration_Request? entity =
-                await _registrationRequestRepository.GetByIdAsync(id);
+                await _unitOfWork.RegistrationRequests.GetByIdAsync(id);
 
             if (entity == null)
                 throw new KeyNotFoundException("Registration request not found.");
@@ -51,32 +52,32 @@ namespace Application.Services
                 Member member = await RequestToMember(entity);
 
                 var existingMember =
-                    await _memberService.GetByIdAsync(member.Id);
+                    await _unitOfWork.Members.GetByIdAsync(member.Id);
 
                 if (existingMember != null)
                     throw new InvalidOperationException(
                         "A member with this Id already exists.");
 
-                await _memberService.CreateAsync(member);
+                await _unitOfWork.Members.AddAsync(member);
             }
             entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
-            _registrationRequestRepository.Update(entity);
-            await _registrationRequestRepository.SaveChangesAsync();
+            _unitOfWork.RegistrationRequests.Update(entity);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            Registration_Request? entity = await _registrationRequestRepository.GetByIdAsync(id);
+            Registration_Request? entity = await _unitOfWork.RegistrationRequests.GetByIdAsync(id);
             if (entity != null)
             {
-                _registrationRequestRepository.Delete(entity);
-                await _registrationRequestRepository.SaveChangesAsync();
+                _unitOfWork.RegistrationRequests.Delete(entity);
+                await _unitOfWork.SaveChangesAsync();
             }
         }
 
         public async Task<PagedResponse<RegistrationResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
-            var result = await _registrationRequestRepository.GetPagedAsync(
+            var result = await _unitOfWork.RegistrationRequests.GetPagedAsync(
                 pageNumber,
                 pageSize);
 
@@ -91,7 +92,7 @@ namespace Application.Services
 
         public async Task<RegistrationResponseDto?> GetByIdAsync(int id)
         {
-            Registration_Request? entity = await _registrationRequestRepository.GetByIdAsync(id);
+            Registration_Request? entity = await _unitOfWork.RegistrationRequests.GetByIdAsync(id);
             return entity != null ? ToDto(entity) : null;
         }
 
