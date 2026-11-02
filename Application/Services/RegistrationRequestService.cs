@@ -1,26 +1,27 @@
 ﻿using Application.DTOs;
+using Application.DTOs.ResponseDtos;
+using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Entities;
+using Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
-using Domain.Interfaces;
-using Domain.Enums;
-using Application.Interfaces.Services;
+using System.Text;
 namespace Application.Services
 {
 
     public class RegistrationRequestService : IRegistrationRequestService
     {
 
-        private readonly IRegistrationRequestRepository _Repo;
+        private readonly IRegistrationRequestRepository _registrationRequestRepository;
         private readonly IEmbeddingService _embeddingService;
         private readonly IMemberService _memberService;
 
-        public RegistrationRequestService(IRegistrationRequestRepository repo, IEmbeddingService embeddingService, IMemberService memberService)
+        public RegistrationRequestService(IRegistrationRequestRepository registrationRequestRepository, IEmbeddingService embeddingService, IMemberService memberService)
         {
-            _Repo = repo;
+            _registrationRequestRepository = registrationRequestRepository;
             _embeddingService = embeddingService;
             _memberService = memberService;
         }
@@ -28,18 +29,18 @@ namespace Application.Services
         public async Task CreateAsync(RegistrationRequestDto request)
         {
             Registration_Request req =await ToEnity(request);
-            await _Repo.AddAsync(req);
-            await _Repo.SaveChangesAsync();
+            await _registrationRequestRepository.AddAsync(req);
+            await _registrationRequestRepository.SaveChangesAsync();
            
         }
         public async Task MarkStatus(int id,Boolean status)
         {
-            Registration_Request ?entity =await _Repo.GetByIdAsync(id);
+            Registration_Request ?entity =await _registrationRequestRepository.GetByIdAsync(id);
             if (entity != null)
             {
                 entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
-                _Repo.Update(entity);
-                await _Repo.SaveChangesAsync();
+                _registrationRequestRepository.Update(entity);
+                await _registrationRequestRepository.SaveChangesAsync();
 
                 if (status == true)
                 {
@@ -52,30 +53,34 @@ namespace Application.Services
 
         public async Task DeleteAsync(int id)
         {
-            Registration_Request ?entity =await _Repo.GetByIdAsync(id);
+            Registration_Request ?entity =await _registrationRequestRepository.GetByIdAsync(id);
             if (entity != null)
             {
-                _Repo.Delete(entity);
-                await _Repo.SaveChangesAsync();
+                _registrationRequestRepository.Delete(entity);
+                await _registrationRequestRepository.SaveChangesAsync();
             }
         }
 
-        public async Task<IEnumerable<RegistrationRequestDto>> GetAllAsync()
+   
+        public async Task<PagedResponse<RegistrationRequestDto>> GetAllAsync(int pageNumber, int pageSize)
         {
-            var entities = await _Repo.GetAllAsync();
+            var result = await _registrationRequestRepository.GetPagedAsync(
+                pageNumber,
+                pageSize);
 
-            var ret = new List<RegistrationRequestDto>();
-            foreach (var entity in entities)
+            return new PagedResponse<RegistrationRequestDto>
             {
-                ret.Add(ToDto(entity));
-            }
-            return ret;
+                Items = result.Items.Select(ToDto),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = result.TotalCount
+            };
         }
 
 
         public async Task<RegistrationRequestDto?> GetByIdAsync(int id)
         {
-            Registration_Request? entity = await _Repo.GetByIdAsync(id);
+            Registration_Request? entity = await _registrationRequestRepository.GetByIdAsync(id);
             return entity != null ? ToDto(entity) : null;
         }
 

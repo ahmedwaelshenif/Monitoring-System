@@ -1,6 +1,5 @@
 ﻿using Application.DTOs.ResponseDtos;
 using Domain.Entities;
-using Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,6 +10,6 @@ namespace Application.Interfaces.Services
     {
         Task CreateAsync(Member member);
         Task<Member?> GetByIdAsync(int id);
-        Task<IEnumerable<MemberResponseDto>> GetAllAsync();
+        Task<PagedResponse<MemberResponseDto>> GetAllAsync(int pageNumber, int pageSize);
     }
 }

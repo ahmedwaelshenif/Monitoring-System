@@ -30,9 +30,33 @@ namespace Infrastructure.Repositories
             return await _dbSet.ToListAsync();
         }
 
-        public Task<PagedResult<T>> GetPagedAsync(int pageNumber, int pageSize)
+        public async Task<PagedResult<T>> GetPagedAsync(int pageNumber,int pageSize)
         {
-            throw new NotImplementedException();
+            var query = _dbSet.AsNoTracking();
+
+            int totalCount = await query.CountAsync();
+
+            var entityType = _context.Model.FindEntityType(typeof(T));
+
+            var primaryKey = entityType?.FindPrimaryKey();
+
+            if (primaryKey == null || primaryKey.Properties.Count != 1)
+                throw new InvalidOperationException(
+                    $"{typeof(T).Name} must have a single primary key.");
+
+            var keyName = primaryKey.Properties[0].Name;
+
+            var items = await query
+                .OrderBy(x => EF.Property<object>(x, keyName))
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<T>
+            {
+                Items = items,
+                TotalCount = totalCount
+            };
         }
 
         public async Task AddAsync(T entity)

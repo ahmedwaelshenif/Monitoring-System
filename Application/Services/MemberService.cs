@@ -1,7 +1,7 @@
 ﻿using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Services;
+using Application.Interfaces.Repositories;
 using Domain.Entities;
-using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -29,15 +29,19 @@ namespace Application.Services
             return await _memberRepository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<MemberResponseDto>> GetAllAsync()
+
+        public async Task<PagedResponse<MemberResponseDto>> GetAllAsync(int pageNumber,int pageSize)
         {
-            IEnumerable<Member> members = await _memberRepository.GetAllAsync();
+            var result = await _memberRepository.GetPagedAsync(pageNumber,pageSize);
 
-            return members.Select(ToDto);
+            return new PagedResponse<MemberResponseDto>
+            {
+                Items = result.Items.Select(ToDto),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = result.TotalCount
+            };
         }
-
-
-
 
 
 

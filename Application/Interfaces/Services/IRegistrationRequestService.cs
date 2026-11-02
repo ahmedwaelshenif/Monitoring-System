@@ -10,7 +10,7 @@ namespace Application.Interfaces.Services
     public interface IRegistrationRequestService
     {
         Task<RegistrationRequestDto?> GetByIdAsync(int id);
-        Task<IEnumerable<RegistrationRequestDto>> GetAllAsync();
+        Task<PagedResponse<RegistrationRequestDto>> GetAllAsync(int pageNumber, int pageSize);
         Task CreateAsync(RegistrationRequestDto request);
         //Task UpdateAsync(RegistrationRequestDto request);
         Task DeleteAsync(int id);
