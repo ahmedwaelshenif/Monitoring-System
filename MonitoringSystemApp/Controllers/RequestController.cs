@@ -24,7 +24,7 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpPost("Send")]
-        public async Task<ActionResult> Add([FromBody] RegistrationRequestDto request)
+        public async Task<ActionResult> Add([FromForm] RegistrationRequestDto request)
         {
             await _RegistrationRequestService.CreateAsync(request);
             return StatusCode(StatusCodes.Status201Created);

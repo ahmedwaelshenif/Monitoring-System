@@ -61,6 +61,14 @@ namespace MonitoringSystemApp.Controllers
         }
 
 
+        [HttpPost("CreateAccount")]
+        public async Task<IActionResult> CreateAccount(DashboardAccountRequest acc)
+        {
+            await _DashboardAccountService.CreateAsync(acc);
+            return Ok("success");
+        }
+
+
         [HttpPatch("RequestReject/{id}")]
         public async Task<IActionResult> MarkRegistratioRequestAsRejected(int id)
         {
