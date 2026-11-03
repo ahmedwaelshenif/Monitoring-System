@@ -47,6 +47,11 @@ builder.Services.AddScoped<
     ILabRepository,
     LabRepository>();
 
+
+builder.Services.AddScoped<
+    IWarningRepository,
+    WarningRepository>();
+
 builder.Services.AddScoped<
     IUnitOfWork,
     UnitOfWork>();
@@ -72,6 +77,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ILabService,
     LabService>();
+
+builder.Services.AddScoped<
+    IWarningService,
+    WarningService>();
 
 
 builder.Services.AddScoped<IPasswordHasher<DashboardAccount>,

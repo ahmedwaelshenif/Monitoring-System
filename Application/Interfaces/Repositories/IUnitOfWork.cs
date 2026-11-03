@@ -12,6 +12,8 @@ namespace Application.Interfaces.Repositories
 
         IEntryLogRepository EntryLogs { get; }
         ILabRepository Labs { get; }
+
+        IWarningRepository Warnings { get; }
         Task<int> SaveChangesAsync();
     }
 }
