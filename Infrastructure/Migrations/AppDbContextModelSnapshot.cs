@@ -77,6 +77,8 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("LabId");
 
+                    b.HasIndex("MemberId");
+
                     b.ToTable("EntryLogs");
                 });
 
@@ -200,7 +202,13 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId");
+
                     b.Navigation("Lab");
+
+                    b.Navigation("Member");
                 });
 
             modelBuilder.Entity("LabMember", b =>

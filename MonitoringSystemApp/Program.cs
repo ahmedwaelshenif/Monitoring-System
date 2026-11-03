@@ -25,6 +25,7 @@ builder.Services.AddHttpClient<IEmbeddingService, EmbeddingService>(client =>
 });
 
 
+
 //Repositories
 
 builder.Services.AddScoped(
@@ -42,6 +43,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IDashboardAccountRepository,
     DashboardAccountRepository>();
+
+builder.Services.AddScoped<
+    IEntryLogRepository,
+    EntryLogRepository>();
 
 builder.Services.AddScoped<
     IUnitOfWork,
@@ -62,6 +67,9 @@ builder.Services.AddScoped<
     IDashboardAccountService,
     DashboardAccountService>();
 
+builder.Services.AddScoped<
+    IEntryLogService,
+    EntryLogService>();
 
 builder.Services.AddScoped<IPasswordHasher<DashboardAccount>,
     PasswordHasher<DashboardAccount>>();
