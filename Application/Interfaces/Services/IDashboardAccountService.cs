@@ -19,5 +19,7 @@ namespace Application.Interfaces.Services
         Task Deactivate(int id);
 
         Task Activate(int id);
+
+        Task DeleteAsync(int id);
     }
 }

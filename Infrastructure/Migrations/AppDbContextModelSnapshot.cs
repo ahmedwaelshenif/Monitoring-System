@@ -22,6 +22,21 @@ namespace Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("DashboardAccountLab", b =>
+                {
+                    b.Property<int>("AccessAccountsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LabsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AccessAccountsId", "LabsId");
+
+                    b.HasIndex("LabsId");
+
+                    b.ToTable("DashboardAccountLab");
+                });
+
             modelBuilder.Entity("Domain.Entities.DashboardAccount", b =>
                 {
                     b.Property<int>("Id")
@@ -192,6 +207,21 @@ namespace Infrastructure.Migrations
                     b.HasIndex("MembersId");
 
                     b.ToTable("LabMember");
+                });
+
+            modelBuilder.Entity("DashboardAccountLab", b =>
+                {
+                    b.HasOne("Domain.Entities.DashboardAccount", null)
+                        .WithMany()
+                        .HasForeignKey("AccessAccountsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Lab", null)
+                        .WithMany()
+                        .HasForeignKey("LabsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.EntryLog", b =>

@@ -78,14 +78,35 @@ namespace MonitoringSystemApp.Controllers
         public async Task<IActionResult> CreateAccount(DashboardAccountRequest acc)
         {
             await _DashboardAccountService.CreateAsync(acc);
-            return Ok("success");
+            return NoContent();
         }
 
         [HttpPost("CreateLab")]
         public async Task<IActionResult> CreateLab(LabRequest lab)
         {
             await _labService.CreateAsync(lab);
-            return Ok("success");
+            return NoContent();
+        }
+
+
+        [HttpDelete("delete-member/{id}")]
+        public async Task<IActionResult> DeleteMember(int id) { 
+            await _memberService.DeleteAsync(id);
+            return NoContent();
+        }
+
+        [HttpDelete("delete-acc/{id}")]
+        public async Task<IActionResult> DeleteAccount(int id)
+        {
+            await _DashboardAccountService.DeleteAsync(id);
+            return NoContent();
+        }
+
+        [HttpDelete("delete-lab/{id}")]
+        public async Task<IActionResult> DeleteLab(int id)
+        {
+            await _labService.DeleteAsync(id);
+            return NoContent();
         }
 
 

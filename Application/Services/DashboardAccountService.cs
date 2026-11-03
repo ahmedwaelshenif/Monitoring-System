@@ -71,9 +71,16 @@ namespace Application.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
+        public async Task DeleteAsync(int id)
+        {
+            var acc=await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+            if (acc == null) return;
+            _unitOfWork.DashboardAccounts.Delete(acc);
+            await _unitOfWork.SaveChangesAsync();
 
+        }
 
-
+        //Helper Methods
         public DashboardAccount ToEntity(DashboardAccountRequest dto)
         {
             DashboardAccount acc = new();
@@ -98,5 +105,6 @@ namespace Application.Services
             return ret;
         }
 
+     
     }
 }

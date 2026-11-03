@@ -42,6 +42,16 @@ namespace Application.Services
             };
         }
 
+
+        public async Task DeleteAsync(int id)
+        {
+            var member = await _unitOfWork.Members.GetByIdAsync(id);
+            if (member == null) return;
+            _unitOfWork.Members.Delete(member);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+
         // Helper Methods
         private MemberResponse ToDto(Member entity)
         {
@@ -57,5 +67,7 @@ namespace Application.Services
             ret.Email = entity.Email;
             return ret;
         }
+
+     
     }
 }

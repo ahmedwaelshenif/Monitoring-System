@@ -26,5 +26,7 @@ namespace Domain.Entities
 
         public bool IsActive { get; set; } = true;
 
+        public ICollection<Lab> Labs { get; set; } = new List<Lab>();
+
     }
 }

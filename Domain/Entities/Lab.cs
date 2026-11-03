@@ -17,6 +17,7 @@ namespace Domain.Entities
 
 
         public ICollection<Member> Members { get; set; } = new List<Member>();
+        public ICollection<DashboardAccount> AccessAccounts { get; set; } = new List<DashboardAccount>();
 
     }
 }

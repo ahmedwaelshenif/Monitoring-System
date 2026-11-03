@@ -45,6 +45,16 @@ namespace Application.Services
             return ToDto(lab);
         }
 
+        public async Task DeleteAsync(int id)
+        {
+            var lab = await _unitOfWork.Labs.GetByIdAsync(id);
+            if (lab == null) return;
+            _unitOfWork.Labs.Delete(lab);
+            await _unitOfWork.SaveChangesAsync();
+
+        }
+
+
 
 
         //Helper Methods
