@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<Member>Members { get; set; }
     public DbSet<Registration_Request> Registration_Requests{ get; set; }
     public DbSet<Lab> Labs { get; set; }
+    public DbSet<EntryLog> EntryLogs { get; set; }
     public AppDbContext(DbContextOptions<AppDbContext> options): base(options)
     {
 

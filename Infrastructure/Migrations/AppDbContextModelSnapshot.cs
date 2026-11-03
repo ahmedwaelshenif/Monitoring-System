@@ -53,6 +53,33 @@ namespace Infrastructure.Migrations
                     b.ToTable("DashboardAccounts");
                 });
 
+            modelBuilder.Entity("Domain.Entities.EntryLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("EventTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("LabId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MemberId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LabId");
+
+                    b.ToTable("EntryLogs");
+                });
+
             modelBuilder.Entity("Domain.Entities.Lab", b =>
                 {
                     b.Property<int>("Id")
@@ -70,7 +97,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Lab");
+                    b.ToTable("Labs");
                 });
 
             modelBuilder.Entity("Domain.Entities.Member", b =>
@@ -163,6 +190,17 @@ namespace Infrastructure.Migrations
                     b.HasIndex("MembersId");
 
                     b.ToTable("LabMember");
+                });
+
+            modelBuilder.Entity("Domain.Entities.EntryLog", b =>
+                {
+                    b.HasOne("Domain.Entities.Lab", "Lab")
+                        .WithMany()
+                        .HasForeignKey("LabId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lab");
                 });
 
             modelBuilder.Entity("LabMember", b =>

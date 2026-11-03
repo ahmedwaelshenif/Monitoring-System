@@ -10,17 +10,21 @@ namespace Infrastructure.Repositories
         public IRegistrationRequestRepository RegistrationRequests { get; }
         public IMemberRepository Members { get; }
         public IDashboardAccountRepository DashboardAccounts { get; }
+        public IEntryLogRepository EntryLogs { get; }
 
         public UnitOfWork(
             AppDbContext context,
             IRegistrationRequestRepository registrationRequests,
             IMemberRepository members,
-            IDashboardAccountRepository dashboardAccounts)
+            IDashboardAccountRepository dashboardAccounts,
+            IEntryLogRepository entryLogs
+            )
         {
             _context = context;
             RegistrationRequests = registrationRequests;
             Members = members;
             DashboardAccounts = dashboardAccounts;
+            EntryLogs = entryLogs;
         }
 
         public async Task<int> SaveChangesAsync()
