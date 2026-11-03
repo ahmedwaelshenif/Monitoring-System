@@ -54,12 +54,14 @@ namespace Application.Services
             };
         }
 
-        public async Task<int> CountTodayStatus(bool status)
+        public async Task<int> CountStatus(bool status, DateOnly date)
         {
-            var startOfDay = DateTime.Today;
+            var startOfDay = date.ToDateTime(TimeOnly.MinValue);
             var endOfDay = startOfDay.AddDays(1);
 
-            var targetStatus = status? EntryStatus.Accepted: EntryStatus.Rejected;
+            var targetStatus = status
+                ? EntryStatus.Accepted
+                : EntryStatus.Rejected;
 
             return await _unitOfWork.EntryLogs.CountAsync(
                 e => e.status == targetStatus &&
@@ -67,7 +69,6 @@ namespace Application.Services
                      e.EventTime < endOfDay
             );
         }
-
 
 
 

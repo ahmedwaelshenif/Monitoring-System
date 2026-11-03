@@ -27,15 +27,15 @@ namespace MonitoringSystemApp.Controllers
 
 
         [HttpGet("count/accepted/today")]
-        public async Task<IActionResult> GetTodayAcceptedCount()
+        public async Task<IActionResult> GetAcceptedCount(DateOnly date)
         {
-            return Ok(await _entryLogService.CountTodayStatus(true));
+            return Ok(await _entryLogService.CountStatus(true,date));
         }
 
         [HttpGet("count/rejected/today")]
-        public async Task<IActionResult> GetTodayRejectedCount()
+        public async Task<IActionResult> GetRejectedCount(DateOnly date)
         {
-            return Ok(await _entryLogService.CountTodayStatus(false));
+            return Ok(await _entryLogService.CountStatus(false,date));
         }
 
         [HttpGet("ByLab")]
