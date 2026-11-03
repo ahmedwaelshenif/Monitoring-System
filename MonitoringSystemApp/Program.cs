@@ -45,13 +45,12 @@ builder.Services.AddScoped<
     DashboardAccountRepository>();
 
 builder.Services.AddScoped<
-<<<<<<< HEAD
     IEntryLogRepository,
     EntryLogRepository>();
-=======
+
+builder.Services.AddScoped<
     ILabRepository,
     LabRepository>();
->>>>>>> 6f79399 (added lab service and repository)
 
 builder.Services.AddScoped<
     IUnitOfWork,
@@ -73,14 +72,13 @@ builder.Services.AddScoped<
     DashboardAccountService>();
 
 builder.Services.AddScoped<
-<<<<<<< HEAD
     IEntryLogService,
     EntryLogService>();
-=======
+
+builder.Services.AddScoped<
     ILabService,
     LabService>();
 
->>>>>>> 6f79399 (added lab service and repository)
 
 builder.Services.AddScoped<IPasswordHasher<DashboardAccount>,
     PasswordHasher<DashboardAccount>>();

@@ -18,8 +18,7 @@ namespace Infrastructure.Repositories
             IRegistrationRequestRepository registrationRequests,
             IMemberRepository members,
             IDashboardAccountRepository dashboardAccounts,
-            IEntryLogRepository entryLogs
-            )
+            IEntryLogRepository entryLogs,
             ILabRepository labs)
         {
             _context = context;
