@@ -194,6 +194,27 @@ namespace Infrastructure.Migrations
                     b.ToTable("Registration_Requests");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Warning", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("LabId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("warning")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LabId");
+
+                    b.ToTable("Warnings");
+                });
+
             modelBuilder.Entity("LabMember", b =>
                 {
                     b.Property<int>("LabsId")
@@ -239,6 +260,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("Lab");
 
                     b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Warning", b =>
+                {
+                    b.HasOne("Domain.Entities.Lab", "Lab")
+                        .WithMany()
+                        .HasForeignKey("LabId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lab");
                 });
 
             modelBuilder.Entity("LabMember", b =>

@@ -1,4 +1,5 @@
 using Application.Interfaces.Repositories;
+using Domain.Entities;
 using Infrastructure.Persistence;
 
 namespace Infrastructure.Repositories
@@ -13,13 +14,17 @@ namespace Infrastructure.Repositories
         public IEntryLogRepository EntryLogs { get; }
         public ILabRepository Labs { get; }
 
+        public IWarningRepository Warnings { get; }
+
         public UnitOfWork(
             AppDbContext context,
             IRegistrationRequestRepository registrationRequests,
             IMemberRepository members,
             IDashboardAccountRepository dashboardAccounts,
             IEntryLogRepository entryLogs,
-            ILabRepository labs)
+            ILabRepository labs,
+            IWarningRepository warnings
+            )
         {
             _context = context;
             RegistrationRequests = registrationRequests;
@@ -27,6 +32,7 @@ namespace Infrastructure.Repositories
             DashboardAccounts = dashboardAccounts;
             EntryLogs = entryLogs;
             Labs = labs;
+            Warnings = warnings;
         }
 
         public async Task<int> SaveChangesAsync()
