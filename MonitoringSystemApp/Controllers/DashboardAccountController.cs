@@ -7,7 +7,7 @@ namespace MonitoringSystemApp.Controllers
 {
     [ApiController]
     [Route("dashboardAccount")]
-    public class DashboardAccountController : Controller
+    public class DashboardAccountController : ControllerBase
     {
         private readonly IDashboardAccountService _DashboardAccountService;
         public DashboardAccountController(IDashboardAccountService dashboardAccountService)

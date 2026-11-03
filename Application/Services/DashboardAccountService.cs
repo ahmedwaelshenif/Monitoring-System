@@ -60,6 +60,10 @@ namespace Application.Services
         public async Task Deactivate(int id)
         {
             DashboardAccount entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+
+            if (entity == null)
+                return;
+
             entity.IsActive = false;
             await _unitOfWork.SaveChangesAsync();
         }
@@ -67,6 +71,10 @@ namespace Application.Services
         public async Task Activate(int id)
         {
             DashboardAccount entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+
+            if (entity == null)
+                return;
+
             entity.IsActive = true;
             await _unitOfWork.SaveChangesAsync();
         }

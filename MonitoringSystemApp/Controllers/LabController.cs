@@ -7,7 +7,7 @@ namespace MonitoringSystemApp.Controllers
 {
     [ApiController]
     [Route("lab")]
-    public class LabController : Controller
+    public class LabController : ControllerBase
     {
         private readonly ILabService _labService;
         public LabController(ILabService labService) { 

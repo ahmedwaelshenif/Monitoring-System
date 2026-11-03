@@ -28,11 +28,19 @@ namespace Application.Services
             _unitOfWork =unitOfWork;
         }
 
-        public async Task CreateAsync(RegistrationRequestDto request)
+        public async Task<bool> CreateAsync(RegistrationRequestDto request)
         {
+            int cnt = await _unitOfWork.RegistrationRequests.CountAsync(r => r.MemberId == request.MemberId && r.status == RequestStatus.Accepted);
+            if (cnt > 0) return false;
+            var requests = await _unitOfWork.RegistrationRequests.GetAllAsync(r => r.MemberId == request.MemberId && r.status== RequestStatus.Pending);
+            foreach(var item in requests){
+                _unitOfWork.RegistrationRequests.Delete(item);
+            }
+
             Registration_Request req = await ToEnity(request);
             await _unitOfWork.RegistrationRequests.AddAsync(req);
             await _unitOfWork.SaveChangesAsync();
+            return true;
         }
 
         public async Task MarkStatus(int id, bool status)

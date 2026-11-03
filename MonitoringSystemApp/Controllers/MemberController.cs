@@ -6,7 +6,7 @@ namespace MonitoringSystemApp.Controllers
 {
     [ApiController]
     [Route("member")]
-    public class MemberController : Controller
+    public class MemberController : ControllerBase
     {
         private readonly IMemberService _memberService;
         public MemberController(IMemberService memberService) { 

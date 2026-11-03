@@ -12,6 +12,10 @@ namespace Application.Interfaces.Repositories
 
         Task<PagedResult<T>> GetPagedAsync(int pageNumber, int pageSize);
 
+        public Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate);
+   
+
+
         Task AddAsync(T entity);
 
         void Update(T entity);

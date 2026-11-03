@@ -8,7 +8,7 @@ namespace MonitoringSystemApp.Controllers
 {
     [ApiController]
     [Route("entryLog")]
-    public class EntryLogController : Controller
+    public class EntryLogController : ControllerBase
     {
         private readonly IEntryLogService _entryLogService;
 
@@ -39,7 +39,7 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpGet("ByLab")]
-        public async Task<IActionResult> GetLogsByLab(int LabId,int PageNumber,int PageSize )
+        public async Task<IActionResult> GetLogsByLab([FromQuery]int LabId, [FromQuery] int PageNumber, [FromQuery] int PageSize )
         {
             return Ok(await _entryLogService.GetByLabAsync(LabId,PageNumber,PageSize));
         }

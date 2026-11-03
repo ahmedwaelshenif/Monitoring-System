@@ -13,7 +13,7 @@ namespace Application.Interfaces.Services
     {
         Task<RegistrationResponseDto?> GetByIdAsync(int id);
         Task<PagedResponse<RegistrationResponseDto>> GetAllAsync(int pageNumber, int pageSize);
-        Task CreateAsync(RegistrationRequestDto request);
+        Task<bool> CreateAsync(RegistrationRequestDto request);
         //Task UpdateAsync(RegistrationRequestDto request);
         Task DeleteAsync(int id);
 
