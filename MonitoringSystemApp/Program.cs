@@ -7,8 +7,6 @@ using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using MonitoringSystemApp.Controllers;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -18,15 +16,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-
 builder.Services.AddHttpClient<IEmbeddingService, EmbeddingService>(client =>
 {
     client.BaseAddress = new Uri("http://127.0.0.1:8000/");
 });
 
-
-
-//Repositories
+// Repositories
 
 builder.Services.AddScoped(
     typeof(IGenericRepository<>),
@@ -56,8 +51,7 @@ builder.Services.AddScoped<
     IUnitOfWork,
     UnitOfWork>();
 
-
-//Services
+// Services
 
 builder.Services.AddScoped<
     IRegistrationRequestService,
@@ -83,10 +77,7 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<IPasswordHasher<DashboardAccount>,
     PasswordHasher<DashboardAccount>>();
 
-
-
 var app = builder.Build();
-
 
 if (app.Environment.IsDevelopment())
 {
