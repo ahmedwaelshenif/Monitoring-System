@@ -78,6 +78,23 @@ namespace Application.Services
             return ToDto(log);
         }
 
+
+        public async Task<PagedResponse<EntryLogResponse>> GetByLabAsync(int LabId,int pageNumber,int pageSize)
+        {
+            var result = await _unitOfWork.EntryLogs.GetPagedLogsByLabAsync(
+                LabId,
+                pageNumber,
+                pageSize);
+
+            return new PagedResponse<EntryLogResponse>
+            {
+                Items = result.Items.Select(ToDto),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = result.TotalCount
+            };
+        }
+
         //Helper Methods
         public EntryLog ToEntity(EntryLogRequest req)
         {

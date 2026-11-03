@@ -37,5 +37,11 @@ namespace MonitoringSystemApp.Controllers
         {
             return Ok(await _entryLogService.CountTodayStatus(false));
         }
+
+        [HttpGet("ByLab")]
+        public async Task<IActionResult> GetLogsByLab(int LabId,int PageNumber,int PageSize )
+        {
+            return Ok(await _entryLogService.GetByLabAsync(LabId,PageNumber,PageSize));
+        }
     }
 }

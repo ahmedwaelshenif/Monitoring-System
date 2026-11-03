@@ -22,6 +22,29 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
+        public async Task<PagedResult<EntryLog>> GetPagedLogsByLabAsync(int LabId,int pageNumber, int pageSize)
+        {
+            var query = _context.EntryLogs
+                        .AsNoTracking()
+                        .Where(I => I.LabId==LabId)
+                        .Include(e => e.Lab)
+                        .Include(e => e.Member);
+
+            int totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(e => e.EventTime)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<EntryLog>
+            {
+                Items = items,
+                TotalCount = totalCount
+            };
+        }
+
         public async Task<PagedResult<EntryLog>> GetPagedWithDetailsAsync(int pageNumber, int pageSize)
         {
             var query = _context.EntryLogs

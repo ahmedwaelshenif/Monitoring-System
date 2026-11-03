@@ -10,5 +10,6 @@ namespace Application.Interfaces.Repositories
     public interface IEntryLogRepository : IGenericRepository<EntryLog>
     {
         Task<PagedResult<EntryLog>> GetPagedWithDetailsAsync(int pageNumber, int pageSize);
+        Task<PagedResult<EntryLog>> GetPagedLogsByLabAsync(int LabId,int pageNumber, int pageSize);
     }
 }

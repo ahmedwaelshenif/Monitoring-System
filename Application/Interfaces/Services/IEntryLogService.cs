@@ -13,7 +13,10 @@ namespace Application.Interfaces.Services
         Task CreateAsync(EntryLogRequest request);
         Task DeleteAsync(int id);
         Task<int> CountTodayStatus(bool status);
-        
+
+        Task<PagedResponse<EntryLogResponse>> GetByLabAsync(int LabId, int pageNumber, int pageSize);
+
+
 
     }
 }
