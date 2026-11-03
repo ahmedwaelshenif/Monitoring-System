@@ -62,7 +62,9 @@ namespace Application.Services
         {
             EntryLog res = new();
             res.EventTime = req.EventTime;
-            res.Lab = req.Lab;
+            res.LabId = req.LabId;
+            if (req.Lab != null) res.Lab = req.Lab;
+            res.MemberId = req.MemberId;
             res.Member = req.Member;
             res.status = req.status;
             return res;
@@ -73,7 +75,9 @@ namespace Application.Services
             EntryLogResponse res = new();
             res.Id = entity.Id;
             res.EventTime = entity.EventTime;
+            res.LabId = entity.LabId;
             res.Lab = entity.Lab;
+            res.MemberId = entity.MemberId;
             res.Member = entity.Member;
             res.status = entity.status;
             res.FaceImage = entity.Member?.FaceImage;

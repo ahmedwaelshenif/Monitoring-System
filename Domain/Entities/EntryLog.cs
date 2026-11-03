@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Enums;
-using System.Reflection.Emit;
 
 namespace Domain.Entities
 {
@@ -12,9 +11,14 @@ namespace Domain.Entities
         [Key]
         public int Id { get; set; }
 
+        public int? MemberId { get; set; }
+
+        [ForeignKey(nameof(MemberId))]
         public Member? Member { get; set; }
 
-        [Required]
+        public int LabId { get; set; }
+
+        [ForeignKey(nameof(LabId))]
         public Lab Lab { get; set; }
 
         [Required]
@@ -22,7 +26,5 @@ namespace Domain.Entities
 
         [Required]
         public EntryStatus status { get; set; }
-
-
     }
 }

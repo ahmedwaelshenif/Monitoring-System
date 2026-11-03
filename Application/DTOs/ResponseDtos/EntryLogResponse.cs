@@ -12,7 +12,11 @@ namespace Application.DTOs.ResponseDtos
         [Key]
         public int Id { get; set; }
 
+        public int? MemberId { get; set; }
+
         public Member? Member { get; set; }
+
+        public int LabId { get; set; }
 
         [Required]
         public Lab Lab { get; set; }
