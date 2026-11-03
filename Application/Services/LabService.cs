@@ -45,6 +45,25 @@ namespace Application.Services
             return ToDto(lab);
         }
 
+
+        public async Task<bool> UpdateAsync(int id, UpdateLab update)
+        {
+            var lab= await _unitOfWork.Labs.GetByIdAsync(id);
+
+            if(lab==null)
+                return false;
+
+            if (!string.IsNullOrWhiteSpace(update.Name))
+                lab.Name = update.Name;
+
+            if (update.Capacity.HasValue)
+                lab.Capacity = update.Capacity.Value;
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return true;
+        }
+
         public async Task DeleteAsync(int id)
         {
             var lab = await _unitOfWork.Labs.GetByIdAsync(id);
@@ -54,6 +73,10 @@ namespace Application.Services
 
         }
 
+        public async Task<int> CountAsync()
+        {
+            return await _unitOfWork.Labs.CountAsync();
+        }
 
 
 
@@ -75,5 +98,7 @@ namespace Application.Services
             labResponse.Id = lab.Id;
             return labResponse;
         }
+
+      
     }
 }

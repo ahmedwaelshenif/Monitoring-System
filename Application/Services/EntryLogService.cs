@@ -3,6 +3,7 @@ using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
+using Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,11 +54,31 @@ namespace Application.Services
             };
         }
 
-        public async Task<EntryLogResponse?> GetByIdAsync(int id)
+        public async Task<int> CountTodayStatus(bool status)
         {
-            throw new NotImplementedException();
+            var startOfDay = DateTime.Today;
+            var endOfDay = startOfDay.AddDays(1);
+
+            var targetStatus = status? EntryStatus.Accepted: EntryStatus.Rejected;
+
+            return await _unitOfWork.EntryLogs.CountAsync(
+                e => e.status == targetStatus &&
+                     e.EventTime >= startOfDay &&
+                     e.EventTime < endOfDay
+            );
         }
 
+
+
+
+        public async Task<EntryLogResponse?> GetByIdAsync(int id)
+        {
+            var log= await _unitOfWork.EntryLogs.GetByIdAsync(id);
+            if (log == null) return null;
+            return ToDto(log);
+        }
+
+        //Helper Methods
         public EntryLog ToEntity(EntryLogRequest req)
         {
             EntryLog res = new();
@@ -83,5 +104,7 @@ namespace Application.Services
             res.FaceImage = entity.Member?.FaceImage;
             return res;
         }
+
+      
     }
 }

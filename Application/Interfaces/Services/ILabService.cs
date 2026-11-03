@@ -12,7 +12,10 @@ namespace Application.Interfaces.Services
         Task CreateAsync(LabRequest lab);
         Task<LabResponse?> GetByIdAsync(int id);
         Task<PagedResponse<LabResponse>> GetAllAsync(int pageNumber, int pageSize);
+        Task<bool> UpdateAsync(int id, UpdateLab update);
         Task DeleteAsync(int id);
+
+        Task<int> CountAsync();
 
     }
 }

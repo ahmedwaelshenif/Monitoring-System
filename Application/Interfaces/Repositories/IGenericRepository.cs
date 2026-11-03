@@ -19,5 +19,9 @@ namespace Application.Interfaces.Repositories
         void Delete(T entity);
 
         Task<int> SaveChangesAsync();
+
+        Task<int> CountAsync();
+
+        Task<int> CountAsync(Expression<Func<T, bool>> predicate);
     }
 }

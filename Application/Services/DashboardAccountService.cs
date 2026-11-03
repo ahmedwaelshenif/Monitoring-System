@@ -71,6 +71,35 @@ namespace Application.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
+        public async Task<bool> UpdateAsync(int id,UpdateDashboardAccount update)
+        {
+            var acc = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+
+            if(acc == null)
+            {
+                return false;
+            }
+
+            if(update.FullName!=null) 
+                acc.FullName = update.FullName;
+
+            if (update.Email != null)
+                acc.Email = update.Email;
+
+            if (!string.IsNullOrWhiteSpace(update.Password))
+            {
+                acc.PasswordHash =
+                    _passwordHasher.HashPassword(acc, update.Password);
+            }
+
+            if (update.Role.HasValue)
+                acc.Role = update.Role.Value;
+            
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+           
+        }
+
         public async Task DeleteAsync(int id)
         {
             var acc=await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
@@ -105,6 +134,6 @@ namespace Application.Services
             return ret;
         }
 
-     
+      
     }
 }

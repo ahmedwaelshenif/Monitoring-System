@@ -16,10 +16,13 @@ namespace Application.Interfaces.Services
 
         Task<PagedResponse<DashboardAccountResponse>> GetAllAsync(int pageNumber, int pageSize);
 
+        Task<bool> UpdateAsync(int id,UpdateDashboardAccount update);
+
         Task Deactivate(int id);
 
         Task Activate(int id);
 
         Task DeleteAsync(int id);
+
     }
 }

@@ -12,6 +12,8 @@ namespace Application.Interfaces.Services
         Task<PagedResponse<EntryLogResponse>> GetAllAsync(int pageNumber, int pageSize);
         Task CreateAsync(EntryLogRequest request);
         Task DeleteAsync(int id);
+        Task<int> CountTodayStatus(bool status);
+        
 
     }
 }
