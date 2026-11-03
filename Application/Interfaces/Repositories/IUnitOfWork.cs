@@ -11,6 +11,7 @@ namespace Application.Interfaces.Repositories
         IDashboardAccountRepository DashboardAccounts { get; }
 
         IEntryLogRepository EntryLogs { get; }
+        ILabRepository Labs { get; }
         Task<int> SaveChangesAsync();
     }
 }

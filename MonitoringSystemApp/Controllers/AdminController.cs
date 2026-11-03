@@ -21,15 +21,18 @@ namespace MonitoringSystemApp.Controllers
         private readonly IDashboardAccountService _DashboardAccountService;
 
         private readonly IMemberService _memberService;
+        private readonly ILabService _labService;
 
         public AdminController(
             IRegistrationRequestService RegistrationRequestService,
             IDashboardAccountService DashboardAccountService,
-            IMemberService memberService
+            IMemberService memberService,
+            ILabService labService
             ) {
             _RegistrationRequestService = RegistrationRequestService;
             _DashboardAccountService = DashboardAccountService;
             _memberService = memberService;
+            _labService = labService;
         }
 
         [HttpGet("RegistrationRequests")]
@@ -60,6 +63,17 @@ namespace MonitoringSystemApp.Controllers
         }
 
 
+        [HttpGet("Labs")]
+
+        public async Task<ActionResult<PagedResponse<LabResponse>>> GetAllLabs(
+           [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            var result = await _labService.GetAllAsync(pageNumber, pageSize);
+            return Ok(result);
+        }
+
+
+
         [HttpPost("CreateAccount")]
         public async Task<IActionResult> CreateAccount(DashboardAccountRequest acc)
         {
@@ -67,30 +81,38 @@ namespace MonitoringSystemApp.Controllers
             return Ok("success");
         }
 
+        [HttpPost("CreateLab")]
+        public async Task<IActionResult> CreateLab(LabRequest lab)
+        {
+            await _labService.CreateAsync(lab);
+            return Ok("success");
+        }
+
+
 
         [HttpPatch("RequestReject/{id}")]
-        public async Task<IActionResult> MarkRegistratioRequestAsRejected(int id)
+        public async Task<IActionResult> RejectRegistrationRequest(int id)
         {
             await _RegistrationRequestService.MarkStatus(id, false);
             return NoContent();
         }
 
         [HttpPatch("RequestApprove/{id}")]
-        public async Task<IActionResult> MarkRegistratioRequestAsApproved(int id)
+        public async Task<IActionResult> ApproveRegistrationRequest(int id)
         {
             await _RegistrationRequestService.MarkStatus(id, true);
             return NoContent();
         }
 
         [HttpPatch("DeactivatAccount/{id}")]
-        public async Task<IActionResult> DeactivatAccount(int id)
+        public async Task<IActionResult> DeactivateAccount(int id)
         {
             await _DashboardAccountService.Deactivate(id);
             return NoContent();
         }
 
         [HttpPatch("ActivatAccount/{id}")]
-        public async Task<IActionResult> ActivatAccount(int id)
+        public async Task<IActionResult> ActivateAccount(int id)
         {
             await _DashboardAccountService.Activate(id);
             return NoContent();
