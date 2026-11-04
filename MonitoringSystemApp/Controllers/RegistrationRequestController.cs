@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.RequestDtos;
 using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Services;
+using Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MonitoringSystemApp.Controllers
@@ -22,6 +23,14 @@ namespace MonitoringSystemApp.Controllers
           [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _RegistrationRequestService.GetAllAsync(pageNumber, pageSize);
+            return Ok(result);
+        }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<PagedResponse<DashboardAccountResponse>>> Search([FromQuery] SearchRequest request)
+        {
+            var result = await _RegistrationRequestService.SearchAsync(request);
+
             return Ok(result);
         }
 

@@ -9,7 +9,7 @@ namespace Application.Specifications
 {
     public class SearchAccountSpecification: BaseSpecification<DashboardAccount>
     {
-        public SearchAccountSpecification(string?name, string email, Role? role, bool?status, int pageNumber, int pageSize)
+        public SearchAccountSpecification(string?name, string? email, Role? role, bool? IsActive, int pageNumber, int pageSize)
         {
             AddCriteria(m =>
 
@@ -22,8 +22,8 @@ namespace Application.Specifications
                 (!role.HasValue ||
                  m.Role == role.Value) &&
 
-                 (!status.HasValue ||
-                 m.IsActive == status.Value)
+                 (!IsActive.HasValue ||
+                 m.IsActive == IsActive.Value)
             );
 
             AddOrderBy(m => m.Id);

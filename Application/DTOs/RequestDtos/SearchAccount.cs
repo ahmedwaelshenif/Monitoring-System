@@ -10,7 +10,7 @@ namespace Application.DTOs.RequestDtos
         public string ? Email {get;set;}
         public string ? Name {get;set;}
         public Role ? role { get;set; }
-        public bool ? status { get; set; }
+        public bool ? IsActive { get; set; }
         public int PageNumber { get; set; } = 1;
 
         public int PageSize { get; set; } = 10;

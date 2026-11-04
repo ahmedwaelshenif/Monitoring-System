@@ -24,6 +24,7 @@ namespace MonitoringSystemApp.Controllers
         }
 
 
+
         [HttpPost("create")]
         public async Task<IActionResult> CreateLab(LabRequest lab)
         {
