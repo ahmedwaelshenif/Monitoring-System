@@ -32,9 +32,8 @@ namespace Application.Services
         public async Task<bool> CreateAsync(RegistrationRequestDto request)
         {
             // check member entity
-            int cnt2= await _unitOfWork.Members.CountAsync(r => r.Id == request.MemberId);
-            int cnt = await _unitOfWork.RegistrationRequests.CountAsync(r => r.MemberId == request.MemberId && r.status == RequestStatus.Accepted);
-            if (cnt > 0 || cnt2>0)
+            int cnt = await _unitOfWork.Members.CountAsync(m => m.MemberId == request.MemberId);
+            if (cnt > 0)
                 return false;
             var requests = await _unitOfWork.RegistrationRequests.GetAllAsync(r => r.MemberId == request.MemberId && r.status== RequestStatus.Pending);
             foreach(var item in requests){
@@ -61,15 +60,12 @@ namespace Application.Services
 
             if (status)
             {
+
+                var exists = await _unitOfWork.Members.CountAsync(m => m.MemberId == entity.MemberId);
+                if (exists > 0)
+                    throw new InvalidOperationException("A member with this Id already exists.");
+
                 Member member = await RequestToMember(entity);
-
-                var existingMember =
-                    await _unitOfWork.Members.GetByIdAsync(member.Id);
-
-                if (existingMember != null)
-                    throw new InvalidOperationException(
-                        "A member with this Id already exists.");
-
                 await _unitOfWork.Members.AddAsync(member);
             }
             entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
@@ -187,7 +183,7 @@ namespace Application.Services
             Member member = new();
             member.FaceImage = req.FaceImage;
             member.IdImage = req.IdImage;
-            member.Id = req.MemberId;
+            member.MemberId = req.MemberId;
             member.FullName = req.FullName;
             member.AcademicYear = req.AcademicYear;
             member.Email = req.Email;

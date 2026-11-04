@@ -148,6 +148,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
 
+                    b.Property<int>("MemberId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Members");

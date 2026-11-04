@@ -11,6 +11,9 @@ namespace Domain.Entities
         public int Id { get; set; }
 
         [Required]
+        public int MemberId { get; set; }
+
+        [Required]
         public string FullName { get; set; }
 
         [Required]
