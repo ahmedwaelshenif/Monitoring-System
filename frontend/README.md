@@ -19,4 +19,4 @@ For local development, the Vite server proxies API routes to `https://localhost:
 npm run build
 ```
 
-The Warnings view is informational because the backend currently has no warning controller routes.
+The Warnings view uses the backend warning list, filter, detail, create, and delete routes.

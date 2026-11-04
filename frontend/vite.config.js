@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: Object.fromEntries(
-      ['/lab', '/entryLog', '/member', '/dashboardAccount', '/registrationRequest']
+      ['/lab', '/entryLog', '/member', '/dashboardAccount', '/registrationRequest', '/warning']
         .map(path => [path, { target: backendTarget, changeOrigin: true, secure: false }]),
     ),
   },
