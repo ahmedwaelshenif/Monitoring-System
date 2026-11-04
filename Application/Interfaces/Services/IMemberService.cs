@@ -1,4 +1,5 @@
-﻿using Application.DTOs.ResponseDtos;
+﻿using Application.DTOs.RequestDtos;
+using Application.DTOs.ResponseDtos;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -12,5 +13,8 @@ namespace Application.Interfaces.Services
         Task<Member?> GetByIdAsync(int id);
         Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize);
         Task DeleteAsync(int id);
+        Task<PagedResponse<MemberResponse>> SearchAsync(SearchMemberRequest request);
+
+
     }
 }

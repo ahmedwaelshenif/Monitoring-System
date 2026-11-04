@@ -1,6 +1,8 @@
+using Application.DTOs.RequestDtos;
 using Application.DTOs.ResponseDtos;
-using Application.Interfaces.Services;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
+using Application.Specifications;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -51,6 +53,31 @@ namespace Application.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
+        public async Task<PagedResponse<MemberResponse>> SearchAsync(SearchMemberRequest request)
+        {
+            var specification = new SearchMemberSpecification(
+                request.Id,
+                request.FullName,
+                request.Email,
+                request.AcademicYear,
+                request.PageNumber,
+                request.PageSize
+            );
+
+            var members = await _unitOfWork.Members
+                .ListAsync(specification);
+
+            var totalCount = await _unitOfWork.Members
+                .CountAsync(specification);
+
+            return new PagedResponse<MemberResponse>
+            {
+                Items = members.Select(ToDto).ToList(),
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount
+            };
+        }
 
         // Helper Methods
         private MemberResponse ToDto(Member entity)

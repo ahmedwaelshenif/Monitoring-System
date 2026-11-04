@@ -2,6 +2,7 @@ using Application.DTOs.RequestDtos;
 using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Specifications;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
@@ -107,6 +108,33 @@ namespace Application.Services
             return entity != null ? ToDto(entity) : null;
         }
 
+        public async Task<PagedResponse<RegistrationResponseDto>> SearchAsync(SearchRequest request)
+        {
+            var specification = new SearchRequestSpecification(
+                request.Id,
+                request.FullName,
+                request.Email,
+                request.AcademicYear,
+                request.Status,
+                request.PageNumber,
+                request.PageSize
+            );
+
+            var requests = await _unitOfWork.RegistrationRequests
+                .ListAsync(specification);
+
+            var totalCount = await _unitOfWork.RegistrationRequests
+                .CountAsync(specification);
+
+            return new PagedResponse<RegistrationResponseDto>
+            {
+                Items = requests.Select(ToDto).ToList(),
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount
+            };
+        }
+
         // Helper Methods
         private async Task<Registration_Request> ToEnity(RegistrationRequestDto dto)
         {
@@ -166,5 +194,7 @@ namespace Application.Services
             member.EmbeddingData = await _embeddingService.ExtractEmbeddingAsync(req.FaceImage);
             return member;
         }
+
+      
     }
 }

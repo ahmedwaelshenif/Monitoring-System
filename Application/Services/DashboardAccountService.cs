@@ -3,14 +3,15 @@ using Application.DTOs.RequestDtos;
 using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Specifications;
 using Domain.Entities;
 using Domain.Enums;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Principal;
 using System.Text;
-using Microsoft.AspNetCore.Identity;
 
 
 namespace Application.Services
@@ -115,6 +116,32 @@ namespace Application.Services
             _unitOfWork.DashboardAccounts.Delete(acc);
             await _unitOfWork.SaveChangesAsync();
 
+        }
+
+        public async Task<PagedResponse<DashboardAccountResponse>> SearchAsync(SearchAccount request)
+        {
+            var specification = new SearchAccountSpecification(
+               request.Email,
+               request.Name,
+               request.role,
+               request.IsActive,
+               request.PageNumber,
+               request.PageSize
+           );
+
+            var accounts = await _unitOfWork.DashboardAccounts
+                .ListAsync(specification);
+
+            var totalCount = await _unitOfWork.DashboardAccounts
+                .CountAsync(specification);
+
+            return new PagedResponse<DashboardAccountResponse>
+            {
+                Items = accounts.Select(ToDto).ToList(),
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount
+            };
         }
 
         //Helper Methods

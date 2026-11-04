@@ -1,6 +1,8 @@
 ﻿using Application.Common;
 using Application.Interfaces.Repositories;
+using Domain.Specifications;
 using Infrastructure.Persistence;
+using Infrastructure.Specifications;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -94,5 +96,27 @@ namespace Infrastructure.Repositories
         {
             return await _dbSet.CountAsync(predicate);
         }
+
+        public async Task<List<T>> ListAsync(
+            ISpecification<T> specification)
+        {
+            var query = SpecificationEvaluator.GetQuery(
+                _dbSet.AsQueryable(),
+                specification);
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<int> CountAsync(
+            ISpecification<T> specification)
+        {
+            var query = SpecificationEvaluator.GetQuery(
+                _dbSet.AsQueryable(),
+                specification,
+                applyPaging: false);
+
+            return await query.CountAsync();
+        }
+
     }
 }
