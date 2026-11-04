@@ -23,6 +23,7 @@ namespace Application.Interfaces.Services
         Task Activate(int id);
 
         Task DeleteAsync(int id);
+        Task<PagedResponse<DashboardAccountResponse>> SearchAsync(SearchAccount request);
 
     }
 }
