@@ -95,6 +95,34 @@ namespace Application.Services
                 TotalCount = result.TotalCount
             };
         }
+        public async Task<PagedResponse<EntryLogResponse>> GetAcceptedTodayAsync(int pageNumber,int pageSize)
+        {
+            var result = await _unitOfWork.EntryLogs.GetPagedAcceptedTodayAsync(
+                pageNumber,
+                pageSize);
+
+            return new PagedResponse<EntryLogResponse>
+            {
+                Items = result.Items.Select(ToDto),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = result.TotalCount
+            };
+        }
+        public async Task<PagedResponse<EntryLogResponse>> GetRejectedTodayAsync(int pageNumber,int pageSize)
+        {
+            var result = await _unitOfWork.EntryLogs.GetPagedRejectedTodayAsync(
+                pageNumber,
+                pageSize);
+
+            return new PagedResponse<EntryLogResponse>
+            {
+                Items = result.Items.Select(ToDto),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = result.TotalCount
+            };
+        }
 
         //Helper Methods
         public EntryLog ToEntity(EntryLogRequest req)

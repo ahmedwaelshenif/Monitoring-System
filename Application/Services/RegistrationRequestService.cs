@@ -30,8 +30,11 @@ namespace Application.Services
 
         public async Task<bool> CreateAsync(RegistrationRequestDto request)
         {
+            // check member entity
+            int cnt2= await _unitOfWork.Members.CountAsync(r => r.Id == request.MemberId);
             int cnt = await _unitOfWork.RegistrationRequests.CountAsync(r => r.MemberId == request.MemberId && r.status == RequestStatus.Accepted);
-            if (cnt > 0) return false;
+            if (cnt > 0 || cnt2>0)
+                return false;
             var requests = await _unitOfWork.RegistrationRequests.GetAllAsync(r => r.MemberId == request.MemberId && r.status== RequestStatus.Pending);
             foreach(var item in requests){
                 _unitOfWork.RegistrationRequests.Delete(item);

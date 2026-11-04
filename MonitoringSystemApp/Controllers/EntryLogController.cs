@@ -39,9 +39,21 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpGet("ByLab")]
-        public async Task<IActionResult> GetLogsByLab([FromQuery]int LabId, [FromQuery] int PageNumber, [FromQuery] int PageSize )
+        public async Task<IActionResult> GetLogsByLab([FromQuery]int LabId, [FromQuery] int PageNumber=1, [FromQuery] int PageSize=10 )
         {
             return Ok(await _entryLogService.GetByLabAsync(LabId,PageNumber,PageSize));
+        }
+
+        [HttpGet("AcceptedToday")]
+        public async Task<IActionResult> GetAcceptedToday( [FromQuery] int PageNumber=1, [FromQuery] int PageSize=10 )
+        {
+            return Ok(await _entryLogService.GetAcceptedTodayAsync(PageNumber,PageSize));
+        }
+
+        [HttpGet("RejectedToday")]
+        public async Task<IActionResult> GetRejectedToday( [FromQuery] int PageNumber=1, [FromQuery] int PageSize=10 )
+        {
+            return Ok(await _entryLogService.GetRejectedTodayAsync(PageNumber,PageSize));
         }
     }
 }

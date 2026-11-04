@@ -17,6 +17,9 @@ namespace Application.Interfaces.Services
         Task<PagedResponse<EntryLogResponse>> GetByLabAsync(int LabId, int pageNumber, int pageSize);
 
 
+        Task<PagedResponse<EntryLogResponse>> GetRejectedTodayAsync(int pageNumber, int pageSize);
+        Task<PagedResponse<EntryLogResponse>> GetAcceptedTodayAsync(int pageNumber, int pageSize);
+
 
     }
 }
