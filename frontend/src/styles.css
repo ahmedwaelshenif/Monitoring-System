@@ -61,3 +61,11 @@
 .warning-name{display:inline-flex;align-items:center;gap:9px;color:#334764;font-weight:600}
 .warning-name i{width:23px;height:23px;border-radius:7px;display:grid;place-items:center;background:#fff2e8;color:#c77a2e;font-size:13px;font-style:normal;font-weight:800}
 @media(max-width:740px){.warning-filter-value label{align-items:flex-start;flex-direction:column;gap:7px}}
+.confirm-modal{width:min(100%,390px);text-align:center;padding:27px 25px 22px}
+.confirm-icon{width:43px;height:43px;margin:0 auto 13px;border-radius:50%;display:grid;place-items:center;background:#fff3e9;color:#bf752f;font-size:18px;font-weight:800}
+.confirm-modal h2{font:700 17px Manrope,sans-serif;color:#172d4d;margin:0}
+.confirm-modal p{font-size:11px;line-height:1.65;color:#7e8b9f;margin:9px 0 19px}
+.confirm-modal .modal-actions{justify-content:center}
+.button-danger{background:#bd4e5c;color:#fff;box-shadow:0 3px 8px #bd4e5c22}
+.button-danger:hover{background:#a9404d}
+.confirm-backdrop{z-index:20}

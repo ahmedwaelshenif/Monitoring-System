@@ -43,6 +43,7 @@ function App() {
   const [refresh, setRefresh] = useState(0)
   const [notice, setNotice] = useState(null)
   const [modal, setModal] = useState(null)
+  const [confirmation, setConfirmation] = useState(null)
   const [selectedLab, setSelectedLab] = useState('')
   const [logsPreset, setLogsPreset] = useState('all')
 
@@ -51,6 +52,7 @@ function App() {
     setNotice({ message, error })
     window.setTimeout(() => setNotice(null), 5000)
   }
+  const askConfirm = (options, action) => setConfirmation({ options, action })
   const reload = () => setRefresh(x => x + 1)
   const saveBase = (event) => {
     event.preventDefault()
@@ -74,15 +76,16 @@ function App() {
       <div className="content">
         {notice && <div className={`notice ${notice.error ? 'notice-error' : ''}`}>{notice.message}<button aria-label="Dismiss" onClick={() => setNotice(null)}>×</button></div>}
         {page === 'overview' && <Overview request={request} refresh={refresh} setPage={setPage} setLogsPreset={setLogsPreset} setSelectedLab={setSelectedLab} />}
-        {page === 'labs' && <Labs request={request} refresh={refresh} notify={notify} setSelectedLab={setSelectedLab} goToPage={setPage} openModal={setModal} />}
+        {page === 'labs' && <Labs request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} setSelectedLab={setSelectedLab} goToPage={setPage} openModal={setModal} />}
         {page === 'logs' && <Logs request={request} refresh={refresh} selectedLab={selectedLab} setSelectedLab={setSelectedLab} preset={logsPreset} setPreset={setLogsPreset} />}
-        {page === 'members' && <Members request={request} refresh={refresh} notify={notify} />}
-        {page === 'accounts' && <Accounts request={request} refresh={refresh} notify={notify} />}
-        {page === 'requests' && <Requests request={request} refresh={refresh} notify={notify} />}
-        {page === 'warnings' && <Warnings request={request} refresh={refresh} notify={notify} />}
+        {page === 'members' && <Members request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
+        {page === 'accounts' && <Accounts request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
+        {page === 'requests' && <Requests request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
+        {page === 'warnings' && <Warnings request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
       </div>
     </main>
     {modal && <LabModal item={modal === 'new' ? null : modal} onClose={() => setModal(null)} request={request} onSaved={() => { setModal(null); reload(); notify(modal === 'new' ? 'Lab created.' : 'Lab updated.') }} onError={e => notify(e.message, true)} />}
+    {confirmation && <ConfirmDialog options={confirmation.options} onClose={() => setConfirmation(null)} onConfirm={async () => { await confirmation.action(); setConfirmation(null) }} />}
   </div>
 }
 
@@ -121,6 +124,11 @@ function FilterBar({ fields, values, onChange, onSubmit, onClear }) {
 function RecordDetails({ title, record, onClose, fields, images = [] }) {
   if (!record) return null
   return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal detail-modal" role="dialog" aria-modal="true" aria-label={title}><div className="modal-heading"><div><span className="eyebrow">RECORD DETAILS</span><h2>{title}</h2></div><button className="icon-button" aria-label="Close" onClick={onClose}>×</button></div><div className="detail-grid">{fields.map(([label, value]) => <div className="detail-item" key={label}><small>{label}</small><strong>{value ?? '—'}</strong></div>)}</div>{images.length > 0 && <div className="detail-images">{images.map(([label, data]) => <div className="detail-image" key={label}><strong>{label}</strong>{data ? <img src={imageSrc(data)} alt={label} /> : <span className="image-empty">No image available</span>}</div>)}</div>}<div className="modal-actions"><button className="button button-light" onClick={onClose}>Close</button></div></section></div>
+}
+function ConfirmDialog({ options, onClose, onConfirm }) {
+  const [busy, setBusy] = useState(false)
+  async function confirm() { setBusy(true); try { await onConfirm() } finally { setBusy(false) } }
+  return <div className="modal-backdrop confirm-backdrop" onMouseDown={e => e.target === e.currentTarget && !busy && onClose()}><section className="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title"><div className="confirm-icon">{options.icon || '!'}</div><h2 id="confirm-title">{options.title}</h2><p>{options.message}</p><div className="modal-actions"><button className="button button-light" onClick={onClose} disabled={busy}>Cancel</button><button className={`button ${options.danger ? 'button-danger' : 'button-primary'}`} onClick={confirm} disabled={busy}>{busy ? 'Please wait…' : options.confirmText || 'Confirm'}</button></div></section></div>
 }
 function imageSrc(data) { return typeof data === 'string' && data.startsWith('data:') ? data : `data:image/jpeg;base64,${data}` }
 
@@ -174,10 +182,10 @@ function WeekChart({ data, loading }) {
   return <div className="chart" aria-label="Accepted and rejected entry counts over the last seven days"><div className="chart-y"><span>{max}</span><span>{Math.round(max / 2)}</span><span>0</span></div><div className="chart-bars">{data.map(row => { const a = row.accepted / max * 100, r = row.rejected / max * 100; const label = new Date(`${row.day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); return <div className="chart-day" key={row.day}><div className="chart-hover-info"><strong>{label}</strong><span>Accepted: {row.accepted}</span><span>Rejected: {row.rejected}</span><b>Total: {row.accepted + row.rejected}</b></div><div className="bar-stack"><div className="bar rejected-bar" style={{ height: `${r}%` }} /><div className="bar accepted-bar" style={{ height: `${a}%` }} /></div><span>{label.split(',')[0]}</span></div> })}</div></div>
 }
 
-function Labs({ request, refresh, notify, setSelectedLab, goToPage, openModal }) {
+function Labs({ request, refresh, notify, askConfirm, setSelectedLab, goToPage, openModal }) {
   const [page, setPage] = useState(1)
   const load = useLoad(() => request(`/lab?pageNumber=${page}&pageSize=10`), [request, refresh, page])
-  const remove = async lab => { if (!window.confirm(`Delete ${lab.name}?`)) return; try { await request(`/lab/${lab.id}`, { method: 'DELETE' }); notify('Lab deleted.'); load.refresh() } catch (e) { notify(e.message, true) } }
+  const remove = lab => askConfirm({ title: 'Delete this lab?', message: `${lab.name} will be deleted. This may also affect records linked to the lab.`, confirmText: 'Delete lab', danger: true }, async () => { try { await request(`/lab/${lab.id}`, { method: 'DELETE' }); notify('Lab deleted.'); load.refresh() } catch (e) { notify(e.message, true) } })
   return <>
     <PageTitle eyebrow="FACILITIES" title="Labs" description="Create and manage labs, then inspect the entry activity for each one." action={<button className="button button-primary" onClick={() => openModal('new')}>＋ Add lab</button>} />
     <Panel title="All labs" subtitle={load.data ? `${load.data.totalCount} labs in the system` : 'Manage lab details and activity'}>
@@ -223,7 +231,7 @@ function Logs({ request, refresh, selectedLab, setSelectedLab, preset, setPreset
   </>
 }
 
-function Members({ request, refresh, notify }) {
+function Members({ request, refresh, notify, askConfirm }) {
   const [page, setPage] = useState(1)
   const [draft, setDraft] = useState({ Id: '', FullName: '', Email: '', AcademicYear: '' })
   const [filters, setFilters] = useState({})
@@ -232,7 +240,7 @@ function Members({ request, refresh, notify }) {
   Object.entries(filters).forEach(([key, value]) => { if (value !== '') params.set(key, value) })
   const query = params.toString()
   const load = useLoad(() => request(`/member/search?${query}`), [request, refresh, query])
-  const remove = async member => { if (!window.confirm(`Delete member ${member.fullName}?`)) return; try { await request(`/member/${member.id}`, { method: 'DELETE' }); notify('Member deleted.'); load.refresh() } catch (e) { notify(e.message, true) } }
+  const remove = member => askConfirm({ title: 'Delete this member?', message: `The member record for ${member.fullName} will be permanently removed.`, confirmText: 'Delete member', danger: true }, async () => { try { await request(`/member/${member.id}`, { method: 'DELETE' }); notify('Member deleted.'); load.refresh() } catch (e) { notify(e.message, true) } })
   return <><PageTitle eyebrow="DIRECTORY" title="Members" description="Browse registered members and review their profile details." />
     <Panel title="All members" subtitle={load.data ? `${load.data.totalCount} matching members` : 'Member records'}>
       <FilterBar fields={[{ name: 'Id', label: 'Member ID', type: 'number', min: 1 }, { name: 'FullName', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'AcademicYear', label: 'Academic year', options: [['1', 'Year 1'], ['2', 'Year 2'], ['3', 'Year 3'], ['4', 'Year 4']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft }) }} onClear={() => { setDraft({ Id: '', FullName: '', Email: '', AcademicYear: '' }); setFilters({}); setPage(1) }} />
@@ -245,7 +253,7 @@ function Members({ request, refresh, notify }) {
 }
 function avatar(bytes, name) { return <span className="person-avatar">{bytes ? <img src={`data:image/jpeg;base64,${bytes}`} alt="" /> : name?.slice(0, 1)?.toUpperCase()}</span> }
 
-function Accounts({ request, refresh, notify }) {
+function Accounts({ request, refresh, notify, askConfirm }) {
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState(null)
   const [create, setCreate] = useState(false)
@@ -261,8 +269,8 @@ function Accounts({ request, refresh, notify }) {
   const query = params.toString()
   const load = useLoad(() => request(`/dashboardAccount/search?${query}`), [request, refresh, query])
   const update = async (account, fields) => { try { await request(`/dashboardAccount/${account.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) }); notify('Account updated.'); load.refresh() } catch (e) { notify(e.message, true) } }
-  const toggle = async account => { try { await request(`/dashboardAccount/${account.isActive ? 'deactivate' : 'activate'}/${account.id}`, { method: 'PATCH' }); notify(`Account ${account.isActive ? 'deactivated' : 'activated'}.`); load.refresh() } catch (e) { notify(e.message, true) } }
-  const remove = async account => { if (!window.confirm(`Delete dashboard account for ${account.fullName}?`)) return; try { await request(`/dashboardAccount/${account.id}`, { method: 'DELETE' }); notify('Account deleted.'); load.refresh() } catch (e) { notify(e.message, true) } }
+  const toggle = account => { const action = account.isActive ? 'deactivate' : 'activate'; askConfirm({ title: `${account.isActive ? 'Deactivate' : 'Activate'} this account?`, message: `${account.fullName} will ${account.isActive ? 'lose' : 'regain'} dashboard access.`, confirmText: `${account.isActive ? 'Deactivate' : 'Activate'} account`, danger: account.isActive }, async () => { try { await request(`/dashboardAccount/${action}/${account.id}`, { method: 'PATCH' }); notify(`Account ${action}d.`); load.refresh() } catch (e) { notify(e.message, true) } }) }
+  const remove = account => askConfirm({ title: 'Delete this account?', message: `The dashboard account for ${account.fullName} will be permanently removed.`, confirmText: 'Delete account', danger: true }, async () => { try { await request(`/dashboardAccount/${account.id}`, { method: 'DELETE' }); notify('Account deleted.'); load.refresh() } catch (e) { notify(e.message, true) } })
   return <><PageTitle eyebrow="ACCESS" title="Dashboard accounts" description="Create accounts and manage names, roles, and access status." action={<button className="button button-primary" onClick={() => setCreate(true)}>＋ Add account</button>} />
     <Panel title="All accounts" subtitle={load.data ? `${load.data.totalCount} matching dashboard accounts` : 'Account access and roles'}>
       <FilterBar fields={[{ name: 'Name', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'role', label: 'Role', options: [['1', 'Admin'], ['2', 'User']] }, { name: 'IsActive', label: 'Access status', options: [['true', 'Active'], ['false', 'Inactive']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft }) }} onClear={() => { setDraft({ Name: '', Email: '', role: '', IsActive: '' }); setFilters({}); setPage(1) }} />
@@ -287,9 +295,8 @@ function AccountModal({ item, onClose, request, onSaved, onError }) {
   return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><div><span className="eyebrow">ACCOUNT ACCESS</span><h2>{item ? 'Edit account' : 'Add an account'}</h2></div><button className="icon-button" onClick={onClose}>×</button></div><form onSubmit={submit} className="form-stack"><label>Full name<input name="fullName" required defaultValue={item?.fullName || ''} /></label><label>Email address<input name="email" type="email" required defaultValue={item?.email || ''} /></label><label>{item ? 'New password (optional)' : 'Password'}<input name="password" type="password" required={!item} minLength="8" /></label><label>Role<select name="role" defaultValue={item?.role ?? 2}><option value="1">Admin</option><option value="2">User</option></select></label><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy}>{busy ? 'Saving…' : item ? 'Save changes' : 'Create account'}</button></div></form></section></div>
 }
 
-function Requests({ request, refresh, notify }) {
+function Requests({ request, refresh, notify, askConfirm }) {
   const [page, setPage] = useState(1)
-  const [create, setCreate] = useState(false)
   const [draft, setDraft] = useState({ Id: '', FullName: '', Email: '', AcademicYear: '', Status: '' })
   const [filters, setFilters] = useState({})
   const [record, setRecord] = useState(null)
@@ -297,11 +304,14 @@ function Requests({ request, refresh, notify }) {
   Object.entries(filters).forEach(([key, value]) => { if (value !== '') params.set(key, value) })
   const query = params.toString()
   const load = useLoad(() => request(`/registrationRequest/search?${query}`), [request, refresh, query])
-  async function decide(item, action) {
-    try { await request(`/registrationRequest/${action}/${item.id}`, { method: 'PATCH' }); notify(`Request ${action === 'approve' ? 'approved' : 'rejected'}.`); load.refresh() }
-    catch (e) { notify(e.message, true) }
+  function decide(item, action) {
+    const approving = action === 'approve'
+    askConfirm({ title: `${approving ? 'Approve' : 'Reject'} this request?`, message: `${item.fullName}'s registration request will be marked ${approving ? 'accepted' : 'rejected'}.`, confirmText: approving ? 'Approve request' : 'Reject request', danger: !approving }, async () => {
+      try { await request(`/registrationRequest/${action}/${item.id}`, { method: 'PATCH' }); notify(`Request ${approving ? 'approved' : 'rejected'}.`); load.refresh() }
+      catch (e) { notify(e.message, true) }
+    })
   }
-  return <><PageTitle eyebrow="ENROLLMENT" title="Registration requests" description="Review new member applications and approve or reject each request." action={<button className="button button-primary" onClick={() => setCreate(true)}>＋ New request</button>} />
+  return <><PageTitle eyebrow="ENROLLMENT" title="Registration requests" description="Review new member applications and approve or reject each request." />
     <Panel title="Incoming requests" subtitle={load.data ? `${load.data.totalCount} matching requests` : 'Review submissions'}>
       <FilterBar fields={[{ name: 'Id', label: 'Request ID', type: 'number', min: 1 }, { name: 'FullName', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'AcademicYear', label: 'Academic year', options: [['1', 'Year 1'], ['2', 'Year 2'], ['3', 'Year 3'], ['4', 'Year 4']] }, { name: 'Status', label: 'Status', options: [['0', 'Pending'], ['1', 'Rejected'], ['2', 'Accepted']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft }) }} onClear={() => { setDraft({ Id: '', FullName: '', Email: '', AcademicYear: '', Status: '' }); setFilters({}); setPage(1) }} />
       {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading requests…</div> : load.data?.items?.length ? <><Table headers={['Applicant', 'Email', 'Member ID', 'Year', 'Submitted', 'Status', 'Actions']}>
@@ -309,20 +319,12 @@ function Requests({ request, refresh, notify }) {
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No registration requests.</Empty>}
     </Panel>
     <RecordDetails title={record?.fullName || 'Registration request'} record={record} onClose={() => setRecord(null)} fields={record ? [['Request ID', `#${record.id}`], ['Member ID', `#${record.memberId}`], ['Full name', record.fullName], ['Email', record.email], ['Academic year', `Year ${record.academicYear}`], ['Submitted', dateText(record.submittedAt)], ['Status', enumName(record.status, ['Pending', 'Rejected', 'Accepted'])]] : []} images={record ? [['Face image', record.faceImage], ['ID image', record.idImage]] : []} />
-    {create && <RegistrationModal request={request} onClose={() => setCreate(false)} onSaved={() => { setCreate(false); notify('Registration request submitted.'); load.refresh() }} onError={e => notify(e.message, true)} />}
   </>
 }
-function RegistrationModal({ request, onClose, onSaved, onError }) {
-  const [busy, setBusy] = useState(false)
-  async function submit(e) { e.preventDefault(); setBusy(true); try { await request('/registrationRequest', { method: 'POST', body: new FormData(e.currentTarget) }); onSaved() } catch (error) { onError(error) } finally { setBusy(false) } }
-  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal modal-wide"><div className="modal-heading"><div><span className="eyebrow">ENROLLMENT</span><h2>Submit registration</h2></div><button className="icon-button" onClick={onClose}>×</button></div><form onSubmit={submit} className="form-stack"><div className="form-grid"><label>Member ID<input name="MemberId" type="number" min="1" required /></label><label>Academic year<select name="AcademicYear" defaultValue="1"><option value="1">Year 1</option><option value="2">Year 2</option><option value="3">Year 3</option><option value="4">Year 4</option></select></label><label>Full name<input name="FullName" required /></label><label>Email<input name="Email" type="email" required /></label><label>Face image<input name="FaceImage" type="file" accept="image/*" required /></label><label>ID image<input name="IdImage" type="file" accept="image/*" required /></label></div><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy}>{busy ? 'Submitting…' : 'Submit request'}</button></div></form></section></div>
-}
-
-function Warnings({ request, refresh, notify }) {
+function Warnings({ request, refresh, notify, askConfirm }) {
   const [page, setPage] = useState(1)
   const [filterType, setFilterType] = useState('all')
   const [filterValue, setFilterValue] = useState('')
-  const [create, setCreate] = useState(false)
   const [record, setRecord] = useState(null)
   const labs = useLoad(() => request('/lab?pageNumber=1&pageSize=1000'), [request, refresh])
   const load = useLoad(() => {
@@ -331,38 +333,25 @@ function Warnings({ request, refresh, notify }) {
     return request(`/warning?pageNumber=${page}&pageSize=10`)
   }, [request, refresh, page, filterType, filterValue])
   const alertName = value => enumName(value, ['Food or drink detected', 'Crowded'])
-  const deleteWarning = async warning => {
-    if (!window.confirm(`Delete warning #${warning.id}?`)) return
+  const deleteWarning = warning => askConfirm({ title: 'Delete this warning?', message: `Warning #${warning.id} for ${warning.lab?.name || `lab #${warning.labId}`} will be permanently removed.`, confirmText: 'Delete warning', danger: true }, async () => {
     try { await request(`/warning/${warning.id}`, { method: 'DELETE' }); notify('Warning deleted.'); load.refresh() }
     catch (e) { notify(e.message, true) }
-  }
+  })
   const openWarning = async warning => {
     try { setRecord(await request(`/warning/${warning.id}`)) }
     catch (e) { notify(e.message, true) }
   }
+  const detailLab = record ? record.lab?.name || labs.data?.items?.find(l => l.id === record.labId)?.name || `Lab #${record.labId}` : ''
   return <>
-    <PageTitle eyebrow="MONITORING" title="Warnings" description="Review alerts raised across your labs." action={<button className="button button-primary" onClick={() => setCreate(true)}>＋ Add warning</button>} />
+    <PageTitle eyebrow="MONITORING" title="Warnings" description="Review alerts raised across your labs." />
     <Panel title="Warnings" subtitle={load.data ? `${load.data.totalCount} records` : 'Lab alerts and conditions'} action={<select className="select-control" value={filterType} onChange={e => { setFilterType(e.target.value); setFilterValue(''); setPage(1) }}><option value="all">All warnings</option><option value="alert">Filter by alert</option><option value="lab">Filter by lab</option></select>}>
       {filterType !== 'all' && <div className="warning-filter-value"><label>{filterType === 'alert' ? 'Alert type' : 'Lab'}{filterType === 'alert' ? <select className="select-control" value={filterValue} onChange={e => { setFilterValue(e.target.value); setPage(1) }}><option value="">Choose alert</option><option value="Food_Or_Drink_Detected">Food or drink detected</option><option value="Crowded">Crowded</option></select> : <select className="select-control" value={filterValue} onChange={e => { setFilterValue(e.target.value); setPage(1) }}><option value="">Choose lab</option>{labs.data?.items?.map(l => <option value={l.id} key={l.id}>{l.name}</option>)}</select>}</label></div>}
       {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading warnings…</div> : load.data?.items?.length ? <><Table headers={['Alert', 'Lab', 'Lab ID', 'Actions']}>
         {load.data.items.map(w => <tr key={w.id} className="clickable-row" tabIndex="0" onClick={() => openWarning(w)} onKeyDown={e => e.key === 'Enter' && openWarning(w)}><td><span className="warning-name"><i>!</i>{alertName(w.warning)}</span></td><td>{w.lab?.name || `Lab #${w.labId}`}</td><td className="muted">#{w.labId}</td><td><button className="icon-button danger" title="Delete warning" onClick={e => { e.stopPropagation(); deleteWarning(w) }}>⌫</button></td></tr>)}
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No warnings found.</Empty>}
     </Panel>
-    {create && <WarningModal labs={labs.data?.items || []} request={request} onClose={() => setCreate(false)} onSaved={() => { setCreate(false); notify('Warning created.'); load.refresh() }} onError={e => notify(e.message, true)} />}
-    <RecordDetails title={`Warning #${record?.id ?? ''}`} record={record} onClose={() => setRecord(null)} fields={record ? [['Warning ID', `#${record.id}`], ['Alert', alertName(record.warning)], ['Lab', record.lab?.name || `Lab #${record.labId}`], ['Lab ID', `#${record.labId}`]] : []} />
+    <RecordDetails title={`Warning #${record?.id ?? ''}`} record={record} onClose={() => setRecord(null)} fields={record ? [['Warning ID', `#${record.id}`], ['Alert', alertName(record.warning)], ['Lab', detailLab]] : []} />
   </>
-}
-
-function WarningModal({ labs, request, onClose, onSaved, onError }) {
-  const [busy, setBusy] = useState(false)
-  async function submit(e) {
-    e.preventDefault(); setBusy(true)
-    const data = new FormData(e.currentTarget)
-    const body = { labId: Number(data.get('labId')), warning: Number(data.get('warning')) }
-    try { await request('/warning/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); onSaved() }
-    catch (error) { onError(error) } finally { setBusy(false) }
-  }
-  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><div><span className="eyebrow">LAB ALERT</span><h2>Add a warning</h2></div><button className="icon-button" onClick={onClose}>×</button></div><form onSubmit={submit} className="form-stack"><label>Lab<select name="labId" required defaultValue=""><option value="" disabled>Select a lab</option>{labs.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label><label>Alert type<select name="warning" defaultValue="0"><option value="0">Food or drink detected</option><option value="1">Crowded</option></select></label><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy || labs.length === 0}>{busy ? 'Saving…' : 'Create warning'}</button></div>{labs.length === 0 && <small className="form-note">Create a lab before adding a warning.</small>}</form></section></div>
 }
 
 export default App
