@@ -7,17 +7,19 @@ namespace Application.DTOs.ResponseDtos
 {
     public class MemberResponse
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
-        public string FullName { get; set; }
+        public string? FullName { get; set; }
 
-        public string Email { get; set; }
+        public string ?Email { get; set; }
+
+        public bool ?Active { get; set; }
         
         [Range(1, 4)]
-        public int AcademicYear { get; set; }
+        public int ?AcademicYear { get; set; }
 
-        public byte[] FaceImage { get; set; }
+        public byte[] ?FaceImage { get; set; }
    
-        public byte[] IdImage { get; set; }
+        public byte[] ?IdImage { get; set; }
     }
 }

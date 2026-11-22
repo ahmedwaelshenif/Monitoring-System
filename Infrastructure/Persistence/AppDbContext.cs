@@ -17,7 +17,31 @@ public class AppDbContext : DbContext
 
     }
 
- 
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<EntryLog>()
+            .HasOne(e => e.Member)
+            .WithMany()
+            .HasForeignKey(e => e.MemberId)
+            .OnDelete(DeleteBehavior.SetNull); // <-- SET NULL
 
-  
+
+        modelBuilder.Entity<EntryLog>()
+            .HasOne(e => e.Lab)
+            .WithMany()
+            .HasForeignKey(e => e.LabId)
+            .OnDelete(DeleteBehavior.SetNull); // <-- SET NULL ON LAB DELETE
+
+
+        modelBuilder.Entity<Warning>()
+            .HasOne(w => w.Lab)
+            .WithMany()
+            .HasForeignKey(w => w.LabId)
+            .OnDelete(DeleteBehavior.SetNull); // <
+    }
+
+
+
+
 }

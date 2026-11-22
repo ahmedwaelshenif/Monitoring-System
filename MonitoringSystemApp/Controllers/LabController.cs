@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.RequestDtos;
 using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Services;
+using Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MonitoringSystemApp.Controllers
@@ -15,16 +16,6 @@ namespace MonitoringSystemApp.Controllers
         }
 
 
-        [HttpGet("")]
-        public async Task<ActionResult<PagedResponse<LabResponse>>> GetAllLabs(
-           [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
-        {
-            var result = await _labService.GetAllAsync(pageNumber, pageSize);
-            return Ok(result);
-        }
-
-
-
         [HttpPost("create")]
         public async Task<IActionResult> CreateLab(LabRequest lab)
         {
@@ -32,21 +23,19 @@ namespace MonitoringSystemApp.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteLab(int id)
-        {
-            await _labService.DeleteAsync(id);
-            return NoContent();
-        }
 
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateLab(int id, [FromBody] UpdateLab dto)
         {
-            var result = await _labService.UpdateAsync(id, dto);
 
-            if (!result)
-                return NotFound("Lab not found.");
-
+            try
+            {
+                var result = await _labService.UpdateAsync(id, dto);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
             return NoContent();
         }
 
@@ -55,6 +44,81 @@ namespace MonitoringSystemApp.Controllers
         {
             int cnt = await _labService.CountAsync();
             return Ok(cnt);
+        }
+
+
+        [HttpGet("search")]
+        public async Task<ActionResult<PagedResponse<LabResponse>>> Search([FromQuery] SearchLabRequest request)
+        {
+            var result = await _labService.SearchAsync(request);
+
+            return Ok(result);
+        }
+
+
+
+        [HttpGet("Active")]
+        public async Task<IActionResult> GetAllActive(
+                        [FromQuery] int pageNumber = 1,
+                        [FromQuery] int pageSize = 10)
+        {
+            var result = await _labService.GetAllAsync(
+                               pageNumber, pageSize, true);
+
+            return Ok(result);
+        }
+        [HttpGet("inactive")]
+        public async Task<IActionResult> GetAllInActive(
+                                [FromQuery] int pageNumber = 1,
+                                [FromQuery] int pageSize = 10)
+        {
+            var result = await _labService.GetAllAsync(
+                pageNumber, pageSize, false);
+
+            return Ok(result);
+        }
+
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> SoftDelete(int id)
+        {
+            try
+            {
+                await _labService.SoftDeleteAsync(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            return NoContent();
+        }
+
+        [HttpPut("{id}/restore")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            try
+            {
+                await _labService.RestoreAsync(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            return NoContent();
+        }
+
+        [HttpDelete("{id}/permanent")]
+        public async Task<IActionResult> PermanentDelete(int id)
+        {
+            try
+            {
+                await _labService.PermanentDeleteAsync(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            return NoContent();
         }
     }
 }

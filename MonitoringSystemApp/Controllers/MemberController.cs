@@ -15,17 +15,9 @@ namespace MonitoringSystemApp.Controllers
             _memberService = memberService;        
         }
 
-        [HttpGet("")]
-
-        public async Task<ActionResult<PagedResponse<MemberResponse>>> GetAllMembers(
-           [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
-        {
-            var result = await _memberService.GetAllAsync(pageNumber, pageSize);
-            return Ok(result);
-        }
 
         [HttpGet("search")]
-        public async Task<ActionResult<PagedResponse<DashboardAccountResponse>>> Search([FromQuery] SearchMemberRequest request)
+        public async Task<ActionResult<PagedResponse<MemberResponse>>> Search([FromQuery] SearchMemberRequest request)
         {
             var result = await _memberService.SearchAsync(request);
 
@@ -33,12 +25,73 @@ namespace MonitoringSystemApp.Controllers
         }
 
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMember(int id)
+        [HttpGet("Active")]
+        public async Task<IActionResult> GetAllActive(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
-            await _memberService.DeleteAsync(id);
+            var result = await _memberService.GetAllAsync(
+                pageNumber, pageSize, true);
+
+            return Ok(result);
+        }
+        [HttpGet("inactive")]
+        public async Task<IActionResult> GetAllInActive(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10
+            )
+        {
+            var result = await _memberService.GetAllAsync(
+                pageNumber, pageSize, false);
+
+            return Ok(result);
+        }
+
+        
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> SoftDelete(int id)
+        {
+            try {
+                await _memberService.SoftDeleteAsync(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
             return NoContent();
         }
+
+        [HttpPut("{id}/restore")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            try
+            {
+                await _memberService.RestoreAsync(id);
+            }
+            catch(KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            return NoContent();
+        }
+
+        // Permanent Delete
+        [HttpDelete("{id}/permanent")]
+        public async Task<IActionResult> PermanentDelete(int id)
+        {
+            try
+            {
+                await _memberService.PermanentDeleteAsync(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            return NoContent();
+        }
+
+
+
 
     }
 }

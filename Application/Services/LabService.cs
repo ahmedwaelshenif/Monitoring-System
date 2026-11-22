@@ -2,6 +2,7 @@
 using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Specifications;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -24,9 +25,9 @@ namespace Application.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<PagedResponse<LabResponse>> GetAllAsync(int pageNumber, int pageSize)
+        public async Task<PagedResponse<LabResponse>> GetAllAsync(int pageNumber, int pageSize,bool active)
         {
-            var result = await _unitOfWork.Labs.GetPagedAsync(pageNumber, pageSize);
+            var result = await _unitOfWork.Labs.GetPagedAsync(pageNumber, pageSize, l=>l.Active==active);
 
             return new PagedResponse<LabResponse>
             {
@@ -41,17 +42,36 @@ namespace Application.Services
         {
             Lab? lab = await _unitOfWork.Labs.GetByIdAsync(id);
             if (lab == null)
-                return null;
+                throw new KeyNotFoundException($"Lab with {id} not found");
+
             return ToDto(lab);
         }
 
+        public async Task<PagedResponse<LabResponse>> SearchAsync(SearchLabRequest request)
+        {
+            var specification = new SearchLabSpecification(request);
+
+            var labs = await _unitOfWork.Labs
+                .ListAsync(specification);
+
+            var totalCount = await _unitOfWork.Labs
+                .CountAsync(specification);
+
+            return new PagedResponse<LabResponse>
+            {
+                Items = labs.Select(ToDto).ToList(),
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount
+            };
+        }
 
         public async Task<bool> UpdateAsync(int id, UpdateLab update)
         {
             var lab= await _unitOfWork.Labs.GetByIdAsync(id);
 
             if(lab==null)
-                return false;
+                throw new KeyNotFoundException($"Lab with {id} not found");
 
             if (!string.IsNullOrWhiteSpace(update.Name))
                 lab.Name = update.Name;
@@ -59,18 +79,42 @@ namespace Application.Services
             if (update.Capacity.HasValue)
                 lab.Capacity = update.Capacity.Value;
 
+
             await _unitOfWork.SaveChangesAsync();
 
             return true;
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task SoftDeleteAsync(int id)
         {
             var lab = await _unitOfWork.Labs.GetByIdAsync(id);
-            if (lab == null) return;
+
+            if (lab == null)
+                throw new KeyNotFoundException($"Lab with {id} not found");
+            lab.Active = false;
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async  Task RestoreAsync(int id)
+        {
+            var lab = await _unitOfWork.Labs.GetByIdAsync(id);
+
+            if (lab == null)
+                throw new KeyNotFoundException($"Lab with {id} not found");
+
+            lab.Active = true;
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task PermanentDeleteAsync(int id)
+        {
+            var lab = await _unitOfWork.Labs.GetByIdAsync(id);
+
+            if (lab == null)
+                throw new KeyNotFoundException($"Lab with {id} not found");
+
             _unitOfWork.Labs.Delete(lab);
             await _unitOfWork.SaveChangesAsync();
-
         }
 
         public async Task<int> CountAsync()
@@ -96,9 +140,10 @@ namespace Application.Services
             labResponse.Name = lab.Name;
             labResponse.Capacity = lab.Capacity;
             labResponse.Id = lab.Id;
+            labResponse.active = lab.Active;
             return labResponse;
         }
 
-      
+
     }
 }

@@ -16,10 +16,10 @@ namespace Domain.Entities
         [ForeignKey(nameof(MemberId))]
         public Member? Member { get; set; }
 
-        public int LabId { get; set; }
+        public int ?LabId { get; set; }
 
         [ForeignKey(nameof(LabId))]
-        public Lab Lab { get; set; }
+        public Lab ?Lab { get; set; }
 
         [Required]
         public DateTime EventTime { get; set; }

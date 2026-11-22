@@ -11,11 +11,16 @@ namespace Application.Interfaces.Services
     {
         Task CreateAsync(LabRequest lab);
         Task<LabResponse?> GetByIdAsync(int id);
-        Task<PagedResponse<LabResponse>> GetAllAsync(int pageNumber, int pageSize);
+        Task<PagedResponse<LabResponse>> GetAllAsync(int pageNumber, int pageSize,bool active);
         Task<bool> UpdateAsync(int id, UpdateLab update);
-        Task DeleteAsync(int id);
 
         Task<int> CountAsync();
+
+        Task SoftDeleteAsync(int id);
+        Task RestoreAsync(int id);
+        Task PermanentDeleteAsync(int id);
+
+        Task<PagedResponse<LabResponse>> SearchAsync(SearchLabRequest request);
 
     }
 }

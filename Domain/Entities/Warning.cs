@@ -10,11 +10,9 @@ namespace Domain.Entities
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        public int LabId { get; set; }
+        public int ?LabId { get; set; }
 
-        [Required]
-        public Lab Lab { get; set; }
+        public Lab ?Lab { get; set; }
 
         [Required]
         public Alert warning { get; set; } 

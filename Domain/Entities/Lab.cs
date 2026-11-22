@@ -15,7 +15,7 @@ namespace Domain.Entities
         [Required]
         public int Capacity { get; set; }
 
-
+        public bool Active { get; set; } = true;
         public ICollection<Member> Members { get; set; } = new List<Member>();
         public ICollection<DashboardAccount> AccessAccounts { get; set; } = new List<DashboardAccount>();
 

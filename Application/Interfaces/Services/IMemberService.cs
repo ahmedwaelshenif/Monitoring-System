@@ -11,10 +11,12 @@ namespace Application.Interfaces.Services
     {
         Task CreateAsync(Member member);
         Task<Member?> GetByIdAsync(int id);
-        Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize);
-        Task DeleteAsync(int id);
+        Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize,bool active);
         Task<PagedResponse<MemberResponse>> SearchAsync(SearchMemberRequest request);
 
+        Task SoftDeleteAsync(int id);
+        Task RestoreAsync(int id);
+        Task PermanentDeleteAsync(int id);
 
     }
 }

@@ -31,9 +31,10 @@ namespace Application.Services
             return await _unitOfWork.Members.GetByIdAsync(id);
         }
 
-        public async Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize)
+        public async Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize,bool active)
         {
-            var result = await _unitOfWork.Members.GetPagedAsync(pageNumber, pageSize);
+
+            var result = await _unitOfWork.Members.GetPagedAsync(pageNumber, pageSize,m=>m.Active==active);
 
             return new PagedResponse<MemberResponse>
             {
@@ -45,24 +46,39 @@ namespace Application.Services
         }
 
 
-        public async Task DeleteAsync(int id)
+        public async Task SoftDeleteAsync(int id)
         {
             var member = await _unitOfWork.Members.GetByIdAsync(id);
-            if (member == null) return;
-            _unitOfWork.Members.Delete(member);
+            if (member == null)
+                throw new KeyNotFoundException("Member not found");
+            member.Active = false;
+            _unitOfWork.Members.Update(member);
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task RestoreAsync(int id)
+        {
+            var member = await _unitOfWork.Members.GetByIdAsync(id);
+            if (member == null)
+                throw new KeyNotFoundException("Member not found");
+            member.Active = true;
+            _unitOfWork.Members.Update(member);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task PermanentDeleteAsync(int id)
+        {
+            var member = await _unitOfWork.Members.GetByIdAsync(id);
+            if (member == null)
+                throw new KeyNotFoundException("Member not found");
+            _unitOfWork.Members.Delete(member); 
+            await _unitOfWork.SaveChangesAsync(); 
+
         }
 
         public async Task<PagedResponse<MemberResponse>> SearchAsync(SearchMemberRequest request)
         {
-            var specification = new SearchMemberSpecification(
-                request.Id,
-                request.FullName,
-                request.Email,
-                request.AcademicYear,
-                request.PageNumber,
-                request.PageSize
-            );
+            var specification = new SearchMemberSpecification(request);
 
             var members = await _unitOfWork.Members
                 .ListAsync(specification);
@@ -92,9 +108,10 @@ namespace Application.Services
             ret.IdImage = entity.IdImage;
             ret.Id = entity.Id;
             ret.Email = entity.Email;
+            ret.Active = entity.Active;
             return ret;
         }
 
-     
+
     }
 }

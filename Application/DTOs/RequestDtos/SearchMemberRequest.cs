@@ -16,8 +16,11 @@ namespace Application.DTOs.RequestDtos
         [Range(1, 4)]
         public int? AcademicYear { get; set; }
 
+        public bool? Active { get; set; } = true;
+
         public int PageNumber { get; set; } = 1;
 
         public int PageSize { get; set; } = 10;
+
     }
 }

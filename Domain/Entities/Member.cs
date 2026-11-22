@@ -24,6 +24,8 @@ namespace Domain.Entities
         [Range(1, 4)]
         public int AcademicYear { get; set; }
 
+        public bool Active { get; set; } = true;
+
         [Required]
         public byte[] FaceImage { get; set; }
         [Required]

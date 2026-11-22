@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Infrastructure.Repositories
 {
@@ -27,25 +28,29 @@ namespace Infrastructure.Repositories
             return await _dbSet.FindAsync(id);
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
-        {
-            return await _dbSet.ToListAsync();
-        }
-
-        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate)
-        {
-            return await _dbSet.Where(predicate).ToListAsync();
-        }
 
 
-        public async Task<PagedResult<T>> GetPagedAsync(int pageNumber,int pageSize)
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> ? criteria = null)
         {
             var query = _dbSet.AsNoTracking();
+            if (criteria != null)
+                query = query.Where(criteria);
+            return await query.ToListAsync();
+        }
+
+
+       
+        public async Task<PagedResult<T>> GetPagedAsync(int pageNumber,int pageSize,Expression<Func<T, bool>>? criteria = null)
+        {
+            var query = _dbSet.AsNoTracking();
+
+            // Apply filter if provided
+            if (criteria != null)
+                query = query.Where(criteria);
 
             int totalCount = await query.CountAsync();
 
             var entityType = _context.Model.FindEntityType(typeof(T));
-
             var primaryKey = entityType?.FindPrimaryKey();
 
             if (primaryKey == null || primaryKey.Properties.Count != 1)
@@ -67,6 +72,9 @@ namespace Infrastructure.Repositories
             };
         }
 
+
+
+
         public async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
@@ -87,14 +95,12 @@ namespace Infrastructure.Repositories
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> CountAsync()
+        public async Task<int> CountAsync(Expression<Func<T, bool>>? criteria = null)
         {
-            return await _dbSet.CountAsync();
-        }
-
-        public async Task<int> CountAsync(Expression<Func<T, bool>> predicate)
-        {
-            return await _dbSet.CountAsync(predicate);
+             var query = _dbSet.AsNoTracking();
+            if (criteria != null)
+                query = query.Where(criteria);
+            return await query.CountAsync();
         }
 
         public async Task<List<T>> ListAsync(

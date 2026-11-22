@@ -9,13 +9,11 @@ namespace Application.Interfaces.Repositories
     {
         Task<T?> GetByIdAsync(int id);
 
-        Task<IEnumerable<T>> GetAllAsync();
 
-        Task<IEnumerable<T>> GetAllAsync(
-            Expression<Func<T, bool>> predicate);
 
-        Task<PagedResult<T>> GetPagedAsync(
-            int pageNumber, int pageSize);
+        Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? criteria = null);
+
+        Task<PagedResult<T>> GetPagedAsync(int pageNumber, int pageSize, Expression<Func<T, bool>>? criteria = null);
 
         Task AddAsync(T entity);
 
@@ -25,10 +23,9 @@ namespace Application.Interfaces.Repositories
 
         Task<int> SaveChangesAsync();
 
-        Task<int> CountAsync();
 
         Task<int> CountAsync(
-            Expression<Func<T, bool>> predicate);
+            Expression<Func<T, bool>> ?criteria=null);
 
         Task<List<T>> ListAsync(
             ISpecification<T> specification);

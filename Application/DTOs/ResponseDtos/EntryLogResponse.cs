@@ -16,10 +16,10 @@ namespace Application.DTOs.ResponseDtos
 
         public Member? Member { get; set; }
 
-        public int LabId { get; set; }
+        public int ?LabId { get; set; }
 
         [Required]
-        public Lab Lab { get; set; }
+        public Lab ?Lab { get; set; }
 
         [Required]
         public DateTime EventTime { get; set; }

@@ -3,29 +3,34 @@ using Domain.Specifications;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Application.DTOs.RequestDtos;
 
 namespace Application.Specifications
 {
     public class SearchMemberSpecification:BaseSpecification<Member>
     {
-        public SearchMemberSpecification(int? id,string? fullName,string? email,int? academicYear,int pageNumber,int pageSize)
+        public SearchMemberSpecification(SearchMemberRequest dto)
         {
             AddCriteria(m =>
-                (!id.HasValue || m.Id == id.Value) &&
+                (!dto.Id.HasValue || m.Id == dto.Id.Value) &&
 
-                (string.IsNullOrWhiteSpace(fullName) ||
-                 m.FullName.Contains(fullName)) &&
+                (string.IsNullOrWhiteSpace(dto.FullName) ||
+                 m.FullName.Contains(dto.FullName)) &&
 
-                (string.IsNullOrWhiteSpace(email) ||
-                 m.Email.Contains(email)) &&
+                (string.IsNullOrWhiteSpace(dto.Email) ||
+                 m.Email.Contains(dto.Email)) &&
 
-                (!academicYear.HasValue ||
-                 m.AcademicYear == academicYear.Value)
+                (!dto.AcademicYear.HasValue ||
+                 m.AcademicYear == dto.AcademicYear.Value) &&
+
+
+                (!dto.Active.HasValue ||
+                 m.Active == dto.Active.Value)
             );
 
             AddOrderBy(m => m.Id);
 
-            ApplyPaging(pageNumber, pageSize);
+            ApplyPaging(dto.PageNumber, dto.PageSize);
         }
     }
 }
