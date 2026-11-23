@@ -111,6 +111,39 @@ namespace Application.Services
             };
         }
 
+        public async Task DeleteLogsByDateRange(EntryLogDeleteDto request)
+        {
+            if (!request.StartDate.HasValue || !request.EndDate.HasValue)
+                throw new ArgumentException("Both StartDate and EndDate are required.");
+            if (request.EndDate < request.StartDate)
+                throw new ArgumentException("EndDate cannot be earlier than StartDate.");
+
+            var specification = new DeleteLogsSpecification(request);
+            
+            var logs = await _unitOfWork.Repository<EntryLog>().ListAsync(specification);
+
+            _unitOfWork.Repository<EntryLog>().DeleteRange(logs);
+            await _unitOfWork.SaveChangesAsync();
+        }
+        public async Task DeleteOldestLogs(EntryLogDeleteDto request)
+        {
+            if (!request.Cnt.HasValue)
+                throw new ArgumentException("Number of logs is required");
+
+            if (request.Cnt <= 0)
+                throw new ArgumentException("Number of logs must be greater than zero.");
+
+            if (request.StartDate.HasValue || request.EndDate.HasValue)
+                throw new ArgumentException("Please do not choose start or end date");
+
+            var specification = new DeleteLogsSpecification(request);
+            
+            var logs = await _unitOfWork.Repository<EntryLog>().ListAsync(specification);
+
+            _unitOfWork.Repository<EntryLog>().DeleteRange(logs);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         //Helper Methods
         public EntryLog ToEntity(EntryLogRequestDto req)
         {

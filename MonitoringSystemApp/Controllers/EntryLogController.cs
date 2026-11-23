@@ -82,6 +82,34 @@ namespace MonitoringSystemApp.Controllers
             }
         }
 
+        [HttpDelete("Range")]
+        public async Task<IActionResult> DeleteEntryLogsWithinDateRange([FromQuery] EntryLogDeleteDto dto)
+        {
+            try
+            {
+                await _entryLogService.DeleteLogsByDateRange(dto);
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("Oldest")]
+        public async Task<IActionResult> DeleteOldestEntryLogs([FromQuery] EntryLogDeleteDto dto)
+        {
+            try
+            {
+                await _entryLogService.DeleteOldestLogs(dto);
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("count/accepted")]
         public async Task<IActionResult> GetAcceptedCount(DateOnly date)
         {
