@@ -102,11 +102,12 @@ namespace Application.Services
                 return null;
 
             MemberResponse ret = new();
+            ret.Id = entity.Id;
+            ret.MemberId = entity.MemberId;
             ret.AcademicYear = entity.AcademicYear;
             ret.FullName = entity.FullName;
             ret.FaceImage = entity.FaceImage;
             ret.IdImage = entity.IdImage;
-            ret.Id = entity.Id;
             ret.Email = entity.Email;
             ret.Active = entity.Active;
             return ret;

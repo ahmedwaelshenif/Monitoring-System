@@ -25,9 +25,25 @@ namespace MonitoringSystemApp.Controllers
             var result = await _RegistrationRequestService.GetAllAsync(pageNumber, pageSize);
             return Ok(result);
         }
+        [HttpGet("{Id:int}")]
+
+        public async Task<ActionResult<RegistrationResponseDto>> GetbyId(int id)
+        {
+            
+            try
+            {
+              var result = await _RegistrationRequestService.GetByIdAsync(id);
+              return Ok(result);
+
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
 
         [HttpGet("search")]
-        public async Task<ActionResult<PagedResponse<DashboardAccountResponse>>> Search([FromQuery] SearchRequest request)
+        public async Task<ActionResult<PagedResponse<RegistrationResponseDto>>> Search([FromQuery] SearchRequest request)
         {
             var result = await _RegistrationRequestService.SearchAsync(request);
 
@@ -49,14 +65,36 @@ namespace MonitoringSystemApp.Controllers
         [HttpPatch("reject/{id}")]
         public async Task<IActionResult> RejectRegistrationRequest(int id)
         {
-            await _RegistrationRequestService.MarkStatus(id, false);
+            try
+            {
+                await _RegistrationRequestService.MarkStatus(id, false);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             return NoContent();
         }
 
         [HttpPatch("approve/{id}")]
         public async Task<IActionResult> ApproveRegistrationRequest(int id)
         {
-            await _RegistrationRequestService.MarkStatus(id, true);
+            try
+            {
+                await _RegistrationRequestService.MarkStatus(id, true);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             return NoContent();
         }
 

@@ -29,12 +29,14 @@ namespace Application.Services
         public async Task DeleteAsync(int id)
         {
             Warning? entity = await _unitOfWork.Warnings.GetByIdAsync(id);
-
-            if (entity != null)
+            if(entity == null)
             {
-                 _unitOfWork.Warnings.Delete(entity);
-                await _unitOfWork.SaveChangesAsync();
+                throw new KeyNotFoundException($"warning with {id} id is not found");
             }
+
+            _unitOfWork.Warnings.Delete(entity);
+            await _unitOfWork.SaveChangesAsync();
+            
         }
 
         public async Task<PagedResponse<WarningResponse>> GetAllAsync(int pageNumber, int pageSize)
@@ -90,12 +92,14 @@ namespace Application.Services
         {
             Warning? entity = await _unitOfWork.Warnings.GetByIdAsync(id);
 
-            if (entity != null)
+            if (entity == null)
             {
-
-                return ToDto(entity);
+                throw new KeyNotFoundException($"warning with {id} id is not found");
             }
-            return null;
+
+
+            return ToDto(entity);
+
         }
 
         public WarningResponse ToDto (Warning entity)

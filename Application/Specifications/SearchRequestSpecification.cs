@@ -12,27 +12,30 @@ namespace Application.Specifications
 {
     public class SearchRequestSpecification : BaseSpecification<Registration_Request>
     {
-        public SearchRequestSpecification(int? id, string? fullName, string? email, int? academicYear,RequestStatus? status, int pageNumber, int pageSize)
+        public SearchRequestSpecification(SearchRequest dto)
         {
             AddCriteria(m =>
-                (!id.HasValue || m.Id == id.Value) &&
+                (!dto.Id.HasValue || m.Id == dto.Id.Value) &&
 
-                (string.IsNullOrWhiteSpace(fullName) ||
-                 m.FullName.Contains(fullName)) &&
+                (string.IsNullOrWhiteSpace(dto.FullName) ||
+                 m.FullName.Contains(dto.FullName)) &&
 
-                (string.IsNullOrWhiteSpace(email) ||
-                 m.Email.Contains(email)) &&
+                (string.IsNullOrWhiteSpace(dto.Email) ||
+                 m.Email.Contains(dto.Email)) &&
 
-                (!academicYear.HasValue ||
-                 m.AcademicYear == academicYear.Value) &&
+                (!dto.AcademicYear.HasValue ||
+                 m.AcademicYear == dto.AcademicYear.Value) &&
 
-                 (!status.HasValue ||
-                 m.status==status.Value)
+                 (!dto.Status.HasValue ||
+                 m.status==dto.Status.Value)&&
+
+                 (!dto.MemberId.HasValue ||
+                 m.MemberId == dto.MemberId.Value)
             );
 
             AddOrderBy(m => m.Id);
 
-            ApplyPaging(pageNumber, pageSize);
+            ApplyPaging(dto.PageNumber, dto.PageSize);
         }
     }
 }

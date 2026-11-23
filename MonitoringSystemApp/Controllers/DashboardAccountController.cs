@@ -45,31 +45,59 @@ namespace MonitoringSystemApp.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccount(int id)
         {
-            await _DashboardAccountService.DeleteAsync(id);
+            try
+            {
+                await _DashboardAccountService.DeleteAsync(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
             return NoContent();
         }
 
         [HttpPatch("deactivate/{id}")]
         public async Task<IActionResult> DeactivateAccount(int id)
         {
-            await _DashboardAccountService.Deactivate(id);
+
+            try
+            {
+                await _DashboardAccountService.Deactivate(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
             return NoContent();
         }
 
         [HttpPatch("activate/{id}")]
         public async Task<IActionResult> ActivateAccount(int id)
         {
-            await _DashboardAccountService.Activate(id);
+
+            try
+            {
+                await _DashboardAccountService.Activate(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
             return NoContent();
         }
 
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateAccount(int id, [FromBody] UpdateDashboardAccount dto)
         {
-            var result = await _DashboardAccountService.UpdateAsync(id, dto);
 
-            if (!result)
-                return NotFound("Lab not found.");
+            try
+            {
+                await _DashboardAccountService.UpdateAsync(id, dto);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
 
             return NoContent();
         }

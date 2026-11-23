@@ -37,7 +37,14 @@ namespace MonitoringSystemApp.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteWarning(int id)
         {
-            await _warningService.DeleteAsync(id);
+            try
+            {
+                await _warningService.DeleteAsync(id);
+            }
+            catch(KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
             return NoContent();
         }
 
@@ -46,10 +53,16 @@ namespace MonitoringSystemApp.Controllers
         public async Task<ActionResult<WarningResponse>> GetByID(
                              int id)
         {
-            var result = await _warningService.GetByIdAsync(id);
-            if (result == null)
-                return NotFound();
-            return Ok(result);
+            try
+            {
+                var result = await _warningService.GetByIdAsync(id);
+                return Ok(result);
+
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         [HttpGet("alert/{warning}")]

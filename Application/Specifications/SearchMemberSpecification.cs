@@ -25,7 +25,10 @@ namespace Application.Specifications
 
 
                 (!dto.Active.HasValue ||
-                 m.Active == dto.Active.Value)
+                 m.Active == dto.Active.Value)&&
+
+                (!dto.MemberId.HasValue ||
+                 m.MemberId == dto.MemberId.Value)
             );
 
             AddOrderBy(m => m.Id);

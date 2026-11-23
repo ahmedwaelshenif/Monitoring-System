@@ -30,13 +30,13 @@ namespace Application.Services
         public async Task DeleteAsync(int id)
         {
             EntryLog? entity = await _unitOfWork.EntryLogs.GetByIdAsync(id);
-            if (entity != null)
+            if (entity == null)
             {
-                _unitOfWork.EntryLogs.Delete(entity);
-                await _unitOfWork.SaveChangesAsync();
-                return;
+                throw new KeyNotFoundException($"log with id {id} is not found");
             }
-            throw new KeyNotFoundException($"EntryLog with ID {id} not found.");
+            _unitOfWork.EntryLogs.Delete(entity);
+            await _unitOfWork.SaveChangesAsync();
+
         }
 
         public async Task<PagedResponse<EntryLogResponse>> GetAllAsync(int pageNumber, int pageSize)
@@ -75,7 +75,10 @@ namespace Application.Services
         public async Task<EntryLogResponse?> GetByIdAsync(int id)
         {
             var log= await _unitOfWork.EntryLogs.GetByIdAsync(id);
-            if (log == null) return null;
+            if (log == null)
+            {
+                throw new KeyNotFoundException($"log with id {id} is not found");
+            }
             return ToDto(log);
         }
 

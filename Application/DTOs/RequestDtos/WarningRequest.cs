@@ -14,7 +14,7 @@ namespace Application.DTOs.RequestDtos
         [Required]
         public int LabId { get; set; }
 
-        public Lab Lab { get; set; }
+        public Lab? Lab { get; set; }
 
         [Required]
         public Alert warning { get; set; }

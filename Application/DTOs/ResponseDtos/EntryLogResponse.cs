@@ -18,8 +18,7 @@ namespace Application.DTOs.ResponseDtos
 
         public int ?LabId { get; set; }
 
-        [Required]
-        public Lab ?Lab { get; set; }
+        public Lab? Lab { get; set; }
 
         [Required]
         public DateTime EventTime { get; set; }

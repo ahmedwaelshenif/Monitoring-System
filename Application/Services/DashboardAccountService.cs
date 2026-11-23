@@ -39,6 +39,10 @@ namespace Application.Services
         public async Task<DashboardAccountResponse?> GetByIdAsync(int id)
         {
             DashboardAccount? entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+            if (entity == null)
+            {
+                throw new KeyNotFoundException($"Account with id {id} is not found");
+            }
             DashboardAccountResponse ret = ToDto(entity);
             return ret;
         }
@@ -60,10 +64,11 @@ namespace Application.Services
 
         public async Task Deactivate(int id)
         {
-            DashboardAccount entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
-
+            DashboardAccount? entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
             if (entity == null)
-                return;
+            {
+                throw new KeyNotFoundException($"Account with id {id} is not found");
+            }
 
             entity.IsActive = false;
             await _unitOfWork.SaveChangesAsync();
@@ -71,24 +76,24 @@ namespace Application.Services
 
         public async Task Activate(int id)
         {
-            DashboardAccount entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
-
+            DashboardAccount? entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
             if (entity == null)
-                return;
+            {
+                throw new KeyNotFoundException($"Account with id {id} is not found");
+            }
+
 
             entity.IsActive = true;
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<bool> UpdateAsync(int id,UpdateDashboardAccount update)
+        public async Task UpdateAsync(int id,UpdateDashboardAccount update)
         {
             var acc = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
-
-            if(acc == null)
+            if (acc == null)
             {
-                return false;
+                throw new KeyNotFoundException($"Account with id {id} is not found");
             }
-
             if(update.FullName!=null) 
                 acc.FullName = update.FullName;
 
@@ -100,19 +105,19 @@ namespace Application.Services
                 acc.PasswordHash =
                     _passwordHasher.HashPassword(acc, update.Password);
             }
-
             if (update.Role.HasValue)
                 acc.Role = update.Role.Value;
-            
             await _unitOfWork.SaveChangesAsync();
-            return true;
            
         }
 
         public async Task DeleteAsync(int id)
         {
             var acc=await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
-            if (acc == null) return;
+            if (acc == null)
+            {
+                throw new KeyNotFoundException($"Account with id {id} is not found");
+            }
             _unitOfWork.DashboardAccounts.Delete(acc);
             await _unitOfWork.SaveChangesAsync();
 
@@ -120,14 +125,8 @@ namespace Application.Services
 
         public async Task<PagedResponse<DashboardAccountResponse>> SearchAsync(SearchAccount request)
         {
-            var specification = new SearchAccountSpecification(
-               request.Email,
-               request.Name,
-               request.role,
-               request.IsActive,
-               request.PageNumber,
-               request.PageSize
-           );
+            var specification = new SearchAccountSpecification(request);
+
 
             var accounts = await _unitOfWork.DashboardAccounts
                 .ListAsync(specification);
