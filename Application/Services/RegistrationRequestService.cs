@@ -32,16 +32,16 @@ namespace Application.Services
         public async Task<bool> CreateAsync(RegistrationRequestDto request)
         {
             // check member entity
-            int cnt = await _unitOfWork.Members.CountAsync(m => m.MemberId == request.MemberId);
+            int cnt = await _unitOfWork.Repository<Member>().CountAsync(m => m.MemberId == request.MemberId);
             if (cnt > 0)
                 return false;
-            var requests = await _unitOfWork.RegistrationRequests.GetAllAsync(r => r.MemberId == request.MemberId && r.status== RequestStatus.Pending);
+            var requests = await _unitOfWork.Repository<Registration_Request>().GetAllAsync(r => r.MemberId == request.MemberId && r.status== RequestStatus.Pending);
             foreach(var item in requests){
-                _unitOfWork.RegistrationRequests.Delete(item);
+                _unitOfWork.Repository<Registration_Request>().Delete(item);
             }
 
             Registration_Request req = await ToEnity(request);
-            await _unitOfWork.RegistrationRequests.AddAsync(req);
+            await _unitOfWork.Repository<Registration_Request>().AddAsync(req);
             await _unitOfWork.SaveChangesAsync();
             return true;
         }
@@ -49,7 +49,7 @@ namespace Application.Services
         public async Task MarkStatus(int id, bool status)
         {
             Registration_Request? entity =
-                await _unitOfWork.RegistrationRequests.GetByIdAsync(id);
+                await _unitOfWork.Repository<Registration_Request>().GetByIdAsync(id);
 
             if (entity == null)
                 throw new KeyNotFoundException($"Registration request with id {id} is not found.");
@@ -61,32 +61,32 @@ namespace Application.Services
             if (status)
             {
 
-                var exists = await _unitOfWork.Members.CountAsync(m => m.MemberId == entity.MemberId);
+                var exists = await _unitOfWork.Repository<Member>().CountAsync(m => m.MemberId == entity.MemberId);
                 if (exists > 0)
                     throw new InvalidOperationException($"A member with MemberId {entity.MemberId} already exists.");
 
                 Member member = await RequestToMember(entity);
-                await _unitOfWork.Members.AddAsync(member);
+                await _unitOfWork.Repository<Member>().AddAsync(member);
             }
             entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
-            _unitOfWork.RegistrationRequests.Update(entity);
+            _unitOfWork.Repository<Registration_Request>().Update(entity);
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            Registration_Request? entity = await _unitOfWork.RegistrationRequests.GetByIdAsync(id);
+            Registration_Request? entity = await _unitOfWork.Repository<Registration_Request>().GetByIdAsync(id);
             if (entity == null)
             {
                 throw new KeyNotFoundException($"Registration request with id {id} is not found.");
             }
-            _unitOfWork.RegistrationRequests.Delete(entity);
+            _unitOfWork.Repository<Registration_Request>().Delete(entity);
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<PagedResponseDto<RegistrationResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
-            var result = await _unitOfWork.RegistrationRequests.GetPagedAsync(
+            var result = await _unitOfWork.Repository<Registration_Request>().GetPagedAsync(
                 pageNumber,
                 pageSize);
 
@@ -101,7 +101,7 @@ namespace Application.Services
 
         public async Task<RegistrationResponseDto?> GetByIdAsync(int id)
         {
-            Registration_Request? entity = await _unitOfWork.RegistrationRequests.GetByIdAsync(id);
+            Registration_Request? entity = await _unitOfWork.Repository<Registration_Request>().GetByIdAsync(id);
             if (entity == null)
             {
                 throw new KeyNotFoundException($"Registration request with id {id} is not found.");
@@ -115,10 +115,10 @@ namespace Application.Services
             var specification = new SearchRequestSpecification(request);
 
 
-            var requests = await _unitOfWork.RegistrationRequests
+            var requests = await _unitOfWork.Repository<Registration_Request>()
                 .ListAsync(specification);
 
-            var totalCount = await _unitOfWork.RegistrationRequests
+            var totalCount = await _unitOfWork.Repository<Registration_Request>()
                 .CountAsync(specification);
 
             return new PagedResponseDto<RegistrationResponseDto>

@@ -2,6 +2,7 @@
 using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Specifications;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -22,86 +23,82 @@ namespace Application.Services
         }
         public async Task CreateAsync(WarningRequestDto request)
         {
-            await _unitOfWork.Warnings.AddAsync(ToEntity(request));
+            await _unitOfWork.Repository<Warning>().AddAsync(ToEntity(request));
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            Warning? entity = await _unitOfWork.Warnings.GetByIdAsync(id);
+            Warning? entity = await _unitOfWork.Repository<Warning>().GetByIdAsync(id);
             if(entity == null)
             {
                 throw new KeyNotFoundException($"warning with {id} id is not found");
             }
 
-            _unitOfWork.Warnings.Delete(entity);
+            _unitOfWork.Repository<Warning>().Delete(entity);
             await _unitOfWork.SaveChangesAsync();
             
         }
 
         public async Task<PagedResponseDto<WarningResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
-          var result =await _unitOfWork.Warnings.GetAllWithDetailsAsync(pageNumber,pageSize);
-
-            return new PagedResponseDto<WarningResponseDto>
+          
+            return await SearchAsync(new WarningFilterDto
             {
-                Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = result.TotalCount
-            };
+                PageSize = pageSize
+            });
 
         }
 
         public async Task<PagedResponseDto<WarningResponseDto>> GetWarningsByAlertAsync(Alert warning,int pageNumber, int pageSize)
         {
-            var result = await _unitOfWork.Warnings.GetWarningsByAlertAsync(
-                    warning,
-                    pageNumber,
-                    pageSize);
+            return await SearchAsync(new WarningFilterDto
+            {
+                Warning = warning,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            });
+        }
 
+        public async Task<PagedResponseDto<WarningResponseDto>> GetWarningsByLabIdAsync(int LabID,int pageNumber, int pageSize)
+        {
 
+            return await SearchAsync(new WarningFilterDto
+            {
+                LabId = LabID,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            });
+        }
+
+        public async Task<PagedResponseDto<WarningResponseDto>> GetWarningsByLabNameAsync(string labName, int pageNumber, int pageSize)
+        {
+            return await SearchAsync(new WarningFilterDto
+            {
+                LabName = labName,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            });
+        }
+
+        public async Task<PagedResponseDto<WarningResponseDto>> SearchAsync(WarningFilterDto filter)
+        {
+            var specifications = new WarningSpecification(filter);
+            var warnings = await _unitOfWork.Repository<Warning>().ListAsync(specifications);
+            int totalCount = await _unitOfWork.Repository<Warning>().CountAsync(specifications);
 
             return new PagedResponseDto<WarningResponseDto>
             {
-                Items = result.Items.Select(ToDto),
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = result.TotalCount
+                Items = warnings.Select(ToDto).ToList(),
+                TotalCount = totalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize
             };
-        }
-
-        public async Task<PagedResponseDto<WarningResponseDto>> GetWarningsByLabAsync(int LabID,int pageNumber, int pageSize)
-        {
-
-            var result = await _unitOfWork.Warnings.GetWarningsByLabAsync(
-                        LabID,
-                        pageNumber,
-                        pageSize);
-
-            return new PagedResponseDto<WarningResponseDto>
-            {
-                Items = result.Items.Select(ToDto),
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = result.TotalCount
-            };
-        }
-
-        public async Task<WarningResponseDto?> GetByIdAsync(int id)
-        {
-            Warning? entity = await _unitOfWork.Warnings.GetByIdAsync(id);
-
-            if (entity == null)
-            {
-                throw new KeyNotFoundException($"warning with {id} id is not found");
-            }
-
-
-            return ToDto(entity);
 
         }
 
+        //Helper Methods
         public WarningResponseDto ToDto (Warning entity)
         {
             WarningResponseDto res = new();
@@ -119,5 +116,7 @@ namespace Application.Services
             res.warning = request.warning;
             return res;
         }
+
+       
     }
 }

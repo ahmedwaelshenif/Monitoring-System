@@ -1,6 +1,8 @@
+
 using Application.Interfaces.Repositories;
-using Domain.Entities;
 using Infrastructure.Persistence;
+using Infrastructure.Repositories;
+using System.Collections.Generic;
 
 namespace Infrastructure.Repositories
 {
@@ -8,31 +10,21 @@ namespace Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
 
-        public IRegistrationRequestRepository RegistrationRequests { get; }
-        public IMemberRepository Members { get; }
-        public IDashboardAccountRepository DashboardAccounts { get; }
-        public IEntryLogRepository EntryLogs { get; }
-        public ILabRepository Labs { get; }
+        private readonly Dictionary<Type, object> _repositories = new();
 
-        public IWarningRepository Warnings { get; }
-
-        public UnitOfWork(
-            AppDbContext context,
-            IRegistrationRequestRepository registrationRequests,
-            IMemberRepository members,
-            IDashboardAccountRepository dashboardAccounts,
-            IEntryLogRepository entryLogs,
-            ILabRepository labs,
-            IWarningRepository warnings
-            )
+        public UnitOfWork(AppDbContext context)
         {
             _context = context;
-            RegistrationRequests = registrationRequests;
-            Members = members;
-            DashboardAccounts = dashboardAccounts;
-            EntryLogs = entryLogs;
-            Labs = labs;
-            Warnings = warnings;
+        }
+
+        public IGenericRepository<T> Repository<T>() where T : class
+        {
+            if (!_repositories.ContainsKey(typeof(T)))
+            {
+                _repositories[typeof(T)] = new GenericRepository<T>(_context);
+            }
+
+            return (IGenericRepository<T>)_repositories[typeof(T)];
         }
 
         public async Task<int> SaveChangesAsync()

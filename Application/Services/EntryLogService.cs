@@ -2,11 +2,13 @@ using Application.DTOs.RequestDtos;
 using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Specifications;
 using Domain.Entities;
 using Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,37 +23,29 @@ namespace Application.Services
             _unitOfWork = unitOfWork;
         }
 
+
         public async Task CreateAsync(EntryLogRequestDto request)
         {
-            await _unitOfWork.EntryLogs.AddAsync(ToEntity(request));
+            await _unitOfWork.Repository<EntryLog>().AddAsync(ToEntity(request));
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            EntryLog? entity = await _unitOfWork.EntryLogs.GetByIdAsync(id);
+            EntryLog? entity = await _unitOfWork.Repository<EntryLog>().GetByIdAsync(id);
             if (entity == null)
             {
                 throw new KeyNotFoundException($"log with id {id} is not found");
             }
-            _unitOfWork.EntryLogs.Delete(entity);
+            _unitOfWork.Repository<EntryLog>().Delete(entity);
             await _unitOfWork.SaveChangesAsync();
 
         }
 
         public async Task<PagedResponseDto<EntryLogResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
-            var result = await _unitOfWork.EntryLogs.GetPagedWithDetailsAsync(
-                pageNumber,
-                pageSize);
-            
-            return new PagedResponseDto<EntryLogResponseDto>
-            {
-                Items = result.Items.Select(ToDto),
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = result.TotalCount
-            };
+           return await SearchAsync(new EntryLogFilterDto { PageNumber = pageNumber, PageSize = pageSize});
+        
         }
 
         public async Task<int> CountStatus(bool status, DateOnly date)
@@ -63,7 +57,7 @@ namespace Application.Services
                 ? EntryStatus.Accepted
                 : EntryStatus.Rejected;
 
-            return await _unitOfWork.EntryLogs.CountAsync(
+            return await _unitOfWork.Repository<EntryLog>().CountAsync(
                 e => e.status == targetStatus &&
                      e.EventTime >= startOfDay &&
                      e.EventTime < endOfDay
@@ -74,7 +68,7 @@ namespace Application.Services
 
         public async Task<EntryLogResponseDto?> GetByIdAsync(int id)
         {
-            var log= await _unitOfWork.EntryLogs.GetByIdAsync(id);
+            var log= await _unitOfWork.Repository<EntryLog>().GetByIdAsync(id);
             if (log == null)
             {
                 throw new KeyNotFoundException($"log with id {id} is not found");
@@ -85,59 +79,48 @@ namespace Application.Services
 
         public async Task<PagedResponseDto<EntryLogResponseDto>> GetByLabAsync(int LabId,int pageNumber,int pageSize)
         {
-            var result = await _unitOfWork.EntryLogs.GetPagedLogsByLabAsync(
-                LabId,
-                pageNumber,
-                pageSize);
-
-            return new PagedResponseDto<EntryLogResponseDto>
-            {
-                Items = result.Items.Select(ToDto),
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = result.TotalCount
-            };
+            return await SearchAsync(new EntryLogFilterDto { PageNumber = pageNumber, PageSize = pageSize, LabId=LabId});
+        
         }
-        public async Task<PagedResponseDto<EntryLogResponseDto>> GetAcceptedTodayAsync(int pageNumber,int pageSize)
-        {
-            var result = await _unitOfWork.EntryLogs.GetPagedAcceptedTodayAsync(
-                pageNumber,
-                pageSize);
+     
 
-            return new PagedResponseDto<EntryLogResponseDto>
-            {
-                Items = result.Items.Select(ToDto),
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = result.TotalCount
-            };
+        public async Task<PagedResponseDto<EntryLogResponseDto>> GetByDateRangeAsync(DateTime fromDate, DateTime toDate, int pageNumber, int pageSize,EntryStatus? status= null)
+        {
+            if (toDate < fromDate)
+                throw new ArgumentException("End date cannot be earlier than start date.");
+
+            return await SearchAsync(new EntryLogFilterDto {
+                            StartDate = fromDate,
+                            EndDate = toDate ,
+                            PageNumber = pageNumber,
+                            PageSize = pageSize, Status = status 
+                        });
         }
-        public async Task<PagedResponseDto<EntryLogResponseDto>> GetRejectedTodayAsync(int pageNumber,int pageSize)
-        {
-            var result = await _unitOfWork.EntryLogs.GetPagedRejectedTodayAsync(
-                pageNumber,
-                pageSize);
 
+        public async Task<PagedResponseDto<EntryLogResponseDto>> SearchAsync(EntryLogFilterDto request)
+        {
+            var specification = new EntryLogSpecification(request);
+            var logs=await _unitOfWork.Repository<EntryLog>().ListAsync(specification);
+            int totalCount=await _unitOfWork.Repository<EntryLog>().CountAsync(specification);
             return new PagedResponseDto<EntryLogResponseDto>
             {
-                Items = result.Items.Select(ToDto),
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = result.TotalCount
+                Items = logs.Select(ToDto).ToList(),
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
             };
         }
 
         //Helper Methods
         public EntryLog ToEntity(EntryLogRequestDto req)
         {
-            EntryLog res = new();
-            res.EventTime = req.EventTime;
-            res.LabId = req.LabId;
-            if (req.Lab != null) res.Lab = req.Lab;
-            res.MemberId = req.MemberId;
-            res.Member = req.Member;
-            res.status = req.status;
-            return res;
+            return new EntryLog
+            {
+                EventTime = req.EventTime,
+                LabId = req.LabId,
+                MemberId = req.MemberId,
+                status = req.status
+            };
         }
 
         public EntryLogResponseDto ToDto(EntryLog entity)
@@ -152,8 +135,6 @@ namespace Application.Services
             res.status = entity.status;
             res.FaceImage = entity.Member?.FaceImage;
             return res;
-        }
-
-      
+        }    
     }
 }

@@ -9,13 +9,11 @@ namespace Application.DTOs.RequestDtos
 {
     public class EntryLogRequestDto
     {
+     
         public int? MemberId { get; set; }
 
-        public Member? Member { get; set; }
-
+        [Required]
         public int LabId { get; set; }
-
-        public Lab? Lab { get; set; }
 
         [Required]
         public DateTime EventTime { get; set; }

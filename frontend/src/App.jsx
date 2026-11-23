@@ -143,7 +143,7 @@ function Overview({ request, refresh, setPage, setLogsPreset, setSelectedLab }) 
     Promise.all(dateRange.map(async date => {
       const day = localDateKey(date)
       const [accepted, rejected] = await Promise.all([
-        request(`/entryLog/count/accepted/today?date=${day}`), request(`/entryLog/count/rejected/today?date=${day}`),
+        request(`/entryLog/count/accepted?date=${day}`), request(`/entryLog/count/rejected?date=${day}`),
       ])
       return { day, accepted: Number(accepted), rejected: Number(rejected) }
     })).then(data => active && setDaily({ data, loading: false, error: '' })).catch(e => active && setDaily({ data: null, loading: false, error: e.message }))
@@ -184,7 +184,7 @@ function WeekChart({ data, loading }) {
 
 function Labs({ request, refresh, notify, askConfirm, setSelectedLab, goToPage, openModal }) {
   const [page, setPage] = useState(1)
-  const load = useLoad(() => request(`/lab?pageNumber=${page}&pageSize=10`), [request, refresh, page])
+  const load = useLoad(() => request(`/lab/Active?pageNumber=${page}&pageSize=10`), [request, refresh, page])
   const remove = lab => askConfirm({ title: 'Delete this lab?', message: `${lab.name} will be deleted. This may also affect records linked to the lab.`, confirmText: 'Delete lab', danger: true }, async () => { try { await request(`/lab/${lab.id}`, { method: 'DELETE' }); notify('Lab deleted.'); load.refresh() } catch (e) { notify(e.message, true) } })
   return <>
     <PageTitle eyebrow="FACILITIES" title="Labs" description="Create and manage labs, then inspect the entry activity for each one." action={<button className="button button-primary" onClick={() => openModal('new')}>＋ Add lab</button>} />
@@ -213,11 +213,17 @@ function LabModal({ item, onClose, request, onSaved, onError }) {
 function Logs({ request, refresh, selectedLab, setSelectedLab, preset, setPreset }) {
   const [page, setPage] = useState(1)
   const [record, setRecord] = useState(null)
-  const labs = useLoad(() => request('/lab?pageNumber=1&pageSize=1000'), [request, refresh])
+  const labs = useLoad(() => request('/lab/Active?pageNumber=1&pageSize=1000'), [request, refresh])
   const load = useLoad(() => {
-    if (preset === 'accepted') return request(`/entryLog/AcceptedToday?PageNumber=${page}&PageSize=10`)
-    if (preset === 'rejected') return request(`/entryLog/RejectedToday?PageNumber=${page}&PageSize=10`)
     if (selectedLab) return request(`/entryLog/ByLab?LabId=${selectedLab}&PageNumber=${page}&PageSize=10`)
+    if (preset === 'accepted' || preset === 'rejected') {
+      const now = new Date()
+      const from = `${localDateKey(now)}T00:00:00`
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+      const to = `${localDateKey(tomorrow)}T00:00:00`
+      const status = preset === 'accepted' ? 1 : 0
+      return request(`/entryLog/date-range?fromDate=${encodeURIComponent(from)}&toDate=${encodeURIComponent(to)}&status=${status}&pageNumber=${page}&pageSize=10`)
+    }
     return request(`/entryLog?pageNumber=${page}&pageSize=10`)
   }, [request, refresh, selectedLab, preset, page])
   const filterLabel = preset === 'accepted' ? 'Accepted today' : preset === 'rejected' ? 'Rejected today' : selectedLab ? `Lab ${selectedLab}` : 'All labs'
@@ -233,19 +239,20 @@ function Logs({ request, refresh, selectedLab, setSelectedLab, preset, setPreset
 
 function Members({ request, refresh, notify, askConfirm }) {
   const [page, setPage] = useState(1)
-  const [draft, setDraft] = useState({ Id: '', FullName: '', Email: '', AcademicYear: '' })
+  const [draft, setDraft] = useState({ Id: '', FullName: '', Email: '', AcademicYear: '', Active: 'true' })
   const [filters, setFilters] = useState({})
   const [record, setRecord] = useState(null)
   const params = new URLSearchParams({ PageNumber: String(page), PageSize: '10' })
   Object.entries(filters).forEach(([key, value]) => { if (value !== '') params.set(key, value) })
   const query = params.toString()
   const load = useLoad(() => request(`/member/search?${query}`), [request, refresh, query])
-  const remove = member => askConfirm({ title: 'Delete this member?', message: `The member record for ${member.fullName} will be permanently removed.`, confirmText: 'Delete member', danger: true }, async () => { try { await request(`/member/${member.id}`, { method: 'DELETE' }); notify('Member deleted.'); load.refresh() } catch (e) { notify(e.message, true) } })
+  const remove = member => askConfirm({ title: 'Deactivate this member?', message: `${member.fullName}'s record will be archived and can be restored later.`, confirmText: 'Deactivate member', danger: true }, async () => { try { await request(`/member/${member.id}`, { method: 'DELETE' }); notify('Member deactivated.'); load.refresh() } catch (e) { notify(e.message, true) } })
+  const restore = async member => { try { await request(`/member/${member.id}/restore`, { method: 'PUT' }); notify('Member restored.'); load.refresh() } catch (e) { notify(e.message, true) } }
   return <><PageTitle eyebrow="DIRECTORY" title="Members" description="Browse registered members and review their profile details." />
     <Panel title="All members" subtitle={load.data ? `${load.data.totalCount} matching members` : 'Member records'}>
-      <FilterBar fields={[{ name: 'Id', label: 'Member ID', type: 'number', min: 1 }, { name: 'FullName', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'AcademicYear', label: 'Academic year', options: [['1', 'Year 1'], ['2', 'Year 2'], ['3', 'Year 3'], ['4', 'Year 4']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft }) }} onClear={() => { setDraft({ Id: '', FullName: '', Email: '', AcademicYear: '' }); setFilters({}); setPage(1) }} />
+      <FilterBar fields={[{ name: 'Id', label: 'Member ID', type: 'number', min: 1 }, { name: 'FullName', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'AcademicYear', label: 'Academic year', options: [['1', 'Year 1'], ['2', 'Year 2'], ['3', 'Year 3'], ['4', 'Year 4']] }, { name: 'Active', label: 'Status', options: [['true', 'Active'], ['false', 'Inactive']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft }) }} onClear={() => { const cleared = { Id: '', FullName: '', Email: '', AcademicYear: '', Active: 'true' }; setDraft(cleared); setFilters(cleared); setPage(1) }} />
       {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading members…</div> : load.data?.items?.length ? <><Table headers={['Member', 'Email', 'Academic year', 'ID', 'Actions']}>
-        {load.data.items.map(m => <tr key={m.id} className="clickable-row" tabIndex="0" onClick={() => setRecord(m)} onKeyDown={e => e.key === 'Enter' && setRecord(m)}><td><div className="person-cell">{avatar(m.faceImage, m.fullName)}<strong>{m.fullName}</strong></div></td><td>{m.email}</td><td>Year {m.academicYear}</td><td className="muted">#{m.id}</td><td><button className="icon-button danger" title="Delete member" onClick={e => { e.stopPropagation(); remove(m) }}>⌫</button></td></tr>)}
+        {load.data.items.map(m => <tr key={m.id} className="clickable-row" tabIndex="0" onClick={() => setRecord(m)} onKeyDown={e => e.key === 'Enter' && setRecord(m)}><td><div className="person-cell">{avatar(m.faceImage, m.fullName)}<strong>{m.fullName}</strong></div></td><td>{m.email}</td><td>Year {m.academicYear}</td><td className="muted">#{m.id}</td><td>{m.active ? <button className="icon-button danger" title="Deactivate member" onClick={e => { e.stopPropagation(); remove(m) }}>⌫</button> : <button className="button button-light" onClick={e => { e.stopPropagation(); restore(m) }}>Restore</button>}</td></tr>)}
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No members found.</Empty>}
     </Panel>
     <RecordDetails title={record?.fullName || 'Member'} record={record} onClose={() => setRecord(null)} fields={record ? [['Member ID', `#${record.id}`], ['Full name', record.fullName], ['Email', record.email], ['Academic year', `Year ${record.academicYear}`]] : []} images={record ? [['Face image', record.faceImage], ['ID image', record.idImage]] : []} />
@@ -326,7 +333,7 @@ function Warnings({ request, refresh, notify, askConfirm }) {
   const [filterType, setFilterType] = useState('all')
   const [filterValue, setFilterValue] = useState('')
   const [record, setRecord] = useState(null)
-  const labs = useLoad(() => request('/lab?pageNumber=1&pageSize=1000'), [request, refresh])
+  const labs = useLoad(() => request('/lab/Active?pageNumber=1&pageSize=1000'), [request, refresh])
   const load = useLoad(() => {
     if (filterType === 'alert' && filterValue !== '') return request(`/warning/alert/${filterValue}?pageNumber=${page}&pageSize=10`)
     if (filterType === 'lab' && filterValue !== '') return request(`/warning/lab/${filterValue}?pageNumber=${page}&pageSize=10`)
@@ -338,8 +345,7 @@ function Warnings({ request, refresh, notify, askConfirm }) {
     catch (e) { notify(e.message, true) }
   })
   const openWarning = async warning => {
-    try { setRecord(await request(`/warning/${warning.id}`)) }
-    catch (e) { notify(e.message, true) }
+    setRecord(warning)
   }
   const detailLab = record ? record.lab?.name || labs.data?.items?.find(l => l.id === record.labId)?.name || `Lab #${record.labId}` : ''
   return <>

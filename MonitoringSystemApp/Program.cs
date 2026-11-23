@@ -28,31 +28,6 @@ builder.Services.AddScoped(
     typeof(GenericRepository<>));
 
 builder.Services.AddScoped<
-    IRegistrationRequestRepository,
-    RegistrationRequestRepository>();
-
-builder.Services.AddScoped<
-    IMemberRepository,
-    MemberRepository>();
-
-builder.Services.AddScoped<
-    IDashboardAccountRepository,
-    DashboardAccountRepository>();
-
-builder.Services.AddScoped<
-    IEntryLogRepository,
-    EntryLogRepository>();
-
-builder.Services.AddScoped<
-    ILabRepository,
-    LabRepository>();
-
-
-builder.Services.AddScoped<
-    IWarningRepository,
-    WarningRepository>();
-
-builder.Services.AddScoped<
     IUnitOfWork,
     UnitOfWork>();
 

@@ -79,7 +79,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("EventTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("LabId")
+                    b.Property<int?>("LabId")
                         .HasColumnType("int");
 
                     b.Property<int?>("MemberId")
@@ -105,6 +105,9 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
                     b.Property<int>("Capacity")
                         .HasColumnType("int");
 
@@ -127,6 +130,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<int>("AcademicYear")
                         .HasColumnType("int");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -205,7 +211,7 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("LabId")
+                    b.Property<int?>("LabId")
                         .HasColumnType("int");
 
                     b.Property<int>("warning")
@@ -253,12 +259,12 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.Lab", "Lab")
                         .WithMany()
                         .HasForeignKey("LabId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Domain.Entities.Member", "Member")
                         .WithMany()
-                        .HasForeignKey("MemberId");
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Lab");
 
@@ -270,8 +276,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.Lab", "Lab")
                         .WithMany()
                         .HasForeignKey("LabId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Lab");
                 });

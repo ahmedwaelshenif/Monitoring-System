@@ -32,13 +32,13 @@ namespace Application.Services
         public async Task CreateAsync(DashboardAccountRequestDto account)
         {
             DashboardAccount entity = ToEntity(account);
-            await _unitOfWork.DashboardAccounts.AddAsync(entity);
+            await _unitOfWork.Repository<DashboardAccount>().AddAsync(entity);
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<DashboardAccountResponseDto?> GetByIdAsync(int id)
         {
-            DashboardAccount? entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+            DashboardAccount? entity = await _unitOfWork.Repository<DashboardAccount>().GetByIdAsync(id);
             if (entity == null)
             {
                 throw new KeyNotFoundException($"Account with id {id} is not found");
@@ -49,7 +49,7 @@ namespace Application.Services
 
         public async Task<PagedResponseDto<DashboardAccountResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
-            var result = await _unitOfWork.DashboardAccounts.GetPagedAsync(
+            var result = await _unitOfWork.Repository<DashboardAccount>().GetPagedAsync(
                 pageNumber,
                 pageSize);
 
@@ -64,7 +64,7 @@ namespace Application.Services
 
         public async Task Deactivate(int id)
         {
-            DashboardAccount? entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+            DashboardAccount? entity = await _unitOfWork.Repository<DashboardAccount>().GetByIdAsync(id);
             if (entity == null)
             {
                 throw new KeyNotFoundException($"Account with id {id} is not found");
@@ -76,7 +76,7 @@ namespace Application.Services
 
         public async Task Activate(int id)
         {
-            DashboardAccount? entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+            DashboardAccount? entity = await _unitOfWork.Repository<DashboardAccount>().GetByIdAsync(id);
             if (entity == null)
             {
                 throw new KeyNotFoundException($"Account with id {id} is not found");
@@ -89,7 +89,7 @@ namespace Application.Services
 
         public async Task UpdateAsync(int id,UpdateDashboardAccountDto update)
         {
-            var acc = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+            var acc = await _unitOfWork.Repository<DashboardAccount>().GetByIdAsync(id);
             if (acc == null)
             {
                 throw new KeyNotFoundException($"Account with id {id} is not found");
@@ -113,12 +113,12 @@ namespace Application.Services
 
         public async Task DeleteAsync(int id)
         {
-            var acc=await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
+            var acc=await _unitOfWork.Repository<DashboardAccount>().GetByIdAsync(id);
             if (acc == null)
             {
                 throw new KeyNotFoundException($"Account with id {id} is not found");
             }
-            _unitOfWork.DashboardAccounts.Delete(acc);
+            _unitOfWork.Repository<DashboardAccount>().Delete(acc);
             await _unitOfWork.SaveChangesAsync();
 
         }
@@ -128,10 +128,10 @@ namespace Application.Services
             var specification = new SearchAccountSpecification(request);
 
 
-            var accounts = await _unitOfWork.DashboardAccounts
+            var accounts = await _unitOfWork.Repository<DashboardAccount>()
                 .ListAsync(specification);
 
-            var totalCount = await _unitOfWork.DashboardAccounts
+            var totalCount = await _unitOfWork.Repository<DashboardAccount>()
                 .CountAsync(specification);
 
             return new PagedResponseDto<DashboardAccountResponseDto>

@@ -22,19 +22,19 @@ namespace Application.Services
 
         public async Task CreateAsync(Member member)
         {
-            await _unitOfWork.Members.AddAsync(member);
+            await _unitOfWork.Repository<Member>().AddAsync(member);
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<Member?> GetByIdAsync(int id)
         {
-            return await _unitOfWork.Members.GetByIdAsync(id);
+            return await _unitOfWork.Repository<Member>().GetByIdAsync(id);
         }
 
         public async Task<PagedResponseDto<MemberResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active)
         {
 
-            var result = await _unitOfWork.Members.GetPagedAsync(pageNumber, pageSize,m=>m.Active==active);
+            var result = await _unitOfWork.Repository<Member>().GetPagedAsync(pageNumber, pageSize,m=>m.Active==active);
 
             return new PagedResponseDto<MemberResponseDto>
             {
@@ -48,30 +48,30 @@ namespace Application.Services
 
         public async Task SoftDeleteAsync(int id)
         {
-            var member = await _unitOfWork.Members.GetByIdAsync(id);
+            var member = await _unitOfWork.Repository<Member>().GetByIdAsync(id);
             if (member == null)
                 throw new KeyNotFoundException("Member not found");
             member.Active = false;
-            _unitOfWork.Members.Update(member);
+            _unitOfWork.Repository<Member>().Update(member);
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task RestoreAsync(int id)
         {
-            var member = await _unitOfWork.Members.GetByIdAsync(id);
+            var member = await _unitOfWork.Repository<Member>().GetByIdAsync(id);
             if (member == null)
                 throw new KeyNotFoundException("Member not found");
             member.Active = true;
-            _unitOfWork.Members.Update(member);
+            _unitOfWork.Repository<Member>().Update(member);
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task PermanentDeleteAsync(int id)
         {
-            var member = await _unitOfWork.Members.GetByIdAsync(id);
+            var member = await _unitOfWork.Repository<Member>().GetByIdAsync(id);
             if (member == null)
                 throw new KeyNotFoundException("Member not found");
-            _unitOfWork.Members.Delete(member); 
+            _unitOfWork.Repository<Member>().Delete(member); 
             await _unitOfWork.SaveChangesAsync(); 
 
         }
@@ -80,10 +80,10 @@ namespace Application.Services
         {
             var specification = new SearchMemberSpecification(request);
 
-            var members = await _unitOfWork.Members
+            var members = await _unitOfWork.Repository<Member>()
                 .ListAsync(specification);
 
-            var totalCount = await _unitOfWork.Members
+            var totalCount = await _unitOfWork.Repository<Member>()
                 .CountAsync(specification);
 
             return new PagedResponseDto<MemberResponseDto>

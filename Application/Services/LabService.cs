@@ -21,13 +21,13 @@ namespace Application.Services
 
         public async Task CreateAsync(LabRequestDto lab)
         {
-            await _unitOfWork.Labs.AddAsync(ToEntity(lab));
+            await _unitOfWork.Repository<Lab>().AddAsync(ToEntity(lab));
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<PagedResponseDto<LabResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active)
         {
-            var result = await _unitOfWork.Labs.GetPagedAsync(pageNumber, pageSize, l=>l.Active==active);
+            var result = await _unitOfWork.Repository<Lab>().GetPagedAsync(pageNumber, pageSize, l=>l.Active==active);
 
             return new PagedResponseDto<LabResponseDto>
             {
@@ -40,7 +40,7 @@ namespace Application.Services
 
         public async Task<LabResponseDto?> GetByIdAsync(int id)
         {
-            Lab? lab = await _unitOfWork.Labs.GetByIdAsync(id);
+            Lab? lab = await _unitOfWork.Repository<Lab>().GetByIdAsync(id);
             if (lab == null)
                 throw new KeyNotFoundException($"Lab with {id} not found");
 
@@ -51,10 +51,10 @@ namespace Application.Services
         {
             var specification = new SearchLabSpecification(request);
 
-            var labs = await _unitOfWork.Labs
+            var labs = await _unitOfWork.Repository<Lab>()
                 .ListAsync(specification);
 
-            var totalCount = await _unitOfWork.Labs
+            var totalCount = await _unitOfWork.Repository<Lab>()
                 .CountAsync(specification);
 
             return new PagedResponseDto<LabResponseDto>
@@ -68,7 +68,7 @@ namespace Application.Services
 
         public async Task<bool> UpdateAsync(int id, UpdateLabDto update)
         {
-            var lab= await _unitOfWork.Labs.GetByIdAsync(id);
+            var lab= await _unitOfWork.Repository<Lab>().GetByIdAsync(id);
 
             if(lab==null)
                 throw new KeyNotFoundException($"Lab with {id} not found");
@@ -87,7 +87,7 @@ namespace Application.Services
 
         public async Task SoftDeleteAsync(int id)
         {
-            var lab = await _unitOfWork.Labs.GetByIdAsync(id);
+            var lab = await _unitOfWork.Repository<Lab>().GetByIdAsync(id);
 
             if (lab == null)
                 throw new KeyNotFoundException($"Lab with {id} not found");
@@ -97,7 +97,7 @@ namespace Application.Services
 
         public async  Task RestoreAsync(int id)
         {
-            var lab = await _unitOfWork.Labs.GetByIdAsync(id);
+            var lab = await _unitOfWork.Repository<Lab>().GetByIdAsync(id);
 
             if (lab == null)
                 throw new KeyNotFoundException($"Lab with {id} not found");
@@ -108,18 +108,18 @@ namespace Application.Services
 
         public async Task PermanentDeleteAsync(int id)
         {
-            var lab = await _unitOfWork.Labs.GetByIdAsync(id);
+            var lab = await _unitOfWork.Repository<Lab>().GetByIdAsync(id);
 
             if (lab == null)
                 throw new KeyNotFoundException($"Lab with {id} not found");
 
-            _unitOfWork.Labs.Delete(lab);
+            _unitOfWork.Repository<Lab>().Delete(lab);
             await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<int> CountAsync()
         {
-            return await _unitOfWork.Labs.CountAsync();
+            return await _unitOfWork.Repository<Lab>().CountAsync();
         }
 
 
