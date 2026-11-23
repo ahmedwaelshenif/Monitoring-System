@@ -5,18 +5,15 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace Application.DTOs.ResponseDtos
+namespace Application.DTOs.RequestDtos
 {
-    public class EntryLogResponse
+    public class EntryLogRequestDto
     {
-        [Key]
-        public int Id { get; set; }
-
         public int? MemberId { get; set; }
 
         public Member? Member { get; set; }
 
-        public int ?LabId { get; set; }
+        public int LabId { get; set; }
 
         public Lab? Lab { get; set; }
 
@@ -25,7 +22,5 @@ namespace Application.DTOs.ResponseDtos
 
         [Required]
         public EntryStatus status { get; set; }
-
-        public byte[]? FaceImage { get; set; }
     }
 }

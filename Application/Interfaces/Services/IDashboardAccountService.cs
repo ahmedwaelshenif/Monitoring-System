@@ -11,19 +11,19 @@ namespace Application.Interfaces.Services
     public interface IDashboardAccountService
     {
         
-        Task CreateAsync(DashboardAccountRequest account);
-        Task<DashboardAccountResponse?> GetByIdAsync(int id);
+        Task CreateAsync(DashboardAccountRequestDto account);
+        Task<DashboardAccountResponseDto?> GetByIdAsync(int id);
 
-        Task<PagedResponse<DashboardAccountResponse>> GetAllAsync(int pageNumber, int pageSize);
+        Task<PagedResponseDto<DashboardAccountResponseDto>> GetAllAsync(int pageNumber, int pageSize);
 
-        Task UpdateAsync(int id,UpdateDashboardAccount update);
+        Task UpdateAsync(int id,UpdateDashboardAccountDto update);
 
         Task Deactivate(int id);
 
         Task Activate(int id);
 
         Task DeleteAsync(int id);
-        Task<PagedResponse<DashboardAccountResponse>> SearchAsync(SearchAccount request);
+        Task<PagedResponseDto<DashboardAccountResponseDto>> SearchAsync(SearchAccountDto request);
 
     }
 }

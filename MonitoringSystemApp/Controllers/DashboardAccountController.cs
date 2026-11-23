@@ -19,7 +19,7 @@ namespace MonitoringSystemApp.Controllers
 
         [HttpGet("")]
 
-        public async Task<ActionResult<PagedResponse<DashboardAccountResponse>>> GetAllDashboardAccounts(
+        public async Task<ActionResult<PagedResponseDto<DashboardAccountResponseDto>>> GetAllDashboardAccounts(
            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _DashboardAccountService.GetAllAsync(pageNumber, pageSize);
@@ -27,7 +27,7 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpGet ("search")]
-        public async Task<ActionResult<PagedResponse<DashboardAccountResponse>>> Search([FromQuery] SearchAccount request)
+        public async Task<ActionResult<PagedResponseDto<DashboardAccountResponseDto>>> Search([FromQuery] SearchAccountDto request)
         {
             var result = await _DashboardAccountService.SearchAsync(request);
 
@@ -36,7 +36,7 @@ namespace MonitoringSystemApp.Controllers
 
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateAccount(DashboardAccountRequest acc)
+        public async Task<IActionResult> CreateAccount(DashboardAccountRequestDto acc)
         {
             await _DashboardAccountService.CreateAsync(acc);
             return NoContent();
@@ -87,7 +87,7 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdateAccount(int id, [FromBody] UpdateDashboardAccount dto)
+        public async Task<IActionResult> UpdateAccount(int id, [FromBody] UpdateDashboardAccountDto dto)
         {
 
             try

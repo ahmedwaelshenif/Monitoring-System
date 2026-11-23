@@ -17,7 +17,7 @@ namespace MonitoringSystemApp.Controllers
 
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateLab(LabRequest lab)
+        public async Task<IActionResult> CreateLab(LabRequestDto lab)
         {
             await _labService.CreateAsync(lab);
             return NoContent();
@@ -25,7 +25,7 @@ namespace MonitoringSystemApp.Controllers
 
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdateLab(int id, [FromBody] UpdateLab dto)
+        public async Task<IActionResult> UpdateLab(int id, [FromBody] UpdateLabDto dto)
         {
 
             try
@@ -48,7 +48,7 @@ namespace MonitoringSystemApp.Controllers
 
 
         [HttpGet("search")]
-        public async Task<ActionResult<PagedResponse<LabResponse>>> Search([FromQuery] SearchLabRequest request)
+        public async Task<ActionResult<PagedResponseDto<LabResponseDto>>> Search([FromQuery] SearchLabRequestDto request)
         {
             var result = await _labService.SearchAsync(request);
 

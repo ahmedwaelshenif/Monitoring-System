@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Application.DTOs.RequestDtos
 {
-    public class UpdateDashboardAccount
+    public class UpdateDashboardAccountDto
     {
      
         public string? FullName { get; set; }

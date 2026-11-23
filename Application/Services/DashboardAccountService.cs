@@ -29,31 +29,31 @@ namespace Application.Services
         }
 
 
-        public async Task CreateAsync(DashboardAccountRequest account)
+        public async Task CreateAsync(DashboardAccountRequestDto account)
         {
             DashboardAccount entity = ToEntity(account);
             await _unitOfWork.DashboardAccounts.AddAsync(entity);
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<DashboardAccountResponse?> GetByIdAsync(int id)
+        public async Task<DashboardAccountResponseDto?> GetByIdAsync(int id)
         {
             DashboardAccount? entity = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
             if (entity == null)
             {
                 throw new KeyNotFoundException($"Account with id {id} is not found");
             }
-            DashboardAccountResponse ret = ToDto(entity);
+            DashboardAccountResponseDto ret = ToDto(entity);
             return ret;
         }
 
-        public async Task<PagedResponse<DashboardAccountResponse>> GetAllAsync(int pageNumber, int pageSize)
+        public async Task<PagedResponseDto<DashboardAccountResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
             var result = await _unitOfWork.DashboardAccounts.GetPagedAsync(
                 pageNumber,
                 pageSize);
 
-            return new PagedResponse<DashboardAccountResponse>
+            return new PagedResponseDto<DashboardAccountResponseDto>
             {
             Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -87,7 +87,7 @@ namespace Application.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(int id,UpdateDashboardAccount update)
+        public async Task UpdateAsync(int id,UpdateDashboardAccountDto update)
         {
             var acc = await _unitOfWork.DashboardAccounts.GetByIdAsync(id);
             if (acc == null)
@@ -123,7 +123,7 @@ namespace Application.Services
 
         }
 
-        public async Task<PagedResponse<DashboardAccountResponse>> SearchAsync(SearchAccount request)
+        public async Task<PagedResponseDto<DashboardAccountResponseDto>> SearchAsync(SearchAccountDto request)
         {
             var specification = new SearchAccountSpecification(request);
 
@@ -134,7 +134,7 @@ namespace Application.Services
             var totalCount = await _unitOfWork.DashboardAccounts
                 .CountAsync(specification);
 
-            return new PagedResponse<DashboardAccountResponse>
+            return new PagedResponseDto<DashboardAccountResponseDto>
             {
                 Items = accounts.Select(ToDto).ToList(),
                 PageNumber = request.PageNumber,
@@ -144,7 +144,7 @@ namespace Application.Services
         }
 
         //Helper Methods
-        public DashboardAccount ToEntity(DashboardAccountRequest dto)
+        public DashboardAccount ToEntity(DashboardAccountRequestDto dto)
         {
             DashboardAccount acc = new();
             acc.Email = dto.Email;
@@ -154,11 +154,11 @@ namespace Application.Services
             acc.PasswordHash = _passwordHasher.HashPassword(acc,dto.Password);
             return acc;
         }
-        public DashboardAccountResponse ToDto(DashboardAccount entity)
+        public DashboardAccountResponseDto ToDto(DashboardAccount entity)
         {
             if (entity == null)
                 return null;
-            DashboardAccountResponse ret = new();
+            DashboardAccountResponseDto ret = new();
             ret.Id = entity.Id;
             ret.FullName = entity.FullName;
             ret.Email = entity.Email;

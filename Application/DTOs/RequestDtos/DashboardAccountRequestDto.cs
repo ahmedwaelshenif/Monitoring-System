@@ -4,12 +4,10 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace Application.DTOs.ResponseDtos
+namespace Application.DTOs.RequestDtos
 {
-    public class DashboardAccountResponse
+    public class DashboardAccountRequestDto
     {
-        [Key]
-        public int Id { get; set; }
 
         [Required]
         public string FullName { get; set; }
@@ -18,9 +16,11 @@ namespace Application.DTOs.ResponseDtos
         [Required]
         public string Email { get; set; }
 
+        [Required]
+        public string Password { get; set; }
+
         public Role Role { get; set; }
 
 
-        public bool IsActive { get; set; } = true;
     }
 }

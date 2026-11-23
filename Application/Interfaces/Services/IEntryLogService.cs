@@ -8,17 +8,17 @@ namespace Application.Interfaces.Services
 {
     public interface IEntryLogService
     {
-        Task<EntryLogResponse?> GetByIdAsync(int id);
-        Task<PagedResponse<EntryLogResponse>> GetAllAsync(int pageNumber, int pageSize);
-        Task CreateAsync(EntryLogRequest request);
+        Task<EntryLogResponseDto?> GetByIdAsync(int id);
+        Task<PagedResponseDto<EntryLogResponseDto>> GetAllAsync(int pageNumber, int pageSize);
+        Task CreateAsync(EntryLogRequestDto request);
         Task DeleteAsync(int id);
         Task<int> CountStatus(bool status,DateOnly date);
 
-        Task<PagedResponse<EntryLogResponse>> GetByLabAsync(int LabId, int pageNumber, int pageSize);
+        Task<PagedResponseDto<EntryLogResponseDto>> GetByLabAsync(int LabId, int pageNumber, int pageSize);
 
 
-        Task<PagedResponse<EntryLogResponse>> GetRejectedTodayAsync(int pageNumber, int pageSize);
-        Task<PagedResponse<EntryLogResponse>> GetAcceptedTodayAsync(int pageNumber, int pageSize);
+        Task<PagedResponseDto<EntryLogResponseDto>> GetRejectedTodayAsync(int pageNumber, int pageSize);
+        Task<PagedResponseDto<EntryLogResponseDto>> GetAcceptedTodayAsync(int pageNumber, int pageSize);
 
 
     }

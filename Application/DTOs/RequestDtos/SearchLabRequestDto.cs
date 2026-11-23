@@ -4,7 +4,7 @@ using System.Text;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.RequestDtos
 {
-    public class SearchLabRequest
+    public class SearchLabRequestDto
     {
        
         public int ?Id { get; set; }

@@ -53,6 +53,11 @@ namespace Domain.Specifications
 
         protected void ApplyPaging(int pageNumber, int pageSize)
         {
+            if (pageNumber < 1)
+                throw new ArgumentOutOfRangeException(nameof(pageNumber));
+
+            if (pageSize < 1 || pageSize > 100)
+                throw new ArgumentOutOfRangeException(nameof(pageSize));
             Skip = (pageNumber - 1) * pageSize;
             Take = pageSize;
         }

@@ -19,17 +19,17 @@ namespace Application.Services
             _unitOfWork=unitOfWork;
         }
 
-        public async Task CreateAsync(LabRequest lab)
+        public async Task CreateAsync(LabRequestDto lab)
         {
             await _unitOfWork.Labs.AddAsync(ToEntity(lab));
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<PagedResponse<LabResponse>> GetAllAsync(int pageNumber, int pageSize,bool active)
+        public async Task<PagedResponseDto<LabResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active)
         {
             var result = await _unitOfWork.Labs.GetPagedAsync(pageNumber, pageSize, l=>l.Active==active);
 
-            return new PagedResponse<LabResponse>
+            return new PagedResponseDto<LabResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -38,7 +38,7 @@ namespace Application.Services
             };
         }
 
-        public async Task<LabResponse?> GetByIdAsync(int id)
+        public async Task<LabResponseDto?> GetByIdAsync(int id)
         {
             Lab? lab = await _unitOfWork.Labs.GetByIdAsync(id);
             if (lab == null)
@@ -47,7 +47,7 @@ namespace Application.Services
             return ToDto(lab);
         }
 
-        public async Task<PagedResponse<LabResponse>> SearchAsync(SearchLabRequest request)
+        public async Task<PagedResponseDto<LabResponseDto>> SearchAsync(SearchLabRequestDto request)
         {
             var specification = new SearchLabSpecification(request);
 
@@ -57,7 +57,7 @@ namespace Application.Services
             var totalCount = await _unitOfWork.Labs
                 .CountAsync(specification);
 
-            return new PagedResponse<LabResponse>
+            return new PagedResponseDto<LabResponseDto>
             {
                 Items = labs.Select(ToDto).ToList(),
                 PageNumber = request.PageNumber,
@@ -66,7 +66,7 @@ namespace Application.Services
             };
         }
 
-        public async Task<bool> UpdateAsync(int id, UpdateLab update)
+        public async Task<bool> UpdateAsync(int id, UpdateLabDto update)
         {
             var lab= await _unitOfWork.Labs.GetByIdAsync(id);
 
@@ -126,7 +126,7 @@ namespace Application.Services
 
         //Helper Methods
 
-        private Lab ToEntity(LabRequest dto)
+        private Lab ToEntity(LabRequestDto dto)
         {
             Lab lab = new();
             lab.Name = dto.Name;
@@ -134,9 +134,9 @@ namespace Application.Services
             return lab;
         }
 
-        private LabResponse ToDto(Lab lab)
+        private LabResponseDto ToDto(Lab lab)
         {
-            LabResponse labResponse = new();
+            LabResponseDto labResponse = new();
             labResponse.Name = lab.Name;
             labResponse.Capacity = lab.Capacity;
             labResponse.Id = lab.Id;

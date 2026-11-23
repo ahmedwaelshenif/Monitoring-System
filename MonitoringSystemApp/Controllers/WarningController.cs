@@ -19,7 +19,7 @@ namespace MonitoringSystemApp.Controllers
 
 
         [HttpGet("")]
-        public async Task<ActionResult<PagedResponse<WarningResponse>>> GetAllWarnings(
+        public async Task<ActionResult<PagedResponseDto<WarningResponseDto>>> GetAllWarnings(
            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _warningService.GetAllAsync(pageNumber, pageSize);
@@ -28,7 +28,7 @@ namespace MonitoringSystemApp.Controllers
 
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateWarning(WarningRequest req)
+        public async Task<IActionResult> CreateWarning(WarningRequestDto req)
         {
             await _warningService.CreateAsync(req);
             return NoContent();
@@ -50,7 +50,7 @@ namespace MonitoringSystemApp.Controllers
 
         [HttpGet("{id}")]
 
-        public async Task<ActionResult<WarningResponse>> GetByID(
+        public async Task<ActionResult<WarningResponseDto>> GetByID(
                              int id)
         {
             try
@@ -67,7 +67,7 @@ namespace MonitoringSystemApp.Controllers
 
         [HttpGet("alert/{warning}")]
 
-        public async Task<ActionResult<PagedResponse<WarningResponse>>> GetAllByWarning(
+        public async Task<ActionResult<PagedResponseDto<WarningResponseDto>>> GetAllByWarning(
                              Alert warning, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _warningService.GetWarningsByAlertAsync(warning, pageNumber,pageSize);
@@ -76,7 +76,7 @@ namespace MonitoringSystemApp.Controllers
 
         [HttpGet("lab/{labid}")]
 
-        public async Task<ActionResult<PagedResponse<WarningResponse>>> GetAllByLab(
+        public async Task<ActionResult<PagedResponseDto<WarningResponseDto>>> GetAllByLab(
                              int labid, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _warningService.GetWarningsByLabAsync(labid, pageNumber,pageSize);

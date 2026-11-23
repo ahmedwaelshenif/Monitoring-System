@@ -7,7 +7,7 @@ using Domain.Entities;
 
 namespace Application.DTOs.RequestDtos
 {
-    public class WarningRequest
+    public class WarningRequestDto
     {
 
 

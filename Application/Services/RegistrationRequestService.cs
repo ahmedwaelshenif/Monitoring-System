@@ -84,13 +84,13 @@ namespace Application.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<PagedResponse<RegistrationResponseDto>> GetAllAsync(int pageNumber, int pageSize)
+        public async Task<PagedResponseDto<RegistrationResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
             var result = await _unitOfWork.RegistrationRequests.GetPagedAsync(
                 pageNumber,
                 pageSize);
 
-            return new PagedResponse<RegistrationResponseDto>
+            return new PagedResponseDto<RegistrationResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -110,7 +110,7 @@ namespace Application.Services
             return entity != null ? ToDto(entity) : null;
         }
 
-        public async Task<PagedResponse<RegistrationResponseDto>> SearchAsync(SearchRequest request)
+        public async Task<PagedResponseDto<RegistrationResponseDto>> SearchAsync(SearchRequestDto request)
         {
             var specification = new SearchRequestSpecification(request);
 
@@ -121,7 +121,7 @@ namespace Application.Services
             var totalCount = await _unitOfWork.RegistrationRequests
                 .CountAsync(specification);
 
-            return new PagedResponse<RegistrationResponseDto>
+            return new PagedResponseDto<RegistrationResponseDto>
             {
                 Items = requests.Select(ToDto).ToList(),
                 PageNumber = request.PageNumber,

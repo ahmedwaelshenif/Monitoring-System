@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Application.DTOs.RequestDtos
 {
-    public class LabRequest
+    public class LabRequestDto
     {
         [Required]
         public string Name {  get; set; }

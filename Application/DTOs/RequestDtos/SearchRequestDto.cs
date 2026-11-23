@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Application.DTOs.RequestDtos
 {
-    public class SearchRequest
+    public class SearchRequestDto
     {
         public int? Id { get; set; }
         public int? MemberId { get; set; }

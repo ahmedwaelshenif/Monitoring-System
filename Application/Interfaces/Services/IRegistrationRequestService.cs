@@ -12,14 +12,14 @@ namespace Application.Interfaces.Services
     public interface IRegistrationRequestService
     {
         Task<RegistrationResponseDto?> GetByIdAsync(int id);
-        Task<PagedResponse<RegistrationResponseDto>> GetAllAsync(int pageNumber, int pageSize);
+        Task<PagedResponseDto<RegistrationResponseDto>> GetAllAsync(int pageNumber, int pageSize);
         Task<bool> CreateAsync(RegistrationRequestDto request);
         //Task UpdateAsync(RegistrationRequestDto request);
         Task DeleteAsync(int id);
 
         Task MarkStatus(int id, Boolean status);
 
-        Task<PagedResponse<RegistrationResponseDto>> SearchAsync(SearchRequest request);
+        Task<PagedResponseDto<RegistrationResponseDto>> SearchAsync(SearchRequestDto request);
 
     }
 }

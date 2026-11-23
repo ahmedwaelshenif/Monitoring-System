@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-public class PagedRequest
+public class PagedRequestDto
 {
     [Range(1, int.MaxValue)]
     public int PageNumber { get; set; } = 1;

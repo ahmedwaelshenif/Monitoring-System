@@ -10,7 +10,7 @@ namespace Application.Specifications
 {
     public class SearchLabSpecification : BaseSpecification<Lab>
     {
-        public SearchLabSpecification(SearchLabRequest dto)
+        public SearchLabSpecification(SearchLabRequestDto dto)
         {
             AddCriteria(l =>
 

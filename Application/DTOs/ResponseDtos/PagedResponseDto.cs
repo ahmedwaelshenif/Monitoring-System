@@ -1,6 +1,6 @@
 ﻿
 
-public class PagedResponse<T>
+public class PagedResponseDto<T>
 {
     public IEnumerable<T> Items { get; set; } = [];
 

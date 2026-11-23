@@ -19,7 +19,7 @@ namespace MonitoringSystemApp.Controllers
 
         [HttpGet("")]
 
-        public async Task<ActionResult<PagedResponse<RegistrationResponseDto>>> GetAllRegistrationRequests(
+        public async Task<ActionResult<PagedResponseDto<RegistrationResponseDto>>> GetAllRegistrationRequests(
           [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _RegistrationRequestService.GetAllAsync(pageNumber, pageSize);
@@ -43,7 +43,7 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<PagedResponse<RegistrationResponseDto>>> Search([FromQuery] SearchRequest request)
+        public async Task<ActionResult<PagedResponseDto<RegistrationResponseDto>>> Search([FromQuery] SearchRequestDto request)
         {
             var result = await _RegistrationRequestService.SearchAsync(request);
 

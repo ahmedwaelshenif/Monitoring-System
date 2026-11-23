@@ -9,10 +9,10 @@ namespace Application.Interfaces.Services
 {
     public interface ILabService
     {
-        Task CreateAsync(LabRequest lab);
-        Task<LabResponse?> GetByIdAsync(int id);
-        Task<PagedResponse<LabResponse>> GetAllAsync(int pageNumber, int pageSize,bool active);
-        Task<bool> UpdateAsync(int id, UpdateLab update);
+        Task CreateAsync(LabRequestDto lab);
+        Task<LabResponseDto?> GetByIdAsync(int id);
+        Task<PagedResponseDto<LabResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active);
+        Task<bool> UpdateAsync(int id, UpdateLabDto update);
 
         Task<int> CountAsync();
 
@@ -20,7 +20,7 @@ namespace Application.Interfaces.Services
         Task RestoreAsync(int id);
         Task PermanentDeleteAsync(int id);
 
-        Task<PagedResponse<LabResponse>> SearchAsync(SearchLabRequest request);
+        Task<PagedResponseDto<LabResponseDto>> SearchAsync(SearchLabRequestDto request);
 
     }
 }

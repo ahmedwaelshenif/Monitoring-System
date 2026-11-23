@@ -9,7 +9,7 @@ namespace Application.Specifications
 {
     public class SearchMemberSpecification:BaseSpecification<Member>
     {
-        public SearchMemberSpecification(SearchMemberRequest dto)
+        public SearchMemberSpecification(SearchMemberRequestDto dto)
         {
             AddCriteria(m =>
                 (!dto.Id.HasValue || m.Id == dto.Id.Value) &&

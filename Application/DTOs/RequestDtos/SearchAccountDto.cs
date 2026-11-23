@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Application.DTOs.RequestDtos
 {
-    public class SearchAccount
+    public class SearchAccountDto
     {
         public string ? Email {get;set;}
         public string ? Name {get;set;}

@@ -17,7 +17,7 @@ namespace MonitoringSystemApp.Controllers
 
 
         [HttpGet("search")]
-        public async Task<ActionResult<PagedResponse<MemberResponse>>> Search([FromQuery] SearchMemberRequest request)
+        public async Task<ActionResult<PagedResponseDto<MemberResponseDto>>> Search([FromQuery] SearchMemberRequestDto request)
         {
             var result = await _memberService.SearchAsync(request);
 

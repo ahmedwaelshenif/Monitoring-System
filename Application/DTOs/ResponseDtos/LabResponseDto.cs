@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Application.DTOs.ResponseDtos
 {
-    public class LabResponse
+    public class LabResponseDto
     {
         public int Id { get; set; }
         public string Name { get; set; }

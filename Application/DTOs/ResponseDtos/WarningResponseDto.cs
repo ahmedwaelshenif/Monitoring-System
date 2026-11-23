@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Application.DTOs.ResponseDtos
 {
-    public class WarningResponse
+    public class WarningResponseDto
     {
         public int Id { get; set; }
 

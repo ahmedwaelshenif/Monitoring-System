@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Application.DTOs.RequestDtos
 {
-    public class SearchMemberRequest
+    public class SearchMemberRequestDto
     {
         public int? Id { get; set; }
 

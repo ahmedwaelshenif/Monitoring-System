@@ -31,12 +31,12 @@ namespace Application.Services
             return await _unitOfWork.Members.GetByIdAsync(id);
         }
 
-        public async Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize,bool active)
+        public async Task<PagedResponseDto<MemberResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active)
         {
 
             var result = await _unitOfWork.Members.GetPagedAsync(pageNumber, pageSize,m=>m.Active==active);
 
-            return new PagedResponse<MemberResponse>
+            return new PagedResponseDto<MemberResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -76,7 +76,7 @@ namespace Application.Services
 
         }
 
-        public async Task<PagedResponse<MemberResponse>> SearchAsync(SearchMemberRequest request)
+        public async Task<PagedResponseDto<MemberResponseDto>> SearchAsync(SearchMemberRequestDto request)
         {
             var specification = new SearchMemberSpecification(request);
 
@@ -86,7 +86,7 @@ namespace Application.Services
             var totalCount = await _unitOfWork.Members
                 .CountAsync(specification);
 
-            return new PagedResponse<MemberResponse>
+            return new PagedResponseDto<MemberResponseDto>
             {
                 Items = members.Select(ToDto).ToList(),
                 PageNumber = request.PageNumber,
@@ -96,12 +96,12 @@ namespace Application.Services
         }
 
         // Helper Methods
-        private MemberResponse ToDto(Member entity)
+        private MemberResponseDto ToDto(Member entity)
         {
             if (entity == null)
                 return null;
 
-            MemberResponse ret = new();
+            MemberResponseDto ret = new();
             ret.Id = entity.Id;
             ret.MemberId = entity.MemberId;
             ret.AcademicYear = entity.AcademicYear;

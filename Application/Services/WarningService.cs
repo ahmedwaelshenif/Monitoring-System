@@ -20,7 +20,7 @@ namespace Application.Services
         {
             _unitOfWork = unitOfWork;
         }
-        public async Task CreateAsync(WarningRequest request)
+        public async Task CreateAsync(WarningRequestDto request)
         {
             await _unitOfWork.Warnings.AddAsync(ToEntity(request));
             await _unitOfWork.SaveChangesAsync();
@@ -39,11 +39,11 @@ namespace Application.Services
             
         }
 
-        public async Task<PagedResponse<WarningResponse>> GetAllAsync(int pageNumber, int pageSize)
+        public async Task<PagedResponseDto<WarningResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
           var result =await _unitOfWork.Warnings.GetAllWithDetailsAsync(pageNumber,pageSize);
 
-            return new PagedResponse<WarningResponse>
+            return new PagedResponseDto<WarningResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -53,7 +53,7 @@ namespace Application.Services
 
         }
 
-        public async Task<PagedResponse<WarningResponse>> GetWarningsByAlertAsync(Alert warning,int pageNumber, int pageSize)
+        public async Task<PagedResponseDto<WarningResponseDto>> GetWarningsByAlertAsync(Alert warning,int pageNumber, int pageSize)
         {
             var result = await _unitOfWork.Warnings.GetWarningsByAlertAsync(
                     warning,
@@ -62,7 +62,7 @@ namespace Application.Services
 
 
 
-            return new PagedResponse<WarningResponse>
+            return new PagedResponseDto<WarningResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -71,7 +71,7 @@ namespace Application.Services
             };
         }
 
-        public async Task<PagedResponse<WarningResponse>> GetWarningsByLabAsync(int LabID,int pageNumber, int pageSize)
+        public async Task<PagedResponseDto<WarningResponseDto>> GetWarningsByLabAsync(int LabID,int pageNumber, int pageSize)
         {
 
             var result = await _unitOfWork.Warnings.GetWarningsByLabAsync(
@@ -79,7 +79,7 @@ namespace Application.Services
                         pageNumber,
                         pageSize);
 
-            return new PagedResponse<WarningResponse>
+            return new PagedResponseDto<WarningResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -88,7 +88,7 @@ namespace Application.Services
             };
         }
 
-        public async Task<WarningResponse?> GetByIdAsync(int id)
+        public async Task<WarningResponseDto?> GetByIdAsync(int id)
         {
             Warning? entity = await _unitOfWork.Warnings.GetByIdAsync(id);
 
@@ -102,9 +102,9 @@ namespace Application.Services
 
         }
 
-        public WarningResponse ToDto (Warning entity)
+        public WarningResponseDto ToDto (Warning entity)
         {
-            WarningResponse res = new();
+            WarningResponseDto res = new();
 
             res.Id = entity.Id;
             res.Lab = entity.Lab;
@@ -112,7 +112,7 @@ namespace Application.Services
             res.warning = entity.warning;
             return res;
         }
-       public Warning ToEntity (WarningRequest request)
+       public Warning ToEntity (WarningRequestDto request)
         {
             Warning res = new();
             res.LabId = request.LabId;

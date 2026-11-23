@@ -10,7 +10,7 @@ namespace Application.Specifications
 {
     public class SearchAccountSpecification: BaseSpecification<DashboardAccount>
     {
-        public SearchAccountSpecification(SearchAccount dto)
+        public SearchAccountSpecification(SearchAccountDto dto)
         {
             AddCriteria(m =>
 

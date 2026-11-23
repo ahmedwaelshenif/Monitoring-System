@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Application.DTOs.ResponseDtos
 {
-    public class MemberResponse
+    public class MemberResponseDto
     {
         public int? Id { get; set; }
 

@@ -18,7 +18,7 @@ namespace MonitoringSystemApp.Controllers
 
         [HttpGet("")]
 
-        public async Task<ActionResult<PagedResponse<EntryLogResponse>>> GetAllEntryLogs(
+        public async Task<ActionResult<PagedResponseDto<EntryLogResponseDto>>> GetAllEntryLogs(
            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _entryLogService.GetAllAsync(pageNumber, pageSize);

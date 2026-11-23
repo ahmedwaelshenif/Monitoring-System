@@ -21,7 +21,7 @@ namespace Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task CreateAsync(EntryLogRequest request)
+        public async Task CreateAsync(EntryLogRequestDto request)
         {
             await _unitOfWork.EntryLogs.AddAsync(ToEntity(request));
             await _unitOfWork.SaveChangesAsync();
@@ -39,13 +39,13 @@ namespace Application.Services
 
         }
 
-        public async Task<PagedResponse<EntryLogResponse>> GetAllAsync(int pageNumber, int pageSize)
+        public async Task<PagedResponseDto<EntryLogResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
             var result = await _unitOfWork.EntryLogs.GetPagedWithDetailsAsync(
                 pageNumber,
                 pageSize);
             
-            return new PagedResponse<EntryLogResponse>
+            return new PagedResponseDto<EntryLogResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -72,7 +72,7 @@ namespace Application.Services
 
 
 
-        public async Task<EntryLogResponse?> GetByIdAsync(int id)
+        public async Task<EntryLogResponseDto?> GetByIdAsync(int id)
         {
             var log= await _unitOfWork.EntryLogs.GetByIdAsync(id);
             if (log == null)
@@ -83,14 +83,14 @@ namespace Application.Services
         }
 
 
-        public async Task<PagedResponse<EntryLogResponse>> GetByLabAsync(int LabId,int pageNumber,int pageSize)
+        public async Task<PagedResponseDto<EntryLogResponseDto>> GetByLabAsync(int LabId,int pageNumber,int pageSize)
         {
             var result = await _unitOfWork.EntryLogs.GetPagedLogsByLabAsync(
                 LabId,
                 pageNumber,
                 pageSize);
 
-            return new PagedResponse<EntryLogResponse>
+            return new PagedResponseDto<EntryLogResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -98,13 +98,13 @@ namespace Application.Services
                 TotalCount = result.TotalCount
             };
         }
-        public async Task<PagedResponse<EntryLogResponse>> GetAcceptedTodayAsync(int pageNumber,int pageSize)
+        public async Task<PagedResponseDto<EntryLogResponseDto>> GetAcceptedTodayAsync(int pageNumber,int pageSize)
         {
             var result = await _unitOfWork.EntryLogs.GetPagedAcceptedTodayAsync(
                 pageNumber,
                 pageSize);
 
-            return new PagedResponse<EntryLogResponse>
+            return new PagedResponseDto<EntryLogResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -112,13 +112,13 @@ namespace Application.Services
                 TotalCount = result.TotalCount
             };
         }
-        public async Task<PagedResponse<EntryLogResponse>> GetRejectedTodayAsync(int pageNumber,int pageSize)
+        public async Task<PagedResponseDto<EntryLogResponseDto>> GetRejectedTodayAsync(int pageNumber,int pageSize)
         {
             var result = await _unitOfWork.EntryLogs.GetPagedRejectedTodayAsync(
                 pageNumber,
                 pageSize);
 
-            return new PagedResponse<EntryLogResponse>
+            return new PagedResponseDto<EntryLogResponseDto>
             {
                 Items = result.Items.Select(ToDto),
                 PageNumber = pageNumber,
@@ -128,7 +128,7 @@ namespace Application.Services
         }
 
         //Helper Methods
-        public EntryLog ToEntity(EntryLogRequest req)
+        public EntryLog ToEntity(EntryLogRequestDto req)
         {
             EntryLog res = new();
             res.EventTime = req.EventTime;
@@ -140,9 +140,9 @@ namespace Application.Services
             return res;
         }
 
-        public EntryLogResponse ToDto(EntryLog entity)
+        public EntryLogResponseDto ToDto(EntryLog entity)
         {
-            EntryLogResponse res = new();
+            EntryLogResponseDto res = new();
             res.Id = entity.Id;
             res.EventTime = entity.EventTime;
             res.LabId = entity.LabId;

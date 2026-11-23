@@ -11,8 +11,8 @@ namespace Application.Interfaces.Services
     {
         Task CreateAsync(Member member);
         Task<Member?> GetByIdAsync(int id);
-        Task<PagedResponse<MemberResponse>> GetAllAsync(int pageNumber, int pageSize,bool active);
-        Task<PagedResponse<MemberResponse>> SearchAsync(SearchMemberRequest request);
+        Task<PagedResponseDto<MemberResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active);
+        Task<PagedResponseDto<MemberResponseDto>> SearchAsync(SearchMemberRequestDto request);
 
         Task SoftDeleteAsync(int id);
         Task RestoreAsync(int id);

@@ -12,7 +12,7 @@ namespace Application.Specifications
 {
     public class SearchRequestSpecification : BaseSpecification<Registration_Request>
     {
-        public SearchRequestSpecification(SearchRequest dto)
+        public SearchRequestSpecification(SearchRequestDto dto)
         {
             AddCriteria(m =>
                 (!dto.Id.HasValue || m.Id == dto.Id.Value) &&
