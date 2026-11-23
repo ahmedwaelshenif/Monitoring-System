@@ -47,9 +47,9 @@ namespace Application.Services
             return ToDto(lab);
         }
 
-        public async Task<PagedResponseDto<LabResponseDto>> SearchAsync(SearchLabRequestDto request)
+        public async Task<PagedResponseDto<LabResponseDto>> SearchAsync(LabFilterDto request)
         {
-            var specification = new SearchLabSpecification(request);
+            var specification = new LabSpecification(request);
 
             var labs = await _unitOfWork.Repository<Lab>()
                 .ListAsync(specification);

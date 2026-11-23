@@ -10,9 +10,9 @@ using System.Text;
 
 namespace Application.Specifications
 {
-    public class SearchRequestSpecification : BaseSpecification<Registration_Request>
+    public class RequestSpecification : BaseSpecification<Registration_Request>
     {
-        public SearchRequestSpecification(SearchRequestDto dto)
+        public RequestSpecification(RegistrationRequestFilterDto dto)
         {
             AddCriteria(m =>
                 (!dto.Id.HasValue || m.Id == dto.Id.Value) &&

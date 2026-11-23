@@ -8,9 +8,9 @@ using System.Text;
 
 namespace Application.Specifications
 {
-    public class SearchAccountSpecification: BaseSpecification<DashboardAccount>
+    public class AccountSpecification: BaseSpecification<DashboardAccount>
     {
-        public SearchAccountSpecification(SearchAccountDto dto)
+        public AccountSpecification(AccountFilterDto dto)
         {
             AddCriteria(m =>
 

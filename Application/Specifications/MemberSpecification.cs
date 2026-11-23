@@ -7,9 +7,9 @@ using Application.DTOs.RequestDtos;
 
 namespace Application.Specifications
 {
-    public class SearchMemberSpecification:BaseSpecification<Member>
+    public class MemberSpecification:BaseSpecification<Member>
     {
-        public SearchMemberSpecification(SearchMemberRequestDto dto)
+        public MemberSpecification(MemberFilterDto dto)
         {
             AddCriteria(m =>
                 (!dto.Id.HasValue || m.Id == dto.Id.Value) &&

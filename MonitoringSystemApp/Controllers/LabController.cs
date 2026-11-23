@@ -48,7 +48,7 @@ namespace MonitoringSystemApp.Controllers
 
 
         [HttpGet("search")]
-        public async Task<ActionResult<PagedResponseDto<LabResponseDto>>> Search([FromQuery] SearchLabRequestDto request)
+        public async Task<ActionResult<PagedResponseDto<LabResponseDto>>> Search([FromQuery] LabFilterDto request)
         {
             var result = await _labService.SearchAsync(request);
 

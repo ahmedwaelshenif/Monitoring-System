@@ -27,7 +27,7 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpGet ("search")]
-        public async Task<ActionResult<PagedResponseDto<DashboardAccountResponseDto>>> Search([FromQuery] SearchAccountDto request)
+        public async Task<ActionResult<PagedResponseDto<DashboardAccountResponseDto>>> Search([FromQuery] AccountFilterDto request)
         {
             var result = await _DashboardAccountService.SearchAsync(request);
 

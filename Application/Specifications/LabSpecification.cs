@@ -8,9 +8,9 @@ using Application.DTOs.RequestDtos;
 
 namespace Application.Specifications
 {
-    public class SearchLabSpecification : BaseSpecification<Lab>
+    public class LabSpecification : BaseSpecification<Lab>
     {
-        public SearchLabSpecification(SearchLabRequestDto dto)
+        public LabSpecification(LabFilterDto dto)
         {
             AddCriteria(l =>
 

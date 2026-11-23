@@ -43,7 +43,7 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<PagedResponseDto<RegistrationResponseDto>>> Search([FromQuery] SearchRequestDto request)
+        public async Task<ActionResult<PagedResponseDto<RegistrationResponseDto>>> Search([FromQuery] RegistrationRequestFilterDto request)
         {
             var result = await _RegistrationRequestService.SearchAsync(request);
 

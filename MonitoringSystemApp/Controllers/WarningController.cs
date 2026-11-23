@@ -35,10 +35,10 @@ namespace MonitoringSystemApp.Controllers
         }
 
 
-        [HttpPost("search")]
-        public async Task<IActionResult> Search(WarningFilterDto filter)
+        [HttpGet("search")]
+        public async Task<ActionResult<PagedResponseDto<WarningResponseDto>>> Search([FromQuery] WarningFilterDto filter)
         {
-            var res=await _warningService.SearchAsync(filter);
+            var res = await _warningService.SearchAsync(filter);
             return Ok(res);
         }
 

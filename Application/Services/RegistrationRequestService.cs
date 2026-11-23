@@ -110,9 +110,9 @@ namespace Application.Services
             return entity != null ? ToDto(entity) : null;
         }
 
-        public async Task<PagedResponseDto<RegistrationResponseDto>> SearchAsync(SearchRequestDto request)
+        public async Task<PagedResponseDto<RegistrationResponseDto>> SearchAsync(RegistrationRequestFilterDto request)
         {
-            var specification = new SearchRequestSpecification(request);
+            var specification = new RequestSpecification(request);
 
 
             var requests = await _unitOfWork.Repository<Registration_Request>()

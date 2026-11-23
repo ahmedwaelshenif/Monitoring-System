@@ -19,7 +19,7 @@ namespace Application.Interfaces.Services
 
         Task MarkStatus(int id, Boolean status);
 
-        Task<PagedResponseDto<RegistrationResponseDto>> SearchAsync(SearchRequestDto request);
+        Task<PagedResponseDto<RegistrationResponseDto>> SearchAsync(RegistrationRequestFilterDto request);
 
     }
 }

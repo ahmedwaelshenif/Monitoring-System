@@ -44,6 +44,14 @@ namespace MonitoringSystemApp.Controllers
             return Ok(result);
         }
 
+        [HttpGet("search")]
+        public async Task<ActionResult<PagedResponseDto<EntryLogResponseDto>>> Search(
+            [FromQuery] EntryLogFilterDto request)
+        {
+            var result = await _entryLogService.SearchAsync(request);
+            return Ok(result);
+        }
+
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
@@ -55,7 +63,7 @@ namespace MonitoringSystemApp.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { message = ex.Message });
             }
         }
 
@@ -70,7 +78,7 @@ namespace MonitoringSystemApp.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { message = ex.Message });
             }
         }
 

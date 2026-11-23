@@ -33,7 +33,6 @@ namespace Application.Services
 
         public async Task<PagedResponseDto<MemberResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active)
         {
-
             var result = await _unitOfWork.Repository<Member>().GetPagedAsync(pageNumber, pageSize,m=>m.Active==active);
 
             return new PagedResponseDto<MemberResponseDto>
@@ -76,9 +75,9 @@ namespace Application.Services
 
         }
 
-        public async Task<PagedResponseDto<MemberResponseDto>> SearchAsync(SearchMemberRequestDto request)
+        public async Task<PagedResponseDto<MemberResponseDto>> SearchAsync(MemberFilterDto request)
         {
-            var specification = new SearchMemberSpecification(request);
+            var specification = new MemberSpecification(request);
 
             var members = await _unitOfWork.Repository<Member>()
                 .ListAsync(specification);

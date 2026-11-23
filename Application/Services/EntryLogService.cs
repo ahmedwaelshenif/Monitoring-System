@@ -44,8 +44,8 @@ namespace Application.Services
 
         public async Task<PagedResponseDto<EntryLogResponseDto>> GetAllAsync(int pageNumber, int pageSize)
         {
-           return await SearchAsync(new EntryLogFilterDto { PageNumber = pageNumber, PageSize = pageSize});
-        
+            return await SearchAsync(new EntryLogFilterDto { PageNumber = pageNumber, PageSize = pageSize });
+
         }
 
         public async Task<int> CountStatus(bool status, DateOnly date)

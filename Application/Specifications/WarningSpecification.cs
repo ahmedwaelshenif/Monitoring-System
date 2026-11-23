@@ -12,7 +12,7 @@ namespace Application.Specifications
            (!filter.LabId.HasValue || w.LabId == filter.LabId.Value) &&
            (!filter.Warning.HasValue || w.warning == filter.Warning.Value) &&
            (string.IsNullOrWhiteSpace(filter.LabName) ||
-            w.Lab.Name.Contains(filter.LabName))
+            (w.Lab != null && w.Lab.Name.Contains(filter.LabName)))
         );
 
             AddInclude(w => w.Lab);

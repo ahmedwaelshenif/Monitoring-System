@@ -20,7 +20,7 @@ namespace Application.Interfaces.Services
         Task RestoreAsync(int id);
         Task PermanentDeleteAsync(int id);
 
-        Task<PagedResponseDto<LabResponseDto>> SearchAsync(SearchLabRequestDto request);
+        Task<PagedResponseDto<LabResponseDto>> SearchAsync(LabFilterDto request);
 
     }
 }

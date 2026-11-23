@@ -123,9 +123,9 @@ namespace Application.Services
 
         }
 
-        public async Task<PagedResponseDto<DashboardAccountResponseDto>> SearchAsync(SearchAccountDto request)
+        public async Task<PagedResponseDto<DashboardAccountResponseDto>> SearchAsync(AccountFilterDto request)
         {
-            var specification = new SearchAccountSpecification(request);
+            var specification = new AccountSpecification(request);
 
 
             var accounts = await _unitOfWork.Repository<DashboardAccount>()
