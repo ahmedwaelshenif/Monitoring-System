@@ -164,5 +164,17 @@ namespace MonitoringSystemApp.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("rotation-config")]
+        public async Task<ActionResult<LogRotationConfigDto>> GetRotationConfig()
+        {
+            return Ok(await _entryLogService.GetRotationConfigAsync());
+        }
+        [HttpPatch("rotation-config")]
+        public async Task<IActionResult> UpdateRotationConfig([FromBody] LogRotationConfigDto dto)
+        {
+            await _entryLogService.UpdateRotationConfigAsync(dto);
+            return NoContent();
+        }
     }
 }

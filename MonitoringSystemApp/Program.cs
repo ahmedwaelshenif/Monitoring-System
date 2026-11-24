@@ -63,8 +63,13 @@ builder.Services.AddScoped<
     EmailService>();
 
 
+
 builder.Services.AddScoped<IPasswordHasher<DashboardAccount>,
     PasswordHasher<DashboardAccount>>();
+
+//Back ground worker
+builder.Services.AddHostedService<
+    LogRotationBackgroundService>();
 
 var app = builder.Build();
 

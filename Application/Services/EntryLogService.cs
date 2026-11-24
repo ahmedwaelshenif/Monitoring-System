@@ -211,6 +211,39 @@ namespace Application.Services
 
 
 
+        public async Task<LogRotationConfigDto> GetRotationConfigAsync()
+        {
+            var config = (await _unitOfWork.Repository<LogRotationConfig>().GetAllAsync()).FirstOrDefault()
+                         ?? new LogRotationConfig();
+
+            return new LogRotationConfigDto
+            {
+                IsEnabled = config.IsEnabled,
+                RetentionDays = config.RetentionDays,
+                RunAtHourUtc = config.RunAtHourUtc,
+                LastRunAt = config.LastRunAt
+            };
+        }
+
+        public async Task UpdateRotationConfigAsync(LogRotationConfigDto dto)
+        {
+            var config = (await _unitOfWork.Repository<LogRotationConfig>().GetAllAsync()).FirstOrDefault();
+            if (config == null)
+            {
+                config = new LogRotationConfig();
+                await _unitOfWork.Repository<LogRotationConfig>().AddAsync(config);
+            }
+
+            config.IsEnabled = dto.IsEnabled;
+            config.RetentionDays = dto.RetentionDays > 0 ? dto.RetentionDays : 30; /////////////
+            config.RunAtHourUtc = Math.Clamp(dto.RunAtHourUtc, 0, 23);
+
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+
+
+
 
 
         //Helper Methods
