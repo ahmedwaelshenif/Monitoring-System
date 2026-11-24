@@ -56,6 +56,7 @@ public class LogRotationBackgroundService : BackgroundService
                     }
 
                     config.LastRunAt = now;
+                    unitOfWork.Repository<LogRotationConfig>().Update(config);
                     await unitOfWork.SaveChangesAsync();
                 }
             }

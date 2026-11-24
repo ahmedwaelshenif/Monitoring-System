@@ -157,12 +157,8 @@ namespace Application.Services
             if (toDate < fromDate)
                 throw new ArgumentException ("toDate cannot be earlier than fromDate.");
 
-            var logs = await _unitOfWork.Repository<EntryLog>().GetAllAsync(l =>
-                l.EventTime >= fromDate &&
-                l.EventTime <= toDate &&
-                (!labId.HasValue || l.LabId == labId.Value) &&
-                l.status == EntryStatus.Accepted 
-            );
+            var spec = new AttendanceExportSpecification(fromDate, toDate, labId);
+            var logs = await _unitOfWork.Repository<EntryLog>().ListAsync(spec);
 
             var orderedLogs = logs.OrderBy(l => l.EventTime).ToList();
 
@@ -230,13 +226,21 @@ namespace Application.Services
             var config = (await _unitOfWork.Repository<LogRotationConfig>().GetAllAsync()).FirstOrDefault();
             if (config == null)
             {
-                config = new LogRotationConfig();
+                config = new LogRotationConfig
+                {
+                    IsEnabled = dto.IsEnabled,
+                    RetentionDays = dto.RetentionDays > 0 ? dto.RetentionDays : 30,
+                    RunAtHourUtc = Math.Clamp(dto.RunAtHourUtc, 0, 23)
+                };
                 await _unitOfWork.Repository<LogRotationConfig>().AddAsync(config);
             }
-
-            config.IsEnabled = dto.IsEnabled;
-            config.RetentionDays = dto.RetentionDays > 0 ? dto.RetentionDays : 30; /////////////
-            config.RunAtHourUtc = Math.Clamp(dto.RunAtHourUtc, 0, 23);
+            else
+            {
+                config.IsEnabled = dto.IsEnabled;
+                config.RetentionDays = dto.RetentionDays > 0 ? dto.RetentionDays : 30; /////////
+                config.RunAtHourUtc = Math.Clamp(dto.RunAtHourUtc, 0, 23);
+                _unitOfWork.Repository<LogRotationConfig>().Update(config);
+            }
 
             await _unitOfWork.SaveChangesAsync();
         }
