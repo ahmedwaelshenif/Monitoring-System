@@ -264,9 +264,9 @@ namespace Application.Services
             res.Id = entity.Id;
             res.EventTime = entity.EventTime;
             res.LabId = entity.LabId;
-            res.LabName=entity.Lab.Name;
+            res.LabName=entity.Lab?.Name;
             res.VisitorId = entity.VisitorId;
-            res.VisitorName = entity.Visitor.FullName;
+            res.VisitorName = entity.Visitor?.FullName;
             res.Status = entity.Status;
             res.FaceImage = entity.Visitor?.FaceImage;
             return res;

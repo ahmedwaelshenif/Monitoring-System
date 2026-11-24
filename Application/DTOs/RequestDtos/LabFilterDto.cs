@@ -4,7 +4,7 @@ using System.Text;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.RequestDtos
 {
-    public class LabFilterDto
+    public class LabFilterDto : PagedRequestDto
     {
        
         public int ?Id { get; set; }
@@ -13,8 +13,7 @@ namespace Application.DTOs.RequestDtos
 
         public bool ?Active { get; set; } = true;
 
-        public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 10;
+
 
     }
 }

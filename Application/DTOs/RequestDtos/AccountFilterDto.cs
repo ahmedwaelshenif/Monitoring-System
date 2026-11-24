@@ -5,15 +5,13 @@ using System.Text;
 
 namespace Application.DTOs.RequestDtos
 {
-    public class AccountFilterDto
+    public class AccountFilterDto : PagedRequestDto
     {
         public string ? Email {get;set;}
         public string ? Name {get;set;}
         public Role ? role { get;set; }
         public bool ? IsActive { get; set; }
-        public int PageNumber { get; set; } = 1;
 
-        public int PageSize { get; set; } = 10;
 
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Application.DTOs.RequestDtos
 {
-    public class EntryLogFilterDto
+    public class EntryLogFilterDto : PagedRequestDto
     {
         public int? LabId { get; set; }
 
@@ -15,8 +15,6 @@ namespace Application.DTOs.RequestDtos
 
         public DateTime? EndDate { get; set; }
 
-        public int PageNumber { get; set; } = 1;
 
-        public int PageSize { get; set; } = 10;
     }
 }

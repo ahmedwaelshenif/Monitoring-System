@@ -15,7 +15,7 @@ namespace Application.Specifications
 
                 (!filter.StartDate.HasValue || e.EventTime >= filter.StartDate.Value) &&
 
-                (!filter.EndDate.HasValue || e.EventTime < filter.EndDate.Value)
+                (!filter.EndDate.HasValue || e.EventTime <= filter.EndDate.Value)
             );
 
             AddInclude(e => e.Lab);

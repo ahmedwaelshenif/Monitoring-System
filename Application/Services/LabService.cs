@@ -118,7 +118,7 @@ namespace Application.Services
 
         public async Task<int> CountAsync()
         {
-            return await _unitOfWork.Repository<Lab>().CountAsync();
+            return await _unitOfWork.Repository<Lab>().CountAsync(l=> l.Active);
         }
 
 
