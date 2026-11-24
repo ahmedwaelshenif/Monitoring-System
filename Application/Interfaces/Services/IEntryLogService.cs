@@ -19,7 +19,7 @@ namespace Application.Interfaces.Services
         Task<PagedResponseDto<EntryLogResponseDto>> GetByLabAsync(int LabId, int pageNumber, int pageSize);
         Task<PagedResponseDto<EntryLogResponseDto>> GetByDateRangeAsync(DateTime fromDate,DateTime toDate,int pageNumber,int pageSize, EntryStatus? status = null);
 
-        Task DeleteOldestLogs(EntryLogDeleteDto request);
+        Task DeleteOldestLogs(int cnt);
 
         Task DeleteLogsByDateRange(EntryLogDeleteDto request);
 

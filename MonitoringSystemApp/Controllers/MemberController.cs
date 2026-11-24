@@ -52,7 +52,7 @@ namespace MonitoringSystemApp.Controllers
         public async Task<IActionResult> SoftDelete(int id)
         {
             try {
-                await _memberService.SoftDeleteAsync(id);
+                await _memberService.SetActiveStatusAsync(id,false);
             }
             catch (KeyNotFoundException ex)
             {
@@ -66,7 +66,7 @@ namespace MonitoringSystemApp.Controllers
         {
             try
             {
-                await _memberService.RestoreAsync(id);
+                await _memberService.SetActiveStatusAsync(id, true);
             }
             catch(KeyNotFoundException ex)
             {

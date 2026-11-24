@@ -125,18 +125,14 @@ namespace Application.Services
             _unitOfWork.Repository<EntryLog>().DeleteRange(logs);
             await _unitOfWork.SaveChangesAsync();
         }
-        public async Task DeleteOldestLogs(EntryLogDeleteDto request)
+        public async Task DeleteOldestLogs(int cnt)
         {
-            if (!request.Cnt.HasValue)
-                throw new ArgumentException("Number of logs is required");
-
-            if (request.Cnt <= 0)
+  
+            if (cnt <= 0)
                 throw new ArgumentException("Number of logs must be greater than zero.");
 
-            if (request.StartDate.HasValue || request.EndDate.HasValue)
-                throw new ArgumentException("Please do not choose start or end date");
 
-            var specification = new DeleteLogsSpecification(request);
+            var specification = new DeleteLogsSpecification(new EntryLogDeleteDto { Cnt=cnt});
             
             var logs = await _unitOfWork.Repository<EntryLog>().ListAsync(specification);
 

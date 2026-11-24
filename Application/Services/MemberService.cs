@@ -31,6 +31,8 @@ namespace Application.Services
             return await _unitOfWork.Repository<Member>().GetByIdAsync(id);
         }
 
+
+
         public async Task<PagedResponseDto<MemberResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active)
         {
             var result = await _unitOfWork.Repository<Member>().GetPagedAsync(pageNumber, pageSize,m=>m.Active==active);
@@ -45,25 +47,23 @@ namespace Application.Services
         }
 
 
-        public async Task SoftDeleteAsync(int id)
+        public async Task SetActiveStatusAsync(int id,bool state)
         {
             var member = await _unitOfWork.Repository<Member>().GetByIdAsync(id);
+
             if (member == null)
                 throw new KeyNotFoundException("Member not found");
-            member.Active = false;
+
+
+            if (state == member.Active)
+                throw new InvalidOperationException("The active status is already set to the requested value.");
+
+            member.Active = state;
             _unitOfWork.Repository<Member>().Update(member);
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task RestoreAsync(int id)
-        {
-            var member = await _unitOfWork.Repository<Member>().GetByIdAsync(id);
-            if (member == null)
-                throw new KeyNotFoundException("Member not found");
-            member.Active = true;
-            _unitOfWork.Repository<Member>().Update(member);
-            await _unitOfWork.SaveChangesAsync();
-        }
+      
 
         public async Task PermanentDeleteAsync(int id)
         {
@@ -72,7 +72,6 @@ namespace Application.Services
                 throw new KeyNotFoundException("Member not found");
             _unitOfWork.Repository<Member>().Delete(member); 
             await _unitOfWork.SaveChangesAsync(); 
-
         }
 
         public async Task<PagedResponseDto<MemberResponseDto>> SearchAsync(MemberFilterDto request)

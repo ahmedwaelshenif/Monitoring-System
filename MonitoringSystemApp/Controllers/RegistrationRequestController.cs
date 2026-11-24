@@ -54,11 +54,17 @@ namespace MonitoringSystemApp.Controllers
         [HttpPost("")]
         public async Task<ActionResult> Add([FromForm] RegistrationRequestDto request)
         {
-            bool result = await _RegistrationRequestService.CreateAsync(request);
-            if (!result)
-                return BadRequest("You already have an accepted registration request.");
+            try
+            {
+                await _RegistrationRequestService.CreateAsync(request);
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
 
-            return StatusCode(StatusCodes.Status201Created);
+            
         }
 
 
@@ -67,7 +73,7 @@ namespace MonitoringSystemApp.Controllers
         {
             try
             {
-                await _RegistrationRequestService.MarkStatus(id, false);
+                await _RegistrationRequestService.RejectAsync(id);
             }
             catch (KeyNotFoundException ex)
             {
@@ -81,11 +87,11 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpPatch("approve/{id}")]
-        public async Task<IActionResult> ApproveRegistrationRequest(int id)
+        public async Task<IActionResult> ApproveRegistrationRequest(int id, [FromBody] List<int>LabIds)
         {
             try
             {
-                await _RegistrationRequestService.MarkStatus(id, true);
+                await _RegistrationRequestService.AcceptAsync(id, LabIds);
             }
             catch (KeyNotFoundException ex)
             {

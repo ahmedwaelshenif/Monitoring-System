@@ -30,7 +30,7 @@ namespace MonitoringSystemApp.Controllers
 
             try
             {
-                var result = await _labService.UpdateAsync(id, dto);
+                await _labService.UpdateAsync(id, dto);
             }
             catch (KeyNotFoundException ex)
             {

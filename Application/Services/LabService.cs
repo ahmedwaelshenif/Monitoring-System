@@ -66,7 +66,7 @@ namespace Application.Services
             };
         }
 
-        public async Task<bool> UpdateAsync(int id, UpdateLabDto update)
+        public async Task UpdateAsync(int id, UpdateLabDto update)
         {
             var lab= await _unitOfWork.Repository<Lab>().GetByIdAsync(id);
 
@@ -82,7 +82,6 @@ namespace Application.Services
 
             await _unitOfWork.SaveChangesAsync();
 
-            return true;
         }
 
         public async Task SoftDeleteAsync(int id)

@@ -21,6 +21,8 @@ namespace Application.DTOs.RequestDtos
 
         public Role Role { get; set; }
 
+        public List<int> LabIds { get; set; } = new List<int>();
+
 
     }
 }

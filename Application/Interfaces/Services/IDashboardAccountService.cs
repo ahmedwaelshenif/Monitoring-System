@@ -18,9 +18,7 @@ namespace Application.Interfaces.Services
 
         Task UpdateAsync(int id,UpdateDashboardAccountDto update);
 
-        Task Deactivate(int id);
-
-        Task Activate(int id);
+        Task SetActiveStatusAsync(int id, bool state);
 
         Task DeleteAsync(int id);
         Task<PagedResponseDto<DashboardAccountResponseDto>> SearchAsync(AccountFilterDto request);

@@ -62,7 +62,7 @@ namespace MonitoringSystemApp.Controllers
 
             try
             {
-                await _DashboardAccountService.Deactivate(id);
+                await _DashboardAccountService.SetActiveStatusAsync(id,false);
             }
             catch (KeyNotFoundException ex)
             {
@@ -77,7 +77,7 @@ namespace MonitoringSystemApp.Controllers
 
             try
             {
-                await _DashboardAccountService.Activate(id);
+                await _DashboardAccountService.SetActiveStatusAsync(id, true);
             }
             catch (KeyNotFoundException ex)
             {

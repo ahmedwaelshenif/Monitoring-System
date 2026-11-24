@@ -23,6 +23,9 @@ namespace Application.Interfaces.Repositories
 
         void DeleteRange(IEnumerable<T> entities);
 
+
+        Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
+
         Task<int> SaveChangesAsync();
 
 

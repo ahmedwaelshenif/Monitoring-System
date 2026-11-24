@@ -13,9 +13,7 @@ namespace Application.Interfaces.Services
         Task<Member?> GetByIdAsync(int id);
         Task<PagedResponseDto<MemberResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active);
         Task<PagedResponseDto<MemberResponseDto>> SearchAsync(MemberFilterDto request);
-
-        Task SoftDeleteAsync(int id);
-        Task RestoreAsync(int id);
+        Task SetActiveStatusAsync(int id, bool state);
         Task PermanentDeleteAsync(int id);
 
     }

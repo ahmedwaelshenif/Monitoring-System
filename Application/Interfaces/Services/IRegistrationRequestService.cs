@@ -13,11 +13,12 @@ namespace Application.Interfaces.Services
     {
         Task<RegistrationResponseDto?> GetByIdAsync(int id);
         Task<PagedResponseDto<RegistrationResponseDto>> GetAllAsync(int pageNumber, int pageSize);
-        Task<bool> CreateAsync(RegistrationRequestDto request);
-        //Task UpdateAsync(RegistrationRequestDto request);
+        Task CreateAsync(RegistrationRequestDto request);
+      
         Task DeleteAsync(int id);
 
-        Task MarkStatus(int id, Boolean status);
+        Task AcceptAsync(int id, List<int> LabIds);
+        Task RejectAsync(int id);
 
         Task<PagedResponseDto<RegistrationResponseDto>> SearchAsync(RegistrationRequestFilterDto request);
 

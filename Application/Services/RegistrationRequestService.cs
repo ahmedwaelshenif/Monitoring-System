@@ -29,12 +29,13 @@ namespace Application.Services
             _unitOfWork =unitOfWork;
         }
 
-        public async Task<bool> CreateAsync(RegistrationRequestDto request)
+        public async Task CreateAsync(RegistrationRequestDto request)
         {
-            // check member entity
-            int cnt = await _unitOfWork.Repository<Member>().CountAsync(m => m.MemberId == request.MemberId);
-            if (cnt > 0)
-                return false;
+          
+            bool exist = await _unitOfWork.Repository<Member>().AnyAsync(m => m.MemberId == request.MemberId);
+            if (exist)
+                throw new InvalidOperationException("This member already has access to the permitted labs.");
+
             var requests = await _unitOfWork.Repository<Registration_Request>().GetAllAsync(r => r.MemberId == request.MemberId && r.status== RequestStatus.Pending);
             foreach(var item in requests){
                 _unitOfWork.Repository<Registration_Request>().Delete(item);
@@ -43,33 +44,44 @@ namespace Application.Services
             Registration_Request req = await ToEnity(request);
             await _unitOfWork.Repository<Registration_Request>().AddAsync(req);
             await _unitOfWork.SaveChangesAsync();
-            return true;
         }
 
-        public async Task MarkStatus(int id, bool status)
-        {
-            Registration_Request? entity =
-                await _unitOfWork.Repository<Registration_Request>().GetByIdAsync(id);
 
-            if (entity == null)
+        public async Task AcceptAsync(int id, List<int> LabIds)
+        {
+            Registration_Request? request = await _unitOfWork.Repository<Registration_Request>().GetByIdAsync(id);
+
+            if (request == null)
                 throw new KeyNotFoundException($"Registration request with id {id} is not found.");
 
-            if (entity.status != RequestStatus.Pending)
-                throw new InvalidOperationException(
-                    "This request has already been processed.");
+            if (request.status != RequestStatus.Pending)
+                throw new InvalidOperationException("This registration request has already been processed.");
 
-            if (status)
-            {
 
-                var exists = await _unitOfWork.Repository<Member>().CountAsync(m => m.MemberId == entity.MemberId);
-                if (exists > 0)
-                    throw new InvalidOperationException($"A member with MemberId {entity.MemberId} already exists.");
 
-                Member member = await RequestToMember(entity);
-                await _unitOfWork.Repository<Member>().AddAsync(member);
-            }
-            entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
-            _unitOfWork.Repository<Registration_Request>().Update(entity);
+            var exists = await _unitOfWork.Repository<Member>().AnyAsync(m => m.MemberId == request.MemberId);
+            if (exists)
+                throw new InvalidOperationException($"A member with MemberId {request.MemberId} already exists.");
+
+            Member member = await RequestToMember(request, LabIds);
+            request.status = RequestStatus.Accepted;
+            await _unitOfWork.Repository<Member>().AddAsync(member);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task RejectAsync(int id)
+        {
+            Registration_Request? request = await _unitOfWork.Repository<Registration_Request>().GetByIdAsync(id);
+
+            if (request == null)
+                throw new KeyNotFoundException($"Registration request with id {id} is not found.");
+
+            if (request.status != RequestStatus.Pending)
+                throw new InvalidOperationException("This registration request has already been processed.");
+
+
+            
+            request.status = RequestStatus.Rejected;
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -175,21 +187,42 @@ namespace Application.Services
             return memoryStream.ToArray();
         }
 
-        private async Task<Member> RequestToMember(Registration_Request req)
+
+
+        private async Task<Member> RequestToMember(Registration_Request req,List<int> labIds)
         {
-            if (req == null)
-                return null;
-            Member member = new();
-            member.FaceImage = req.FaceImage;
-            member.IdImage = req.IdImage;
-            member.MemberId = req.MemberId;
-            member.FullName = req.FullName;
-            member.AcademicYear = req.AcademicYear;
-            member.Email = req.Email;
-            member.EmbeddingData = await _embeddingService.ExtractEmbeddingAsync(req.FaceImage);
+            ArgumentNullException.ThrowIfNull(req);
+
+            if (labIds == null || !labIds.Any())
+                throw new InvalidOperationException(
+                    "At least one lab must be assigned.");
+
+            var distinctLabIds = labIds.Distinct().ToList();
+
+            var labs = await _unitOfWork.Repository<Lab>()
+                .GetAllAsync(l => distinctLabIds.Contains(l.Id) && l.Active);
+
+            if (labs.Count() != distinctLabIds.Count)
+                throw new InvalidOperationException(
+                    "One or more selected labs do not exist or are inactive.");
+
+            Member member = new()
+            {
+                FaceImage = req.FaceImage,
+                IdImage = req.IdImage,
+                MemberId = req.MemberId,
+                FullName = req.FullName,
+                AcademicYear = req.AcademicYear,
+                Email = req.Email,
+                Labs = labs.ToList()
+            };
+
+            member.EmbeddingData =
+                await _embeddingService.ExtractEmbeddingAsync(req.FaceImage);
+
             return member;
         }
 
-      
+
     }
 }

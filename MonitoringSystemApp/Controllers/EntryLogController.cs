@@ -97,11 +97,11 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpDelete("Oldest")]
-        public async Task<IActionResult> DeleteOldestEntryLogs([FromQuery] EntryLogDeleteDto dto)
+        public async Task<IActionResult> DeleteOldestEntryLogs([FromQuery] int cnt)
         {
             try
             {
-                await _entryLogService.DeleteOldestLogs(dto);
+                await _entryLogService.DeleteOldestLogs(cnt);
                 return NoContent();
             }
             catch (ArgumentException ex)

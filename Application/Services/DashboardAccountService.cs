@@ -31,7 +31,7 @@ namespace Application.Services
 
         public async Task CreateAsync(DashboardAccountRequestDto account)
         {
-            DashboardAccount entity = ToEntity(account);
+            DashboardAccount entity = await ToEntity(account);
             await _unitOfWork.Repository<DashboardAccount>().AddAsync(entity);
             await _unitOfWork.SaveChangesAsync();
         }
@@ -62,31 +62,23 @@ namespace Application.Services
             };
         }
 
-        public async Task Deactivate(int id)
+        public async Task SetActiveStatusAsync(int id,bool state)
         {
             DashboardAccount? entity = await _unitOfWork.Repository<DashboardAccount>().GetByIdAsync(id);
             if (entity == null)
-            {
                 throw new KeyNotFoundException($"Account with id {id} is not found");
-            }
 
-            entity.IsActive = false;
+            if(entity.Role==Role.Admin)
+                throw new InvalidOperationException("Can't change Active Status for an admin");
+
+            if (state == entity.IsActive)
+                throw new InvalidOperationException("The active status is already set to the requested value.");
+
+            entity.IsActive = state;
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task Activate(int id)
-        {
-            DashboardAccount? entity = await _unitOfWork.Repository<DashboardAccount>().GetByIdAsync(id);
-            if (entity == null)
-            {
-                throw new KeyNotFoundException($"Account with id {id} is not found");
-            }
-
-
-            entity.IsActive = true;
-            await _unitOfWork.SaveChangesAsync();
-        }
-
+       
         public async Task UpdateAsync(int id,UpdateDashboardAccountDto update)
         {
             var acc = await _unitOfWork.Repository<DashboardAccount>().GetByIdAsync(id);
@@ -144,28 +136,36 @@ namespace Application.Services
         }
 
         //Helper Methods
-        public DashboardAccount ToEntity(DashboardAccountRequestDto dto)
+        private async Task<DashboardAccount> ToEntity(DashboardAccountRequestDto dto)
         {
             DashboardAccount acc = new();
             acc.Email = dto.Email;
             acc.FullName = dto.FullName;
             acc.Role = dto.Role;
 
+            if (dto.LabIds == null || !dto.LabIds.Any())
+                throw new InvalidOperationException("At least one lab must be assigned.");
+
+            var labs = await _unitOfWork.Repository<Lab>().GetAllAsync(l => dto.LabIds.Contains(l.Id) &&l.Active);
+
+            if (labs.Count() != dto.LabIds.Distinct().Count())
+                throw new KeyNotFoundException("One or more selected labs do not exist or are inactive.");
+
+            acc.Labs = labs.ToList();
             acc.PasswordHash = _passwordHasher.HashPassword(acc,dto.Password);
             return acc;
         }
-        public DashboardAccountResponseDto ToDto(DashboardAccount entity)
+        private DashboardAccountResponseDto ToDto(DashboardAccount entity)
         {
             if (entity == null)
                 return null;
-            DashboardAccountResponseDto ret = new();
-            ret.Id = entity.Id;
-            ret.FullName = entity.FullName;
-            ret.Email = entity.Email;
-            ret.Role = entity.Role;
-            ret.IsActive = entity.IsActive;
-
-            return ret;
+            return new DashboardAccountResponseDto {
+                Id = entity.Id,
+                FullName = entity.FullName,
+                Email = entity.Email,
+                Role = entity.Role,
+                IsActive = entity.IsActive,
+            };  
         }
 
       
