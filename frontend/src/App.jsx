@@ -3,9 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 const API_KEY = 'monitoring-admin-api-base'
 const navItems = [
   ['overview', 'Overview', '◫'], ['labs', 'Labs', '▦'], ['logs', 'Entry logs', '≋'],
-  ['members', 'Members', '♙'], ['accounts', 'Accounts', '♧'], ['requests', 'Registration requests', '▤'], ['warnings', 'Warnings', '⚑'],
+  ['visitors', 'Visitors', '♙'], ['accounts', 'Accounts', '♧'], ['requests', 'Registration requests', '▤'], ['warnings', 'Warnings', '⚑'],
 ]
 const localDateKey = (value) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+const nextDateStart = (dateKey) => { const value = new Date(`${dateKey}T12:00:00`); value.setDate(value.getDate() + 1); return `${localDateKey(value)}T00:00:00` }
 const dateText = (value) => value ? new Date(value).toLocaleString() : '—'
 const enumName = (value, choices) => choices[value] ?? String(value ?? '—')
 
@@ -59,7 +60,8 @@ async function downloadFile(base, path, defaultFilename = 'download.xlsx') {
 }
 
 function App() {
-  const [page, setPage] = useState('overview')
+  const initialPage = navItems.some(([id]) => id === window.location.hash.slice(1)) ? window.location.hash.slice(1) : 'overview'
+  const [page, setPage] = useState(initialPage)
   const [apiBase, setApiBase] = useState(localStorage.getItem(API_KEY) || '')
   const [draftBase, setDraftBase] = useState(localStorage.getItem(API_KEY) || '')
   const [refresh, setRefresh] = useState(0)
@@ -70,6 +72,19 @@ function App() {
   const [logsPreset, setLogsPreset] = useState('all')
 
   const request = useCallback((path, options) => api(apiBase, path, options), [apiBase])
+  const goToPage = useCallback((nextPage) => {
+    setPage(nextPage)
+    if (window.location.hash !== `#${nextPage}`) window.history.pushState({ page: nextPage }, '', `#${nextPage}`)
+  }, [])
+  useEffect(() => {
+    const syncPage = () => {
+      const pageFromUrl = window.location.hash.slice(1)
+      setPage(navItems.some(([id]) => id === pageFromUrl) ? pageFromUrl : 'overview')
+    }
+    window.addEventListener('popstate', syncPage)
+    window.addEventListener('hashchange', syncPage)
+    return () => { window.removeEventListener('popstate', syncPage); window.removeEventListener('hashchange', syncPage) }
+  }, [])
   const notify = (message, error = false) => {
     setNotice({ message, error })
     window.setTimeout(() => setNotice(null), 5000)
@@ -87,19 +102,20 @@ function App() {
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="side-label">WORKSPACE</div>
-      <nav>{navItems.map(([id, label, icon]) => <button key={id} className={`nav-item ${page === id ? 'active' : ''}`} onClick={() => { setPage(id); if (id === 'logs') setLogsPreset('all') }}><span className="nav-icon">{icon}</span><span>{label}</span></button>)}</nav>
+      <nav>{navItems.map(([id, label, icon]) => <button key={id} className={`nav-item ${page === id ? 'active' : ''}`} aria-current={page === id ? 'page' : undefined} onClick={() => { goToPage(id); if (id === 'logs') setLogsPreset('all') }}><span className="nav-icon">{icon}</span><span>{label}</span></button>)}</nav>
       <div className="sidebar-bottom"><div className="connection-dot" />API connection <span className="connection-text">{apiBase ? 'Custom' : 'Same origin'}</span></div>
     </aside>
     <main className="main-area">
       <header className="topbar">
         <div className="breadcrumb">Workspace <span>/</span> <strong>{navItems.find(x => x[0] === page)?.[1]}</strong></div>
+        <form className="api-config" onSubmit={saveBase}><label htmlFor="api-base">API address</label><input id="api-base" value={draftBase} onChange={e => setDraftBase(e.target.value)} placeholder="Same origin" /><button className="button button-light" type="submit">Save</button></form>
       </header>
       <div className="content">
         {notice && <div className={`notice ${notice.error ? 'notice-error' : ''}`}>{notice.message}<button aria-label="Dismiss" onClick={() => setNotice(null)}>×</button></div>}
-        {page === 'overview' && <Overview request={request} refresh={refresh} setPage={setPage} setLogsPreset={setLogsPreset} setSelectedLab={setSelectedLab} />}
-        {page === 'labs' && <Labs request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} setSelectedLab={setSelectedLab} goToPage={setPage} openModal={setModal} />}
+        {page === 'overview' && <Overview request={request} refresh={refresh} setPage={goToPage} setLogsPreset={setLogsPreset} setSelectedLab={setSelectedLab} />}
+        {page === 'labs' && <Labs request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} setSelectedLab={setSelectedLab} goToPage={goToPage} openModal={setModal} />}
         {page === 'logs' && <Logs request={request} apiBase={apiBase} refresh={refresh} selectedLab={selectedLab} setSelectedLab={setSelectedLab} preset={logsPreset} setPreset={setLogsPreset} askConfirm={askConfirm} notify={notify} />}
-        {page === 'members' && <Members request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
+        {page === 'visitors' && <Visitors request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
         {page === 'accounts' && <Accounts request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
         {page === 'requests' && <Requests request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
         {page === 'warnings' && <Warnings request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
@@ -179,7 +195,7 @@ function Overview({ request, refresh, setPage, setLogsPreset, setSelectedLab }) 
     <PageTitle eyebrow="ADMINISTRATION" title="Overview" description="A clear view of activity across your monitoring system." action={<button className="button button-primary" onClick={() => setPage('labs')}>Manage labs <span>→</span></button>} />
     {(labs.error || logs.error || daily.error) && <ErrorBox message={labs.error || logs.error || daily.error} />}
     <div className="stats-grid">
-      <StatCard title="Total labs" value={labs.data ?? '—'} hint="Active monitoring locations" icon="▦" />
+      <StatCard title="Total labs" value={labs.data ?? '—'} hint="Labs in the system" icon="▦" />
       <StatCard title="Accepted today" value={todayCounts?.accepted ?? (daily.loading ? '…' : '—')} hint="Successful entries · view logs" icon="✓" tone="green" onClick={() => { setSelectedLab(''); setLogsPreset('accepted'); setPage('logs') }} />
       <StatCard title="Rejected today" value={todayCounts?.rejected ?? (daily.loading ? '…' : '—')} hint="Denied entries · view logs" icon="×" tone="red" onClick={() => { setSelectedLab(''); setLogsPreset('rejected'); setPage('logs') }} />
       <StatCard title="Entries this week" value={daily.loading ? '…' : weekTotal} hint="Accepted and rejected" icon="↗" tone="blue" />
@@ -190,7 +206,7 @@ function Overview({ request, refresh, setPage, setLogsPreset, setSelectedLab }) 
     </div>
     <Panel title="Recent entry logs" subtitle="Latest activity recorded by the system" action={<button className="text-button" onClick={() => setPage('logs')}>View all logs <span>→</span></button>}>
       {logs.loading ? <div className="loading">Loading recent activity…</div> : recentLogs.length ? <Table headers={['Time', 'Member', 'Lab', 'Result']}>
-        {recentLogs.map(x => <tr key={x.id}><td>{dateText(x.eventTime)}</td><td>{x.member?.fullName || (x.memberId ? `#${x.memberId}` : 'Unidentified')}</td><td>{x.lab?.name || `Lab #${x.labId}`}</td><td><Status value={x.status} /></td></tr>)}
+        {recentLogs.map(x => <tr key={x.id}><td>{dateText(x.eventTime)}</td><td>{x.visitorName || (x.visitorId ? `#${x.visitorId}` : 'Unidentified')}</td><td>{x.labName || `Lab #${x.labId}`}</td><td><Status value={x.status} /></td></tr>)}
       </Table> : <Empty>No entry logs are available.</Empty>}
     </Panel>
   </>
@@ -248,13 +264,22 @@ function Logs({ request, apiBase, refresh, selectedLab, setSelectedLab, preset, 
   const [cleanupOpen, setCleanupOpen] = useState(false)
   const [range, setRange] = useState({ from: '', to: '', status: '' })
   const labs = useLoad(() => request('/lab/Active?pageNumber=1&pageSize=1000'), [request, refresh])
+  const visitors = useLoad(() => request('/visitor/Active?pageNumber=1&pageSize=1000'), [request, refresh])
   const load = useLoad(() => {
-    if (range.from && range.to) {
-      const fromIso = `${range.from}T00:00:00`
-      const toIso = `${range.to}T23:59:59`
-      return request(`/entryLog/date-range?fromDate=${encodeURIComponent(fromIso)}&toDate=${encodeURIComponent(toIso)}${range.status !== '' ? `&status=${range.status}` : ''}&pageNumber=${page}&pageSize=10`)
+    const hasDateFilter = Boolean(range.from || range.to)
+    if (range.from && range.to && range.to < range.from) throw new Error('The end date must be on or after the start date.')
+    if (range.from && range.to && !selectedLab && range.status === '') {
+      return request(`/entryLog/date-range?fromDate=${encodeURIComponent(`${range.from}T00:00:00`)}&toDate=${encodeURIComponent(nextDateStart(range.to))}&pageNumber=${page}&pageSize=10`)
     }
-    if (selectedLab) return request(`/entryLog/ByLab?LabId=${selectedLab}&PageNumber=${page}&PageSize=10`)
+    if (selectedLab && !hasDateFilter && range.status === '' && preset === 'all') return request(`/entryLog/ByLab?LabId=${selectedLab}&PageNumber=${page}&PageSize=10`)
+    if (selectedLab || hasDateFilter || range.status !== '') {
+      const query = new URLSearchParams({ pageNumber: String(page), pageSize: '10' })
+      if (selectedLab) query.set('LabId', selectedLab)
+      if (range.from) query.set('StartDate', `${range.from}T00:00:00`)
+      if (range.to) query.set('EndDate', nextDateStart(range.to))
+      if (range.status !== '') query.set('Status', range.status)
+      return request(`/entryLog/search?${query}`)
+    }
     if (preset === 'accepted' || preset === 'rejected') {
       const now = new Date()
       const from = `${localDateKey(now)}T00:00:00`
@@ -272,28 +297,28 @@ function Logs({ request, apiBase, refresh, selectedLab, setSelectedLab, preset, 
     <Panel title="Entry history" subtitle={load.data ? `${load.data.totalCount} records · ${filterLabel}` : 'Most recent records appear first'} action={<div className="panel-controls">{preset !== 'all' && <button className="text-button" onClick={() => { setPreset('all'); setPage(1) }}>Clear status filter</button>}<select className="select-control" value={selectedLab} onChange={e => { setSelectedLab(e.target.value); setPreset('all'); setPage(1) }}><option value="">All labs</option>{labs.data?.items?.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></div>}>
       <div className="panel-controls"><label>From <input type="date" value={range.from} onChange={e => { setRange(s => ({ ...s, from: e.target.value })); setPage(1) }} /></label><label>To <input type="date" value={range.to} onChange={e => { setRange(s => ({ ...s, to: e.target.value })); setPage(1) }} /></label><select className="select-control" value={range.status} onChange={e => setRange(s => ({ ...s, status: e.target.value }))}><option value="">Any decision</option><option value="0">Rejected</option><option value="1">Accepted</option></select><button className="button button-light" onClick={() => setRange({ from: '', to: '', status: '' })}>Clear dates</button></div>
       {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading entry logs…</div> : load.data?.items?.length ? <><Table headers={['Time', 'Member', 'Face image', 'Lab', 'Decision', 'Actions']}>
-        {load.data.items.map(x => <tr key={x.id} className="clickable-row" tabIndex="0" onClick={() => openLog(x)} onKeyDown={e => e.key === 'Enter' && openLog(x)}><td>{dateText(x.eventTime)}</td><td>{x.member?.fullName || (x.memberId ? `#${x.memberId}` : 'Unidentified')}</td><td>{x.faceImage || x.member?.faceImage ? avatar(x.faceImage || x.member?.faceImage, x.member?.fullName) : <span className="muted">—</span>}</td><td>{x.lab?.name || `Lab #${x.labId}`}</td><td><Status value={x.status} /></td><td><button className="icon-button danger" title="Delete entry log" onClick={e => { e.stopPropagation(); deleteLog(x) }}>⌫</button></td></tr>)}
+        {load.data.items.map(x => <tr key={x.id} className="clickable-row" tabIndex="0" onClick={() => openLog(x)} onKeyDown={e => e.key === 'Enter' && openLog(x)}><td>{dateText(x.eventTime)}</td><td>{x.visitorName || (x.visitorId ? `#${x.visitorId}` : 'Unidentified')}</td><td>{x.faceImage ? avatar(x.faceImage, x.visitorName) : <span className="muted">—</span>}</td><td>{x.labName || `Lab #${x.labId}`}</td><td><Status value={x.status} /></td><td><button className="icon-button danger" title="Delete entry log" onClick={e => { e.stopPropagation(); deleteLog(x) }}>⌫</button></td></tr>)}
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No logs match this selection.</Empty>}
     </Panel>
-    <RecordDetails title={`Entry log #${record?.id ?? ''}`} record={record} onClose={() => setRecord(null)} fields={record ? [['Log ID', `#${record.id}`], ['Event time', dateText(record.eventTime)], ['Decision', enumName(record.status, ['Rejected', 'Accepted'])], ['Member', record.member?.fullName || 'Unidentified'], ['Member ID', record.memberId ? `#${record.memberId}` : '—'], ['Email', record.member?.email || '—'], ['Lab', record.lab?.name || `Lab #${record.labId}`]] : []} images={record ? [['Face image', record.faceImage || record.member?.faceImage]] : []} />
-    {createOpen && <EntryLogModal labs={labs.data?.items || []} request={request} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); load.refresh(); notify('Entry log created.') }} onError={e => notify(e.message, true)} />}
+    <RecordDetails title={`Entry log #${record?.id ?? ''}`} record={record} onClose={() => setRecord(null)} fields={record ? [['Log ID', `#${record.id}`], ['Event time', dateText(record.eventTime)], ['Decision', enumName(record.status, ['Rejected', 'Accepted'])], ['Visitor', record.visitorName || 'Unidentified'], ['Visitor ID', record.visitorId ? `#${record.visitorId}` : '—'], ['Lab', record.labName || `Lab #${record.labId}`]] : []} images={record ? [['Face image', record.faceImage]] : []} />
+    {createOpen && <EntryLogModal labs={labs.data?.items || []} visitors={visitors.data?.items || []} request={request} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); load.refresh(); notify('Entry log created.') }} onError={e => notify(e.message, true)} />}
     {exportOpen && <ExportExcelModal labs={labs.data?.items || []} apiBase={apiBase} onClose={() => setExportOpen(false)} notify={notify} onError={e => notify(e.message, true)} />}
     {rotationOpen && <LogRotationModal request={request} onClose={() => setRotationOpen(false)} notify={notify} onError={e => notify(e.message, true)} />}
     {cleanupOpen && <CleanupLogsModal request={request} onClose={() => setCleanupOpen(false)} onCleaned={() => load.refresh()} askConfirm={askConfirm} notify={notify} onError={e => notify(e.message, true)} />}
   </>
 }
 
-function EntryLogModal({ labs, request, onClose, onSaved, onError }) {
+function EntryLogModal({ labs, visitors, request, onClose, onSaved, onError }) {
   const [busy, setBusy] = useState(false)
   async function submit(e) {
     e.preventDefault(); setBusy(true)
     const form = new FormData(e.currentTarget)
-    const memberId = form.get('memberId')
-    const body = { labId: Number(form.get('labId')), memberId: memberId ? Number(memberId) : null, eventTime: new Date(form.get('eventTime')).toISOString(), status: Number(form.get('status')) }
+    const visitorId = form.get('visitorId')
+    const body = { labId: Number(form.get('labId')), visitorId: visitorId ? Number(visitorId) : null, eventTime: new Date(form.get('eventTime')).toISOString(), status: Number(form.get('status')) }
     try { await request('/entryLog', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); onSaved() }
     catch (error) { onError(error) } finally { setBusy(false) }
   }
-  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><h2>Add entry log</h2><button className="icon-button" onClick={onClose}>×</button></div><form className="form-stack" onSubmit={submit}><label>Lab<select name="labId" required>{labs.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label><label>Member ID (optional)<input name="memberId" type="number" min="1" /></label><label>Event time<input name="eventTime" type="datetime-local" required defaultValue={localDateTimeValue()} /></label><label>Decision<select name="status"><option value="1">Accepted</option><option value="0">Rejected</option></select></label><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy}>{busy ? 'Saving…' : 'Create log'}</button></div></form></section></div>
+  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><h2>Add entry log</h2><button className="icon-button" onClick={onClose}>×</button></div><form className="form-stack" onSubmit={submit}><label>Lab<select name="labId" required>{labs.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label><label>Visitor (optional)<select name="visitorId"><option value="">Unidentified visitor</option>{visitors.map(v => <option key={v.id} value={v.id}>{v.fullName} · #{v.memberId}</option>)}</select></label><label>Event time<input name="eventTime" type="datetime-local" required defaultValue={localDateTimeValue()} /></label><label>Decision<select name="status"><option value="1">Accepted</option><option value="0">Rejected</option></select></label><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy || labs.length === 0}>{busy ? 'Saving…' : 'Create log'}</button></div></form></section></div>
 }
 function localDateTimeValue() { const now = new Date(); return `${localDateKey(now)}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` }
 
@@ -588,7 +613,7 @@ function CleanupLogsModal({ request, onClose, onCleaned, askConfirm, notify, onE
   )
 }
 
-function Members({ request, refresh, notify, askConfirm }) {
+function Visitors({ request, refresh, notify, askConfirm }) {
   const [page, setPage] = useState(1)
   const [draft, setDraft] = useState({ MemberId: '', FullName: '', Email: '', AcademicYear: '', Active: 'true' })
   const [filters, setFilters] = useState({})
@@ -598,18 +623,18 @@ function Members({ request, refresh, notify, askConfirm }) {
   const query = params.toString()
   const hasCriteria = Object.entries(filters).some(([key, value]) => key !== 'Active' && value !== '')
   const selectedActive = filters.Active === 'false' ? false : true
-  const load = useLoad(() => hasCriteria ? request(`/member/search?${query}`) : request(`/member/${selectedActive ? 'Active' : 'inactive'}?pageNumber=${page}&pageSize=10`), [request, refresh, query, hasCriteria, selectedActive])
-  const remove = member => askConfirm({ title: 'Deactivate this member?', message: `${member.fullName}'s record will be archived and can be restored later.`, confirmText: 'Deactivate member', danger: true }, async () => { try { await request(`/member/${member.id}`, { method: 'DELETE' }); notify('Member deactivated.'); load.refresh() } catch (e) { notify(e.message, true) } })
-  const restore = async member => { try { await request(`/member/${member.id}/restore`, { method: 'PUT' }); notify('Member restored.'); load.refresh() } catch (e) { notify(e.message, true) } }
-  const permanentDelete = member => askConfirm({ title: 'Permanently delete this member?', message: `This permanently removes ${member.fullName} and cannot be undone.`, confirmText: 'Permanently delete', danger: true }, async () => { try { await request(`/member/${member.id}/permanent`, { method: 'DELETE' }); notify('Member permanently deleted.'); load.refresh() } catch (e) { notify(e.message, true) } })
-  return <><PageTitle eyebrow="DIRECTORY" title="Members" description="Browse registered members and review their profile details." />
-    <Panel title="All members" subtitle={load.data ? `${load.data.totalCount} matching members` : 'Member records'}>
+  const load = useLoad(() => hasCriteria ? request(`/visitor/search?${query}`) : request(`/visitor/${selectedActive ? 'Active' : 'inactive'}?pageNumber=${page}&pageSize=10`), [request, refresh, query, hasCriteria, selectedActive])
+  const remove = visitor => askConfirm({ title: 'Deactivate this visitor?', message: `${visitor.fullName}'s access record will be archived and can be restored later.`, confirmText: 'Deactivate visitor', danger: true }, async () => { try { await request(`/visitor/${visitor.id}`, { method: 'DELETE' }); notify('Visitor deactivated.'); load.refresh() } catch (e) { notify(e.message, true) } })
+  const restore = async visitor => { try { await request(`/visitor/${visitor.id}/restore`, { method: 'PUT' }); notify('Visitor restored.'); load.refresh() } catch (e) { notify(e.message, true) } }
+  const permanentDelete = visitor => askConfirm({ title: 'Permanently delete this visitor?', message: `This permanently removes ${visitor.fullName} and cannot be undone.`, confirmText: 'Permanently delete', danger: true }, async () => { try { await request(`/visitor/${visitor.id}/permanent`, { method: 'DELETE' }); notify('Visitor permanently deleted.'); load.refresh() } catch (e) { notify(e.message, true) } })
+  return <><PageTitle eyebrow="DIRECTORY" title="Visitors" description="Browse people with monitoring access and review their profile details." />
+    <Panel title="All visitors" subtitle={load.data ? `${load.data.totalCount} matching visitors` : 'Registered visitor access'}>
       <FilterBar fields={[{ name: 'MemberId', label: 'Student ID', type: 'number', min: 1 }, { name: 'FullName', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'AcademicYear', label: 'Academic year', options: [['1', 'Year 1'], ['2', 'Year 2'], ['3', 'Year 3'], ['4', 'Year 4']] }, { name: 'Active', label: 'Status', options: [['true', 'Active'], ['false', 'Inactive']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft }) }} onClear={() => { const cleared = { MemberId: '', FullName: '', Email: '', AcademicYear: '', Active: 'true' }; setDraft(cleared); setFilters(cleared); setPage(1) }} />
-      {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading members…</div> : load.data?.items?.length ? <><Table headers={['Member', 'Email', 'Academic year', 'Student ID', 'Actions']}>
-        {load.data.items.map(m => <tr key={m.id} className="clickable-row" tabIndex="0" onClick={() => setRecord(m)} onKeyDown={e => e.key === 'Enter' && setRecord(m)}><td><div className="person-cell">{avatar(m.faceImage, m.fullName)}<strong>{m.fullName}</strong></div></td><td>{m.email}</td><td>Year {m.academicYear}</td><td className="muted">#{m.memberId || m.id}</td><td>{m.active ? <button className="icon-button danger" title="Deactivate member" onClick={e => { e.stopPropagation(); remove(m) }}>⌫</button> : <div className="row-actions"><button className="button button-light" onClick={e => { e.stopPropagation(); restore(m) }}>Restore</button><button className="button button-danger small" onClick={e => { e.stopPropagation(); permanentDelete(m) }}>Delete permanently</button></div>}</td></tr>)}
-      </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No members found.</Empty>}
+      {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading visitors…</div> : load.data?.items?.length ? <><Table headers={['Visitor', 'Email', 'Academic year', 'Student ID', 'Actions']}>
+        {load.data.items.map(m => <tr key={m.id} className="clickable-row" tabIndex="0" onClick={() => setRecord(m)} onKeyDown={e => e.key === 'Enter' && setRecord(m)}><td><div className="person-cell">{avatar(m.faceImage, m.fullName)}<strong>{m.fullName}</strong></div></td><td>{m.email}</td><td>Year {m.academicYear}</td><td className="muted">#{m.memberId || m.id}</td><td>{m.active ? <button className="icon-button danger" title="Deactivate visitor" onClick={e => { e.stopPropagation(); remove(m) }}>⌫</button> : <div className="row-actions"><button className="button button-light" onClick={e => { e.stopPropagation(); restore(m) }}>Restore</button><button className="button button-danger small" onClick={e => { e.stopPropagation(); permanentDelete(m) }}>Delete permanently</button></div>}</td></tr>)}
+      </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No visitors found.</Empty>}
     </Panel>
-    <RecordDetails title={record?.fullName || 'Member'} record={record} onClose={() => setRecord(null)} fields={record ? [['Student ID', record.memberId ? `#${record.memberId}` : `#${record.id}`], ['Full name', record.fullName], ['Email', record.email], ['Academic year', `Year ${record.academicYear}`]] : []} images={record ? [['Face image', record.faceImage], ['ID image', record.idImage]] : []} />
+    <RecordDetails title={record?.fullName || 'Visitor'} record={record} onClose={() => setRecord(null)} fields={record ? [['Visitor ID', `#${record.id}`], ['Student ID', record.memberId ? `#${record.memberId}` : '—'], ['Full name', record.fullName], ['Email', record.email], ['Academic year', `Year ${record.academicYear}`], ['Access status', record.active ? 'Active' : 'Inactive']] : []} images={record ? [['Face image', record.faceImage], ['ID image', record.idImage]] : []} />
   </>
 }
 function avatar(bytes, name) { return <span className="person-avatar">{bytes ? <img src={`data:image/jpeg;base64,${bytes}`} alt="" /> : name?.slice(0, 1)?.toUpperCase()}</span> }
@@ -635,7 +660,7 @@ function Accounts({ request, refresh, notify, askConfirm }) {
     <Panel title="All accounts" subtitle={load.data ? `${load.data.totalCount} matching dashboard accounts` : 'Account access and roles'}>
       <FilterBar fields={[{ name: 'Name', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'role', label: 'Role', options: [['1', 'Admin'], ['2', 'User']] }, { name: 'IsActive', label: 'Access status', options: [['true', 'Active'], ['false', 'Inactive']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft }) }} onClear={() => { setDraft({ Name: '', Email: '', role: '', IsActive: '' }); setFilters({}); setPage(1) }} />
       {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading accounts…</div> : load.data?.items?.length ? <><Table headers={['Account', 'Email', 'Role', 'Status', 'Actions']}>
-        {load.data.items.map(a => <tr key={a.id}><td><div className="account-cell"><span className="initial-avatar">{a.fullName?.slice(0, 1)?.toUpperCase()}</span><strong>{a.fullName}</strong></div></td><td>{a.email}</td><td><span className="role-pill">{enumName(a.role, { 1: 'Admin', 2: 'User' })}</span></td><td><span className={`access-state ${a.isActive ? 'is-active' : 'is-inactive'}`}><i />{a.isActive ? 'Active' : 'Inactive'}</span></td><td><div className="row-actions"><button className="button button-light" onClick={() => setEditing(a)}>Edit</button><button className="button button-light" onClick={() => toggle(a)}>{a.isActive ? 'Deactivate' : 'Activate'}</button><button className="icon-button danger" title="Delete account" onClick={() => remove(a)}>⌫</button></div></td></tr>)}
+        {load.data.items.map(a => <tr key={a.id}><td><div className="account-cell"><span className="initial-avatar">{a.fullName?.slice(0, 1)?.toUpperCase()}</span><strong>{a.fullName}</strong></div></td><td>{a.email}</td><td><span className="role-pill">{enumName(a.role, { 1: 'Admin', 2: 'User' })}</span></td><td><span className={`access-state ${a.isActive ? 'is-active' : 'is-inactive'}`}><i />{a.isActive ? 'Active' : 'Inactive'}</span></td><td><div className="row-actions"><button className="button button-light" onClick={() => setEditing(a)}>Edit</button>{a.role !== 1 && <button className="button button-light" onClick={() => toggle(a)}>{a.isActive ? 'Deactivate' : 'Activate'}</button>}<button className="icon-button danger" title="Delete account" onClick={() => remove(a)}>⌫</button></div></td></tr>)}
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No dashboard accounts found.</Empty>}
     </Panel>
     {(create || editing) && <AccountModal item={editing} onClose={() => { setCreate(false); setEditing(null) }} request={request} onSaved={() => { setCreate(false); setEditing(null); notify(editing ? 'Account updated.' : 'Account created.'); load.refresh() }} onError={e => notify(e.message, true)} />}
@@ -643,16 +668,20 @@ function Accounts({ request, refresh, notify, askConfirm }) {
 }
 function AccountModal({ item, onClose, request, onSaved, onError }) {
   const [busy, setBusy] = useState(false)
+  const [selectedLabIds, setSelectedLabIds] = useState([])
+  const labs = useLoad(() => request('/lab/Active?pageNumber=1&pageSize=1000'), [request])
   async function submit(e) {
     e.preventDefault(); setBusy(true); const data = new FormData(e.currentTarget)
     const fields = { fullName: data.get('fullName'), email: data.get('email'), role: Number(data.get('role')) }
+    if (!item) fields.labIds = selectedLabIds
     if (data.get('password')) fields.password = data.get('password')
+    if (!item && selectedLabIds.length === 0) { setBusy(false); onError(new Error('Select at least one lab for this account.')); return }
     try {
       await request(item ? `/dashboardAccount/${item.id}` : '/dashboardAccount/create', { method: item ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) })
       onSaved()
     } catch (error) { onError(error) } finally { setBusy(false) }
   }
-  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><div><span className="eyebrow">ACCOUNT ACCESS</span><h2>{item ? 'Edit account' : 'Add an account'}</h2></div><button className="icon-button" onClick={onClose}>×</button></div><form onSubmit={submit} className="form-stack"><label>Full name<input name="fullName" required defaultValue={item?.fullName || ''} /></label><label>Email address<input name="email" type="email" required defaultValue={item?.email || ''} /></label><label>{item ? 'New password (optional)' : 'Password'}<input name="password" type="password" required={!item} minLength="8" /></label><label>Role<select name="role" defaultValue={item?.role ?? 2}><option value="1">Admin</option><option value="2">User</option></select></label><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy}>{busy ? 'Saving…' : item ? 'Save changes' : 'Create account'}</button></div></form></section></div>
+  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><div><span className="eyebrow">ACCOUNT ACCESS</span><h2>{item ? 'Edit account' : 'Add an account'}</h2></div><button className="icon-button" onClick={onClose}>×</button></div><form onSubmit={submit} className="form-stack"><label>Full name<input name="fullName" required defaultValue={item?.fullName || ''} /></label><label>Email address<input name="email" type="email" required defaultValue={item?.email || ''} /></label><label>{item ? 'New password (optional)' : 'Password'}<input name="password" type="password" required={!item} minLength="8" /></label><label>Role<select name="role" defaultValue={item?.role ?? 2}><option value="1">Admin</option><option value="2">User</option></select></label>{!item && <div className="form-field"><strong>Assigned labs</strong><small>Select at least one lab. The backend requires a lab assignment when creating an account.</small>{labs.loading ? <div className="loading">Loading active labs…</div> : labs.error ? <ErrorBox message={labs.error} retry={labs.refresh} /> : labs.data?.items?.length ? <div className="check-list">{labs.data.items.map(lab => <label className="check-row" key={lab.id}><input type="checkbox" checked={selectedLabIds.includes(lab.id)} onChange={e => setSelectedLabIds(ids => e.target.checked ? [...ids, lab.id] : ids.filter(id => id !== lab.id))} /><span><strong>{lab.name}</strong><small>{lab.capacity} seats · Lab #{lab.id}</small></span></label>)}</div> : <Empty>No active labs available. Add or restore a lab before creating an account.</Empty>}</div>}<div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy || (!item && (labs.loading || !labs.data?.items?.length || selectedLabIds.length === 0))}>{busy ? 'Saving…' : item ? 'Save changes' : 'Create account'}</button></div></form></section></div>
 }
 
 function Requests({ request, refresh, notify, askConfirm }) {
@@ -661,6 +690,8 @@ function Requests({ request, refresh, notify, askConfirm }) {
   const [filters, setFilters] = useState({})
   const [record, setRecord] = useState(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [approval, setApproval] = useState(null)
+  const labs = useLoad(() => request('/lab/Active?pageNumber=1&pageSize=1000'), [request, refresh])
   const params = new URLSearchParams({ PageNumber: String(page), PageSize: '10' })
   Object.entries(filters).forEach(([key, value]) => { if (value !== '') params.set(key, value) })
   const query = params.toString()
@@ -668,6 +699,7 @@ function Requests({ request, refresh, notify, askConfirm }) {
   const load = useLoad(() => request(hasFilters ? `/registrationRequest/search?${query}` : `/registrationRequest?pageNumber=${page}&pageSize=10`), [request, refresh, query, hasFilters, page])
   function decide(item, action, onDone = () => {}) {
     const approving = action === 'approve'
+    if (approving) { setApproval({ item, onDone }); return }
     askConfirm({ title: `${approving ? 'Approve' : 'Reject'} this request?`, message: `${item.fullName}'s registration request will be marked ${approving ? 'accepted' : 'rejected'}.`, confirmText: approving ? 'Approve request' : 'Reject request', danger: !approving }, async () => {
       try { await request(`/registrationRequest/${action}/${item.id}`, { method: 'PATCH' }); notify(`Request ${approving ? 'approved' : 'rejected'}.`); load.refresh(); onDone() }
       catch (e) { notify(e.message, true) }
@@ -683,7 +715,21 @@ function Requests({ request, refresh, notify, askConfirm }) {
     </Panel>
     <RecordDetails title={record?.fullName || 'Registration request'} record={record} onClose={() => setRecord(null)} fields={record ? [['Request ID', `#${record.id}`], ['Member ID', `#${record.memberId}`], ['Full name', record.fullName], ['Email', record.email], ['Academic year', `Year ${record.academicYear}`], ['Submitted', dateText(record.submittedAt)], ['Status', <Status kind="request" value={record.status} />]] : []} images={record ? [['Face image', record.faceImage], ['ID image', record.idImage]] : []} actions={record?.status === 0 && <><button className="button button-light small" onClick={() => decide(record, 'reject', () => setRecord(null))}>Reject</button><button className="button button-primary small" onClick={() => decide(record, 'approve', () => setRecord(null))}>Approve</button></>} />
     {createOpen && <RegistrationModal request={request} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); load.refresh(); notify('Registration request submitted.') }} onError={e => notify(e.message, true)} />}
+    {approval && <ApproveRequestModal item={approval.item} labs={labs.data?.items || []} loading={labs.loading} error={labs.error} retry={labs.refresh} request={request} onClose={() => setApproval(null)} onError={e => notify(e.message, true)} onSaved={() => { approval.onDone(); setApproval(null); setRecord(null); load.refresh(); notify('Request approved and lab access assigned.') }} />}
   </>
+}
+function ApproveRequestModal({ item, labs, loading, error, retry, request, onClose, onSaved, onError }) {
+  const [selected, setSelected] = useState([])
+  const [busy, setBusy] = useState(false)
+  async function submit(e) {
+    e.preventDefault()
+    if (!selected.length) { onError(new Error('Select at least one active lab.')); return }
+    setBusy(true)
+    try { await request(`/registrationRequest/approve/${item.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(selected) }); onSaved() }
+    catch (error) { onError(error) }
+    finally { setBusy(false) }
+  }
+  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><div><span className="eyebrow">ASSIGN ACCESS</span><h2>Approve {item.fullName}</h2></div><button className="icon-button" onClick={onClose}>×</button></div><p className="modal-copy">Choose the active labs this visitor can enter. At least one lab is required.</p>{loading ? <div className="loading">Loading active labs…</div> : error ? <ErrorBox message={error} retry={retry} /> : labs.length ? <form className="form-stack" onSubmit={submit}><div className="check-list">{labs.map(lab => <label className="check-row" key={lab.id}><input type="checkbox" checked={selected.includes(lab.id)} onChange={e => setSelected(current => e.target.checked ? [...current, lab.id] : current.filter(id => id !== lab.id))} /><span><strong>{lab.name}</strong><small>{lab.capacity} seats · Lab #{lab.id}</small></span></label>)}</div><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy || selected.length === 0}>{busy ? 'Approving…' : `Approve and assign ${selected.length} lab${selected.length === 1 ? '' : 's'}`}</button></div></form> : <><Empty>No active labs available. Activate a lab before approving this request.</Empty><div className="modal-actions"><button className="button button-light" onClick={onClose}>Close</button></div></>}</section></div>
 }
 function RegistrationModal({ request, onClose, onSaved, onError }) {
   const [busy, setBusy] = useState(false)
@@ -738,7 +784,7 @@ function Warnings({ request, refresh, notify, askConfirm }) {
 function WarningModal({ labs, request, onClose, onSaved, onError }) {
   const [busy, setBusy] = useState(false)
   async function submit(e) { e.preventDefault(); setBusy(true); const form = new FormData(e.currentTarget); const body = { labId: Number(form.get('labId')), warning: Number(form.get('warning')) }; try { await request('/warning/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); onSaved() } catch (error) { onError(error) } finally { setBusy(false) } }
-  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><h2>Create warning</h2><button className="icon-button" onClick={onClose}>×</button></div><form className="form-stack" onSubmit={submit}><label>Lab<select name="labId" required>{labs.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label><label>Alert type<select name="warning"><option value="0">Food or drink detected</option><option value="1">Crowded</option></select></label><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy}>{busy ? 'Saving…' : 'Create warning'}</button></div></form></section></div>
+  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><h2>Create warning</h2><button className="icon-button" onClick={onClose}>×</button></div>{labs.length ? <form className="form-stack" onSubmit={submit}><label>Lab<select name="labId" required>{labs.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label><label>Alert type<select name="warning"><option value="0">Food or drink detected</option><option value="1">Crowded</option></select></label><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy}>{busy ? 'Saving…' : 'Create warning'}</button></div></form> : <><Empty>There are no active labs. Add or restore a lab before creating a warning.</Empty><div className="modal-actions"><button className="button button-light" onClick={onClose}>Close</button></div></>}</section></div>
 }
 
 export default App

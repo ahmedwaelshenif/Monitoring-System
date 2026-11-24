@@ -69,3 +69,29 @@
 .button-danger{background:#bd4e5c;color:#fff;box-shadow:0 3px 8px #bd4e5c22}
 .button-danger:hover{background:#a9404d}
 .confirm-backdrop{z-index:20}
+
+/* Calm motion and clearer selection states for the admin workflows. */
+.content{animation:workspace-enter .28s ease-out both}
+.panel,.stat-card,.button,.icon-button,.nav-item{transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,border-color .18s ease,color .18s ease}
+.panel{box-shadow:0 5px 18px #10274708}
+.panel:hover{box-shadow:0 9px 26px #1027470d}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 10px 25px #10274710}
+.button:not(:disabled):hover{transform:translateY(-1px)}
+.modal{animation:modal-enter .2s cubic-bezier(.2,.75,.25,1) both}
+.notice{animation:notice-enter .22s ease-out both}
+.form-stack input:focus-visible,.form-stack select:focus-visible,.filters-grid input:focus-visible,.filters-grid select:focus-visible,.select-control:focus-visible,.api-config input:focus-visible{outline:2px solid #7da7ec;outline-offset:2px}
+.check-list{display:grid;gap:8px;max-height:250px;overflow:auto;padding:2px}
+.check-row{display:flex!important;align-items:center;gap:11px!important;padding:11px 12px;border:1px solid #e7edf5;border-radius:9px;background:#fbfcfe;cursor:pointer;transition:border-color .16s,background-color .16s}
+.check-row:has(input:checked){border-color:#9bb9e8;background:#f0f5fd}
+.check-row input{width:16px!important;height:16px!important;accent-color:#173761;flex:none}
+.check-row>span{display:grid;gap:4px}
+.check-row strong{color:#30445f;font-size:11px}
+.check-row small,.form-field>small{color:#8d99aa;font-size:10px;font-weight:400}
+.form-field{display:grid;gap:8px}
+.form-field>strong{font-size:10px;color:#617089}
+.modal-copy{color:#7d899a;font-size:11px;line-height:1.6;margin:-8px 0 15px}
+@keyframes workspace-enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes modal-enter{from{opacity:0;transform:translateY(7px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes notice-enter{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media(max-width:740px){.api-config{gap:6px}.api-config input{min-width:110px}.check-list{max-height:40vh}}
