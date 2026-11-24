@@ -53,6 +53,10 @@ namespace MonitoringSystemApp.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
             return NoContent();
         }
 

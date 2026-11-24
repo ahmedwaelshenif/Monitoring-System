@@ -9,13 +9,26 @@ namespace Application.Specifications
         public EntryLogSpecification(EntryLogFilterDto filter)
         {
             AddCriteria(e =>
-                (!filter.LabId.HasValue || e.LabId == filter.LabId.Value) &&
+                (!filter.LabId.HasValue ||
+                    e.LabId == filter.LabId.Value) &&
 
-                (!filter.Status.HasValue || e.Status == filter.Status.Value) &&
+                (!filter.Status.HasValue ||
+                    e.Status == filter.Status.Value) &&
 
-                (!filter.StartDate.HasValue || e.EventTime >= filter.StartDate.Value) &&
+                (!filter.StartDate.HasValue ||
+                    e.EventTime >= filter.StartDate.Value) &&
 
-                (!filter.EndDate.HasValue || e.EventTime <= filter.EndDate.Value)
+                (!filter.EndDate.HasValue ||
+                    e.EventTime <= filter.EndDate.Value) &&
+
+                (string.IsNullOrEmpty(filter.FullName) ||
+                    e.Visitor.FullName.Contains(filter.FullName)) &&
+
+                (string.IsNullOrEmpty(filter.Email) ||
+                    e.Visitor.Email.Contains(filter.Email)) &&
+
+                (!filter.AcademicYear.HasValue ||
+                    e.Visitor.AcademicYear == filter.AcademicYear.Value)
             );
 
             AddInclude(e => e.Lab);

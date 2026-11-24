@@ -92,6 +92,19 @@ namespace Application.Services
             };
         }
 
+        public async Task<PagedResponseDto<VisitorResponseDto>> GetVisitorsbyLab(int id, PagedRequestDto pagination)
+        {
+            var visitors = await _unitOfWork.Repository<Visitor>().ListAsync(new VisitorByLabSpecification(id, pagination.PageNumber, pagination.PageSize));
+            int totalCount = await _unitOfWork.Repository<Visitor>().CountAsync(new VisitorByLabSpecification(id, pagination.PageNumber, pagination.PageSize));
+            return new PagedResponseDto<VisitorResponseDto>
+            {
+                Items = visitors.Select(ToDto).ToList(),
+                TotalCount = totalCount,
+                PageNumber = pagination.PageNumber,
+                PageSize = pagination.PageSize
+            };
+        }
+
         // Helper Methods
         private VisitorResponseDto ToDto(Visitor entity)
         {
@@ -154,5 +167,7 @@ namespace Application.Services
             visitor.Labs.Remove(lab);
             await _unitOfWork.SaveChangesAsync();
         }
+
+
     }
 }

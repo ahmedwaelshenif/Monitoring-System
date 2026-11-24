@@ -110,6 +110,8 @@ namespace Application.Services
             {
                 throw new KeyNotFoundException($"Account with id {id} is not found");
             }
+            if (acc.Role == Role.Admin)
+                throw new InvalidOperationException("Cannot delete an Admin");
             _unitOfWork.Repository<DashboardAccount>().Delete(acc);
             await _unitOfWork.SaveChangesAsync();
 

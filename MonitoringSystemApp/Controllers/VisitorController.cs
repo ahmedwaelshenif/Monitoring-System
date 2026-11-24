@@ -126,6 +126,14 @@ namespace MonitoringSystemApp.Controllers
             }
         }
 
+        [HttpGet("{labId}")]
+
+        public async Task<IActionResult> GetVisitorsbyLab(int labId, [FromQuery] PagedRequestDto pagination )
+        {
+            var result = await _visitorService.GetVisitorsbyLab(labId, pagination);
+            return Ok(result);
+
+        }
 
 
     }

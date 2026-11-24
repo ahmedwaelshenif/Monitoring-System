@@ -17,6 +17,7 @@ namespace Application.Interfaces.Services
 
         Task AddLabAsync(int memberId, int LabId);
         Task RemoveLabAsync(int memberId, int LabId);
+        Task<PagedResponseDto<VisitorResponseDto>> GetVisitorsbyLab(int id, PagedRequestDto pagination);
 
     }
 }
