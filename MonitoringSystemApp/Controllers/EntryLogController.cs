@@ -145,5 +145,24 @@ namespace MonitoringSystemApp.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("export/excel")]
+        public async Task<IActionResult> ExportAttendanceExcel(
+                                [FromQuery] DateTime fromDate,
+                                [FromQuery] DateTime toDate,
+                                [FromQuery] int? labId = null)
+        {
+            try
+            {
+                var fileBytes = await _entryLogService.ExportAttendanceToExcelAsync(fromDate, toDate, labId);
+                string fileName = $"Attendance_{fromDate:yyyyMMdd_HHmm}_to_{toDate:yyyyMMdd_HHmm}.xlsx";
+                string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                return File(fileBytes, contentType, fileName);
+            }
+            catch(ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

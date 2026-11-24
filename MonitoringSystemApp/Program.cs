@@ -4,6 +4,7 @@ using Application.Services;
 using Domain.Entities;
 using Infrastructure;
 using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using MonitoringSystemApp.Controllers;
 
@@ -56,6 +57,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IWarningService,
     WarningService>();
+
+builder.Services.AddScoped<
+    IEmailService,
+    EmailService>();
 
 
 builder.Services.AddScoped<IPasswordHasher<DashboardAccount>,

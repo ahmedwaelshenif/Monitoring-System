@@ -6,6 +6,7 @@ using Application.Specifications;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,16 +18,21 @@ namespace Application.Services
     public class RegistrationRequestService : IRegistrationRequestService
     {
         private readonly IEmbeddingService _embeddingService;
-
+        private readonly IEmailService _emailService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ILogger<RegistrationRequestService> _logger;
 
         public RegistrationRequestService(
             IEmbeddingService embeddingService,
-            IUnitOfWork unitOfWork
+            IUnitOfWork unitOfWork,
+            IEmailService emailService,
+            ILogger<RegistrationRequestService> logger
             )
         {
             _embeddingService = embeddingService;
-            _unitOfWork =unitOfWork;
+            _unitOfWork = unitOfWork;
+            _emailService = emailService;
+            _logger = logger;
         }
 
         public async Task<bool> CreateAsync(RegistrationRequestDto request)
@@ -71,6 +77,43 @@ namespace Application.Services
             entity.status = status ? RequestStatus.Accepted : RequestStatus.Rejected;
             _unitOfWork.Repository<Registration_Request>().Update(entity);
             await _unitOfWork.SaveChangesAsync();
+            try
+            {
+                if (status)
+                {
+                    await _emailService.SendEmailAsync(
+                        entity.Email,
+                        "Registration Approved",
+                        $"""
+                        <html>
+                            <body>
+                                <h2>Congratulations {entity.FullName}!</h2>
+                                <p>Your registration request has been approved.</p>
+                            </body>
+                        </html>
+                        """
+                    );
+                }
+                else
+                {
+                    await _emailService.SendEmailAsync(
+                        entity.Email,
+                        "Registration Rejected",
+                        $"""
+                        <html>
+                            <body>
+                                <h2>Hello {entity.FullName},</h2>
+                                <p>Your registration request for Student ID {entity.MemberId} has been rejected. Please submit a new request with clear and valid Information.</p>
+                            </body>
+                        </html>
+                        """
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send registration email to {Email}", entity.Email);
+            }
         }
 
         public async Task DeleteAsync(int id)

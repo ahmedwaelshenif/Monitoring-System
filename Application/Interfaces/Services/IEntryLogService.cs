@@ -23,5 +23,6 @@ namespace Application.Interfaces.Services
 
         Task DeleteLogsByDateRange(EntryLogDeleteDto request);
 
+        Task<byte[]> ExportAttendanceToExcelAsync(DateTime fromDate, DateTime toDate, int? labId = null);
     }
 }
