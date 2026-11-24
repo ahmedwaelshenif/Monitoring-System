@@ -239,6 +239,31 @@ namespace Infrastructure.Migrations
                     b.ToTable("LabMember");
                 });
 
+            modelBuilder.Entity("LogRotationConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastRunAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RetentionDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RunAtHourUtc")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LogRotationConfigs");
+                });
+
             modelBuilder.Entity("DashboardAccountLab", b =>
                 {
                     b.HasOne("Domain.Entities.DashboardAccount", null)
