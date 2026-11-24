@@ -4,6 +4,7 @@ using Application.Services;
 using Domain.Entities;
 using Infrastructure;
 using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using MonitoringSystemApp.Controllers;
 
@@ -20,6 +21,7 @@ builder.Services.AddHttpClient<IEmbeddingService, EmbeddingService>(client =>
 {
     client.BaseAddress = new Uri("http://127.0.0.1:8000/");
 });
+
 
 // Repositories
 
@@ -57,9 +59,18 @@ builder.Services.AddScoped<
     IWarningService,
     WarningService>();
 
+builder.Services.AddScoped<
+    IEmailService,
+    EmailService>();
+
+
 
 builder.Services.AddScoped<IPasswordHasher<DashboardAccount>,
     PasswordHasher<DashboardAccount>>();
+
+//Back ground worker
+builder.Services.AddHostedService<
+    LogRotationBackgroundService>();
 
 var app = builder.Build();
 

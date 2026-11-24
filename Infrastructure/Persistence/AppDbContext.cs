@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Lab> Labs { get; set; }
     public DbSet<EntryLog> EntryLogs { get; set; }
     public DbSet<Warning> Warnings { get; set; }
+    public DbSet<LogRotationConfig> LogRotationConfigs { get; set; }
     public AppDbContext(DbContextOptions<AppDbContext> options): base(options)
     {
 
