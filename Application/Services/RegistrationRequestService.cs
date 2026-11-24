@@ -3,6 +3,7 @@ using Application.DTOs.ResponseDtos;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Specifications;
+using DocumentFormat.OpenXml.Vml.Office;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 
 namespace Application.Services
@@ -73,6 +75,28 @@ namespace Application.Services
             request.status = RequestStatus.Accepted;
             await _unitOfWork.Repository<Member>().AddAsync(member);
             await _unitOfWork.SaveChangesAsync();
+
+
+            try
+            {
+                await _emailService.SendEmailAsync(
+                            request.Email,
+                            "Registration Approved",
+                            $"""
+                        <html>
+                            <body>
+                                <h2>Congratulations {request.FullName}!</h2>
+                                <p>Your registration request has been approved.</p>
+                            </body>
+                        </html>
+                        """
+                      );
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send registration email to {Email}", request.Email);
+            }
         }
 
         public async Task RejectAsync(int id)
@@ -90,41 +114,24 @@ namespace Application.Services
             request.status = RequestStatus.Rejected;
             await _unitOfWork.SaveChangesAsync();
             try
-            {
-                if (status)
-                {
-                    await _emailService.SendEmailAsync(
-                        entity.Email,
-                        "Registration Approved",
-                        $"""
-                        <html>
-                            <body>
-                                <h2>Congratulations {entity.FullName}!</h2>
-                                <p>Your registration request has been approved.</p>
-                            </body>
-                        </html>
-                        """
-                    );
-                }
-                else
-                {
-                    await _emailService.SendEmailAsync(
-                        entity.Email,
+            {     
+               await _emailService.SendEmailAsync(
+                        request.Email,
                         "Registration Rejected",
                         $"""
                         <html>
                             <body>
-                                <h2>Hello {entity.FullName},</h2>
-                                <p>Your registration request for Student ID {entity.MemberId} has been rejected. Please submit a new request with clear and valid Information.</p>
+                                <h2>Hello {request.FullName},</h2>
+                                <p>Your registration request for Student ID {request.MemberId} has been rejected. Please submit a new request with clear and valid Information.</p>
                             </body>
                         </html>
                         """
                     );
-                }
+                
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send registration email to {Email}", entity.Email);
+                _logger.LogError(ex, "Failed to send registration email to {Email}", request.Email);
             }
         }
 

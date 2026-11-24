@@ -86,4 +86,12 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+var password = builder.Configuration["EmailSettings:Password"];
+
+Console.WriteLine(
+    string.IsNullOrEmpty(password)
+        ? "Email password not configured"
+        : "Email password loaded successfully"
+);
+
 app.Run();
