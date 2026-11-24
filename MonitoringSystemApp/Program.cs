@@ -22,6 +22,7 @@ builder.Services.AddHttpClient<IEmbeddingService, EmbeddingService>(client =>
     client.BaseAddress = new Uri("http://127.0.0.1:8000/");
 });
 
+
 // Repositories
 
 builder.Services.AddScoped(
