@@ -82,17 +82,17 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("LabId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("MemberId")
+                    b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<int>("status")
+                    b.Property<int?>("VisitorId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("LabId");
 
-                    b.HasIndex("MemberId");
+                    b.HasIndex("VisitorId");
 
                     b.ToTable("EntryLogs");
                 });
@@ -118,48 +118,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Labs");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Member", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AcademicYear")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte[]>("EmbeddingData")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<byte[]>("FaceImage")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte[]>("IdImage")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<int>("MemberId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Members");
                 });
 
             modelBuilder.Entity("Domain.Entities.Registration_Request", b =>
@@ -203,6 +161,48 @@ namespace Infrastructure.Migrations
                     b.ToTable("Registration_Requests");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Visitor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AcademicYear")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("EmbeddingData")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<byte[]>("FaceImage")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("IdImage")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<int>("MemberId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Visitors");
+                });
+
             modelBuilder.Entity("Domain.Entities.Warning", b =>
                 {
                     b.Property<int>("Id")
@@ -224,19 +224,19 @@ namespace Infrastructure.Migrations
                     b.ToTable("Warnings");
                 });
 
-            modelBuilder.Entity("LabMember", b =>
+            modelBuilder.Entity("LabVisitor", b =>
                 {
                     b.Property<int>("LabsId")
                         .HasColumnType("int");
 
-                    b.Property<int>("MembersId")
+                    b.Property<int>("VisitorsId")
                         .HasColumnType("int");
 
-                    b.HasKey("LabsId", "MembersId");
+                    b.HasKey("LabsId", "VisitorsId");
 
-                    b.HasIndex("MembersId");
+                    b.HasIndex("VisitorsId");
 
-                    b.ToTable("LabMember");
+                    b.ToTable("LabVisitor");
                 });
 
             modelBuilder.Entity("LogRotationConfig", b =>
@@ -286,14 +286,14 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("LabId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Domain.Entities.Member", "Member")
+                    b.HasOne("Domain.Entities.Visitor", "Visitor")
                         .WithMany()
-                        .HasForeignKey("MemberId")
+                        .HasForeignKey("VisitorId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Lab");
 
-                    b.Navigation("Member");
+                    b.Navigation("Visitor");
                 });
 
             modelBuilder.Entity("Domain.Entities.Warning", b =>
@@ -306,7 +306,7 @@ namespace Infrastructure.Migrations
                     b.Navigation("Lab");
                 });
 
-            modelBuilder.Entity("LabMember", b =>
+            modelBuilder.Entity("LabVisitor", b =>
                 {
                     b.HasOne("Domain.Entities.Lab", null)
                         .WithMany()
@@ -314,9 +314,9 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Member", null)
+                    b.HasOne("Domain.Entities.Visitor", null)
                         .WithMany()
-                        .HasForeignKey("MembersId")
+                        .HasForeignKey("VisitorsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

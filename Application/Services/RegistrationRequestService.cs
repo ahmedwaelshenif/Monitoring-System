@@ -40,7 +40,7 @@ namespace Application.Services
         public async Task CreateAsync(RegistrationRequestDto request)
         {
           
-            bool exist = await _unitOfWork.Repository<Member>().AnyAsync(m => m.MemberId == request.MemberId);
+            bool exist = await _unitOfWork.Repository<Visitor>().AnyAsync(v => v.MemberId == request.MemberId);
             if (exist)
                 throw new InvalidOperationException("This member already has access to the permitted labs.");
 
@@ -67,13 +67,13 @@ namespace Application.Services
 
 
 
-            var exists = await _unitOfWork.Repository<Member>().AnyAsync(m => m.MemberId == request.MemberId);
+            var exists = await _unitOfWork.Repository<Visitor>().AnyAsync(v => v.MemberId == request.MemberId);
             if (exists)
                 throw new InvalidOperationException($"A member with MemberId {request.MemberId} already exists.");
 
-            Member member = await RequestToMember(request, LabIds);
+            Visitor visitor = await RequestToVisitor(request, LabIds);
             request.status = RequestStatus.Accepted;
-            await _unitOfWork.Repository<Member>().AddAsync(member);
+            await _unitOfWork.Repository<Visitor>().AddAsync(visitor);
             await _unitOfWork.SaveChangesAsync();
 
 
@@ -239,7 +239,7 @@ namespace Application.Services
 
 
 
-        private async Task<Member> RequestToMember(Registration_Request req,List<int> labIds)
+        private async Task<Visitor> RequestToVisitor(Registration_Request req,List<int> labIds)
         {
             ArgumentNullException.ThrowIfNull(req);
 
@@ -256,7 +256,7 @@ namespace Application.Services
                 throw new InvalidOperationException(
                     "One or more selected labs do not exist or are inactive.");
 
-            Member member = new()
+            Visitor visitor = new()
             {
                 FaceImage = req.FaceImage,
                 IdImage = req.IdImage,
@@ -267,10 +267,10 @@ namespace Application.Services
                 Labs = labs.ToList()
             };
 
-            member.EmbeddingData =
+            visitor.EmbeddingData =
                 await _embeddingService.ExtractEmbeddingAsync(req.FaceImage);
 
-            return member;
+            return visitor;
         }
 
 

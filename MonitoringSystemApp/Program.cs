@@ -40,8 +40,8 @@ builder.Services.AddScoped<
     RegistrationRequestService>();
 
 builder.Services.AddScoped<
-    IMemberService,
-    MemberService>();
+    IVisitorService,
+    VisitorService>();
 
 builder.Services.AddScoped<
     IDashboardAccountService,

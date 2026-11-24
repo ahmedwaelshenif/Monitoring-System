@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MonitoringSystemApp.Controllers
 {
     [ApiController]
-    [Route("registrationRequest")]
+    [Route("[controller]")]
     public class RegistrationRequestController : ControllerBase
     {
         private readonly IRegistrationRequestService _RegistrationRequestService;

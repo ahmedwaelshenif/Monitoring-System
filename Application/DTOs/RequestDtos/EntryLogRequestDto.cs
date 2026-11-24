@@ -10,7 +10,7 @@ namespace Application.DTOs.RequestDtos
     public class EntryLogRequestDto
     {
      
-        public int? MemberId { get; set; }
+        public int? VisitorId { get; set; }
 
         [Required]
         public int LabId { get; set; }

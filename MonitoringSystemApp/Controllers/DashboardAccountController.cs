@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MonitoringSystemApp.Controllers
 {
     [ApiController]
-    [Route("dashboardAccount")]
+    [Route("[controller]")]
     public class DashboardAccountController : ControllerBase
     {
         private readonly IDashboardAccountService _DashboardAccountService;

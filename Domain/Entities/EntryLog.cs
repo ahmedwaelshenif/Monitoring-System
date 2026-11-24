@@ -11,10 +11,10 @@ namespace Domain.Entities
         [Key]
         public int Id { get; set; }
 
-        public int? MemberId { get; set; }
+        public int? VisitorId { get; set; }
 
-        [ForeignKey(nameof(MemberId))]
-        public Member? Member { get; set; }
+      
+        public Visitor? Visitor { get; set; }
 
         public int ?LabId { get; set; }
 
@@ -25,6 +25,6 @@ namespace Domain.Entities
         public DateTime EventTime { get; set; }
 
         [Required]
-        public EntryStatus status { get; set; }
+        public EntryStatus Status { get; set; }
     }
 }

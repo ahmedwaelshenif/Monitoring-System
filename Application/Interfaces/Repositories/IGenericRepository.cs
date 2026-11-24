@@ -37,5 +37,8 @@ namespace Application.Interfaces.Repositories
 
         Task<int> CountAsync(
             ISpecification<T> specification);
+
+        public Task<T?> GetEntityWithSpecAsync(
+            ISpecification<T> specification);
     }
 }

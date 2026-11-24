@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Domain.Entities
 {
     
-    public class Member
+    public class Visitor
     {
         [Key]
         public int Id { get; set; }

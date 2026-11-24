@@ -132,5 +132,15 @@ namespace Infrastructure.Repositories
         {
             return await _dbSet.AnyAsync(predicate);
         }
+        public async Task<T?> GetEntityWithSpecAsync(
+            ISpecification<T> specification)
+        {
+            var query = SpecificationEvaluator.GetQuery(
+                _dbSet.AsQueryable(),
+                specification,
+                applyPaging: false);
+
+            return await query.FirstOrDefaultAsync();
+        }
     }
 }

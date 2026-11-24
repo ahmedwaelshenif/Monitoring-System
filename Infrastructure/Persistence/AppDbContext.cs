@@ -7,7 +7,7 @@ public class AppDbContext : DbContext
 {
 
     public DbSet<DashboardAccount> DashboardAccounts { get; set; }
-    public DbSet<Member>Members { get; set; }
+    public DbSet<Visitor> Visitors { get; set; }
     public DbSet<Registration_Request> Registration_Requests{ get; set; }
     public DbSet<Lab> Labs { get; set; }
     public DbSet<EntryLog> EntryLogs { get; set; }
@@ -22,9 +22,9 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<EntryLog>()
-            .HasOne(e => e.Member)
+            .HasOne(e => e.Visitor)
             .WithMany()
-            .HasForeignKey(e => e.MemberId)
+            .HasForeignKey(e => e.VisitorId)
             .OnDelete(DeleteBehavior.SetNull); // <-- SET NULL
 
 

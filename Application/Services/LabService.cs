@@ -122,6 +122,45 @@ namespace Application.Services
         }
 
 
+        public async Task AddVisitorAsync(int labId, int visitorId)
+        {
+            var lab = await _unitOfWork.Repository<Lab>().GetEntityWithSpecAsync(new LabWithVisitorsSpecification(labId));
+            if (lab == null)
+                throw new KeyNotFoundException("Lab doesn't exist");
+
+            if(!lab.Active)
+                throw new InvalidOperationException("Lab is Inactive");
+
+            var visitor = await _unitOfWork.Repository<Visitor>().GetByIdAsync(visitorId);
+            if (visitor == null)
+                throw new KeyNotFoundException("Member doesn't exist");
+
+            if(!visitor.Active)
+                throw new InvalidOperationException("Member is Inactive");
+
+            if (lab.Visitors.Any(m => m.MemberId == visitor.MemberId))
+                throw new InvalidOperationException("Member already registered in lab");
+            lab.Visitors.Add(visitor);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task RemoveVisitorAsync(int labId, int visitorId)
+        {
+            var lab = await _unitOfWork.Repository<Lab>().GetEntityWithSpecAsync(new LabWithVisitorsSpecification(labId));
+            if (lab == null)
+                throw new KeyNotFoundException("Lab doesn't exist");
+
+            var visitor = await _unitOfWork.Repository<Visitor>().GetByIdAsync(visitorId);
+            if (visitor == null)
+                throw new KeyNotFoundException("Member doesn't exist");
+
+            if (!lab.Visitors.Any(m => m.MemberId == visitor.MemberId))
+                throw new InvalidOperationException("Member isn't registered in lab");
+            lab.Visitors.Remove(visitor);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+
 
         //Helper Methods
 
@@ -142,7 +181,5 @@ namespace Application.Services
             labResponse.active = lab.Active;
             return labResponse;
         }
-
-
     }
 }

@@ -7,7 +7,7 @@ using Domain.Enums;
 namespace MonitoringSystemApp.Controllers
 {
     [ApiController]
-    [Route("warning")]
+    [Route("[controller]")]
     public class WarningController : ControllerBase
     {
         private readonly IWarningService _warningService;

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MonitoringSystemApp.Controllers
 {
     [ApiController]
-    [Route("entryLog")]
+    [Route("[controller]")]
     public class EntryLogController : ControllerBase
     {
         private readonly IEntryLogService _entryLogService;

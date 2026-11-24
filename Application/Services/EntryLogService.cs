@@ -60,7 +60,7 @@ namespace Application.Services
                 : EntryStatus.Rejected;
 
             return await _unitOfWork.Repository<EntryLog>().CountAsync(
-                e => e.status == targetStatus &&
+                e => e.Status == targetStatus &&
                      e.EventTime >= startOfDay &&
                      e.EventTime < endOfDay
             );
@@ -183,11 +183,11 @@ namespace Application.Services
             {
                 worksheet.Cell(row, 1).Value = index++;
                 worksheet.Cell(row, 2).Value = log.EventTime.ToString("yyyy-MM-dd HH:mm:ss");
-                worksheet.Cell(row, 3).Value = log.Member?.MemberId.ToString() ?? "N/A";
-                worksheet.Cell(row, 4).Value = log.Member?.FullName ?? "Unknown";
-                worksheet.Cell(row, 5).Value = log.Member?.AcademicYear.ToString() ?? "-";
+                worksheet.Cell(row, 3).Value = log.Visitor?.MemberId.ToString() ?? "N/A";
+                worksheet.Cell(row, 4).Value = log.Visitor?.FullName ?? "Unknown";
+                worksheet.Cell(row, 5).Value = log.Visitor?.AcademicYear.ToString() ?? "-";
                 worksheet.Cell(row, 6).Value = log.Lab?.Name ?? "N/A";
-                worksheet.Cell(row, 7).Value = log.status.ToString();
+                worksheet.Cell(row, 7).Value = log.Status.ToString();
                 // Alternating row styling
                 if (row % 2 == 0)
                     worksheet.Row(row).Style.Fill.BackgroundColor = XLColor.FromHtml("#F8FAFC");
@@ -253,8 +253,8 @@ namespace Application.Services
             {
                 EventTime = req.EventTime,
                 LabId = req.LabId,
-                MemberId = req.MemberId,
-                status = req.status
+                VisitorId = req.VisitorId,
+                Status = req.status
             };
         }
 
@@ -264,11 +264,11 @@ namespace Application.Services
             res.Id = entity.Id;
             res.EventTime = entity.EventTime;
             res.LabId = entity.LabId;
-            res.Lab = entity.Lab;
-            res.MemberId = entity.MemberId;
-            res.Member = entity.Member;
-            res.status = entity.status;
-            res.FaceImage = entity.Member?.FaceImage;
+            res.LabName=entity.Lab.Name;
+            res.VisitorId = entity.VisitorId;
+            res.VisitorName = entity.Visitor.FullName;
+            res.Status = entity.Status;
+            res.FaceImage = entity.Visitor?.FaceImage;
             return res;
         }    
     }

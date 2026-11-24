@@ -12,11 +12,11 @@ namespace Application.Specifications
                 l.EventTime >= fromDate &&
                 l.EventTime <= toDate &&
                 (!labId.HasValue || l.LabId == labId.Value) &&
-                l.status == EntryStatus.Accepted
+                l.Status == EntryStatus.Accepted
             );
 
             // Eagerly load Member and Lab in SQL:
-            AddInclude(l => l.Member);
+            AddInclude(l => l.Visitor);
             AddInclude(l => l.Lab);
 
             AddOrderBy(l => l.EventTime);

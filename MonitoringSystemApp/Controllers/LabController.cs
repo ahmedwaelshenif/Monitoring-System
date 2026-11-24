@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MonitoringSystemApp.Controllers
 {
     [ApiController]
-    [Route("lab")]
+    [Route("[controller]")]
     public class LabController : ControllerBase
     {
         private readonly ILabService _labService;
@@ -119,6 +119,44 @@ namespace MonitoringSystemApp.Controllers
                 return NotFound(new { message = ex.Message });
             }
             return NoContent();
+        }
+
+
+        [HttpPost("{labId}/visitors/{visitorId}")]
+        public async Task<IActionResult> AddVisitor(int labId, int visitorId)
+        {
+            try
+            {
+                await _labService.AddVisitorAsync(labId, visitorId);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+        [HttpDelete("{labId}/visitors/{visitorId}")]
+        public async Task<IActionResult> RemoveVisitor(int labId, int visitorId)
+        {
+            try
+            {
+                await _labService.RemoveVisitorAsync(labId, visitorId);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

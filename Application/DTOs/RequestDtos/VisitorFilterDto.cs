@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Application.DTOs.RequestDtos
 {
-    public class MemberFilterDto
+    public class VisitorFilterDto
     {
         public int? Id { get; set; }
 
