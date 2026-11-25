@@ -90,7 +90,12 @@ namespace Application.Services
             {
                 throw new KeyNotFoundException($"Account with id {id} is not found");
             }
-            if(update.FullName!=null) 
+            if (acc.Role == Role.Admin && update.Role==Role.User)
+            {
+                throw new InvalidOperationException("Can't change a role for an admin");
+            }
+
+            if (update.FullName!=null) 
                 acc.FullName = update.FullName;
 
             if (update.Email != null)

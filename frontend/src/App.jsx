@@ -23,6 +23,7 @@ function Icon({ name, size = 18, strokeWidth = 1.8, className = '' }) {
     'clipboard-check': <><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5h6a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1ZM8 13l2.5 2.5L16 10"/></>,
     'triangle-alert': <><path d="m10.3 4.3-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-2.7l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></>,
     'activity': <><path d="M3 12h4l3-8 4 16 3-8h4"/></>,
+    'brand-eye': <><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M5.5 12S8.2 7.5 12 7.5 18.5 12 18.5 12 15.8 16.5 12 16.5 5.5 12 5.5 12Z"/><circle cx="12" cy="12" r="2.2"/></>,
     'check': <><path d="m5 12 4 4L19 6"/></>,
     'building': <><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 21v-4h6v4M8 7h2m4 0h2M8 11h2m4 0h2"/></>,
     'arrow-up-right': <><path d="M7 17 17 7M7 7h10v10"/></>,
@@ -48,6 +49,15 @@ const dateText = (value) => value ? new Date(value).toLocaleString() : '—'
 const enumName = (value, choices) => choices[value] ?? String(value ?? '—')
 const alertName = value => enumName(value, ['Food or drink detected', 'Crowded'])
 const getMemberId = record => record?.memberId ?? record?.MemberId ?? record?.memberID ?? record?.MemberID ?? null
+function buildMemberIdsByVisitorId(activeItems = [], inactiveItems = []) {
+  const byId = new Map()
+  for (const visitor of [...activeItems, ...inactiveItems]) {
+    const id = visitor.id ?? visitor.Id
+    if (id != null) byId.set(String(id), getMemberId(visitor))
+  }
+  return byId
+}
+const resolveEntryLogMemberId = (log, memberIdsByVisitorId) => getMemberId(log) ?? memberIdsByVisitorId.get(String(log?.visitorId ?? log?.VisitorId)) ?? null
 
 async function api(base, path, options = {}) {
   const root = base.trim().replace(/\/$/, '')
@@ -145,7 +155,7 @@ function App() {
       </header>
       <div className="content">
         {notice && <div className={`notice ${notice.error ? 'notice-error' : ''}`}>{notice.message}<button aria-label="Dismiss" onClick={() => setNotice(null)}><Icon name="close" size={16} /></button></div>}
-        {page === 'overview' && <><Overview request={request} refresh={refresh} setPage={goToPage} setLogsPreset={setLogsPreset} setSelectedLab={setSelectedLab} /><CampusPulse request={request} refresh={refresh} openLabDetails={openLabDetails} /></>}
+        {page === 'overview' && <><Overview request={request} refresh={refresh} setPage={goToPage} setLogsPreset={setLogsPreset} setSelectedLab={setSelectedLab} /><CampusPulse request={request} refresh={refresh} openLabDetails={openLabDetails} goToPage={goToPage} /></>}
         {page === 'labs' && <Labs request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} setSelectedLab={setSelectedLab} goToPage={goToPage} openModal={setModal} openLabDetails={openLabDetails} />}
         {page === 'lab-detail' && <LabDetails labId={labDetailId} request={request} refresh={refresh} goBack={() => goToPage('labs')} goToPage={goToPage} setSelectedLab={setSelectedLab} />}
         {page === 'logs' && <Logs request={request} apiBase={apiBase} refresh={refresh} selectedLab={selectedLab} setSelectedLab={setSelectedLab} preset={logsPreset} setPreset={setLogsPreset} askConfirm={askConfirm} notify={notify} />}
@@ -157,13 +167,8 @@ function App() {
     </main>
     <footer className="site-footer">
       <div className="footer-inner">
-        <div className="footer-brand"><span className="footer-mark"><Icon name="activity" size={19} /></span><span><strong>MONITOR</strong><small>CONTROL CENTER</small></span></div>
+        <div className="footer-brand"><span className="footer-mark"><Icon name="brand-eye" size={19} /></span><span><strong>MONITOR</strong><small>CONTROL CENTER</small></span></div>
         <p>Monitoring System · Operations and access management</p>
-        <nav className="footer-socials" aria-label="Social media">
-          <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" aria-label="Instagram"><Icon name="instagram" size={20} /></a>
-          <a href="https://www.facebook.com/" target="_blank" rel="noreferrer" aria-label="Facebook"><Icon name="facebook" size={20} /></a>
-          <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" aria-label="LinkedIn"><Icon name="linkedin" size={20} /></a>
-        </nav>
       </div>
       <div className="footer-bottom">© {new Date().getFullYear()} Monitoring System</div>
     </footer>
@@ -248,9 +253,8 @@ function Overview({ request, refresh, setPage, setLogsPreset, setSelectedLab }) 
   const acceptedRate = todayTotal ? (todayCounts.accepted / todayTotal) * 100 : 0
   return <>
     <section className="overview-hero">
-      <div className="overview-copy"><span className="hero-kicker"><i /> MONITORING SYSTEM · OPERATIONS</span><h1>Your operations,<br /><em>in clear view.</em></h1><p>Entry activity, facility health, and access operations in one place.</p><div className="hero-actions"><button className="button button-hero" onClick={() => setPage('labs')}>Manage facilities <Icon name="arrow-up-right" size={15} /></button><button className="hero-link" onClick={() => setPage('logs')}>Review entry activity <Icon name="arrow-right" size={14} /></button></div></div>
-      <div className="hero-art" aria-hidden="true"><div className="hero-orbit orbit-one" /><div className="hero-orbit orbit-two" /><div className="hero-orbit orbit-three" /><div className="hero-center"><Icon name="activity" size={37} /></div><div className="hero-node node-one"><Icon name="shield-check" size={16} /></div><div className="hero-node node-two"><Icon name="building" size={16} /></div><div className="hero-node node-three"><Icon name="door-open" size={16} /></div><div className="hero-caption">ACCESS<br /><b>MONITORING</b></div></div>
-      <div className="hero-date"><span>LOCAL DATE</span><strong>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</strong></div>
+      <div className="overview-copy"><h1>Your operations,<br /><em>in clear view.</em></h1></div>
+      <div className="hero-art" aria-hidden="true"><div className="hero-orbit orbit-one" /><div className="hero-orbit orbit-two" /><div className="hero-orbit orbit-three" /><div className="hero-center"><Icon name="brand-eye" size={37} /></div><div className="hero-node node-one"><Icon name="shield-check" size={16} /></div><div className="hero-node node-two"><Icon name="building" size={16} /></div><div className="hero-node node-three"><Icon name="door-open" size={16} /></div><div className="hero-caption">ACCESS<br /><b>MONITORING</b></div></div>
     </section>
     {(labs.error || daily.error) && <ErrorBox message={labs.error || daily.error} />}
     <div className="stats-grid">
@@ -273,7 +277,7 @@ function WeekChart({ data, loading }) {
   return <div className="chart" aria-label="Accepted and rejected entry counts over the last seven days"><div className="chart-y"><span>{max}</span><span>{Math.round(max / 2)}</span><span>0</span></div><div className="chart-bars">{data.map(row => { const a = row.accepted / max * 100, r = row.rejected / max * 100; const label = new Date(`${row.day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); return <div className="chart-day" key={row.day}><div className="chart-hover-info"><strong>{label}</strong><span>Accepted: {row.accepted}</span><span>Rejected: {row.rejected}</span><b>Total: {row.accepted + row.rejected}</b></div><div className="bar-stack"><div className="bar rejected-bar" style={{ height: `${r}%` }} /><div className="bar accepted-bar" style={{ height: `${a}%` }} /></div><span>{label.split(',')[0]}</span></div> })}</div></div>
 }
 
-function CampusPulse({ request, refresh, openLabDetails }) {
+function CampusPulse({ request, refresh, openLabDetails, goToPage }) {
   const [page, setPage] = useState(1)
   const pageSize = 4
   const labs = useLoad(() => request(`/lab/Active?pageNumber=${page}&pageSize=${pageSize}`), [request, refresh, page])
@@ -299,9 +303,9 @@ function CampusPulse({ request, refresh, openLabDetails }) {
     <section className="campus-pulse-section">
     <div className="campus-pulse-heading"><div><h2>Facility network</h2><p>Lab access, warnings, and recent activity in one view.</p></div><button className="button button-light" onClick={refreshAll}><Icon name="refresh" size={15} /> Refresh</button></div>
     <div className="map-stats">
-      <article><span>Active labs</span><strong>{labs.data?.totalCount ?? '—'}</strong><small>Current facilities</small></article>
-      <article><span>Permitted members</span><strong>{memberCounts.loading ? '…' : totalMembers}</strong><small>Across labs on this page</small></article>
-      <article><span>Reported warnings</span><strong className={warnings.data?.totalCount ? 'has-map-warnings' : ''}>{warnings.data?.totalCount ?? '—'}</strong><small>Latest warning records</small></article>
+      <button type="button" className="map-stat-card" onClick={() => goToPage('labs')}><span>Active labs</span><strong>{labs.data?.totalCount ?? '—'}</strong><small>Current facilities · view labs</small></button>
+      <button type="button" className="map-stat-card" onClick={() => goToPage('visitors')}><span>Permitted members</span><strong>{memberCounts.loading ? '…' : totalMembers}</strong><small>Across labs on this page · view visitors</small></button>
+      <button type="button" className="map-stat-card" onClick={() => goToPage('warnings')}><span>Reported warnings</span><strong className={warnings.data?.totalCount ? 'has-map-warnings' : ''}>{warnings.data?.totalCount ?? '—'}</strong><small>Latest warning records · view warnings</small></button>
     </div>
     {(labs.error || warnings.error || activity.error) && <ErrorBox message={labs.error || warnings.error || activity.error} retry={refreshAll} />}
     {labs.loading ? <div className="loading">Loading campus pulse…</div> : rooms.length ? <div className="campus-pulse-layout">
@@ -369,6 +373,7 @@ function LabDetails({ labId, request, refresh, goBack, goToPage, setSelectedLab 
   const [memberPage, setMemberPage] = useState(1)
   const [busy, setBusy] = useState('')
   const [feedback, setFeedback] = useState(null)
+  const [selectedLog, setSelectedLog] = useState(null)
   const lab = useLoad(async () => {
     if (!labId) throw new Error('No lab was selected.')
     for (const active of [true, false]) {
@@ -378,6 +383,13 @@ function LabDetails({ labId, request, refresh, goBack, goToPage, setSelectedLab 
     throw new Error(`Lab #${labId} could not be found.`)
   }, [request, refresh, labId])
   const members = useLoad(() => labId ? request(`/visitor/${labId}?PageNumber=${memberPage}&PageSize=10`) : Promise.resolve({ items: [] }), [request, refresh, labId, memberPage])
+  const visitors = useLoad(() => request('/visitor/Active?pageNumber=1&pageSize=1000'), [request, refresh])
+  const inactiveVisitors = useLoad(() => request('/visitor/inactive?pageNumber=1&pageSize=1000'), [request, refresh])
+  const memberIdsByVisitorId = useMemo(
+    () => buildMemberIdsByVisitorId(visitors.data?.items, inactiveVisitors.data?.items),
+    [visitors.data, inactiveVisitors.data]
+  )
+  const resolveLogMemberId = log => resolveEntryLogMemberId(log, memberIdsByVisitorId)
   const logs = useLoad(() => labId ? request(`/entryLog/ByLab?LabId=${labId}&PageNumber=1&PageSize=5`) : Promise.resolve({ items: [] }), [request, refresh, labId])
 
   async function updateMembership(action, rawId) {
@@ -421,10 +433,11 @@ function LabDetails({ labId, request, refresh, goBack, goToPage, setSelectedLab 
         </Table><Pager page={memberPage} total={members.data.totalPages} onPage={setMemberPage} /></> : <Empty>No visitors are currently assigned to this lab.</Empty>}
       </Panel>
       <Panel title="Recent logs" subtitle="Latest entry activity recorded for this lab" action={<button className="text-button" onClick={() => { setSelectedLab(String(labId)); goToPage('logs') }}>View all logs <Icon name="arrow-right" size={14} /></button>}>
-        {logs.error ? <ErrorBox message={logs.error} retry={logs.refresh} /> : logs.loading ? <div className="loading">Loading recent logs…</div> : logs.data?.items?.length ? <Table headers={['Time', 'Visitor', 'Decision']}>
-          {logs.data.items.map(item => <tr key={item.id}><td>{dateText(item.eventTime)}</td><td>{item.visitorName || (item.visitorId ? `Visitor #${item.visitorId}` : 'Unidentified visitor')}</td><td><Status value={item.status} /></td></tr>)}
+        {logs.error ? <ErrorBox message={logs.error} retry={logs.refresh} /> : logs.loading ? <div className="loading">Loading recent logs…</div> : logs.data?.items?.length ? <Table headers={['Time', 'Member', 'Member ID', 'Face image', 'Lab', 'Decision']}>
+          {logs.data.items.map(item => { const memberId = resolveLogMemberId(item); return <tr key={item.id} className="clickable-row" tabIndex="0" onClick={() => setSelectedLog(item)} onKeyDown={e => e.key === 'Enter' && setSelectedLog(item)}><td>{dateText(item.eventTime)}</td><td>{item.visitorName || (item.visitorId ? `#${item.visitorId}` : 'Unidentified')}</td><td>{memberId != null && memberId !== '' ? `#${memberId}` : '—'}</td><td>{item.faceImage ? avatar(item.faceImage, item.visitorName) : <span className="muted">—</span>}</td><td>{item.labName || record.name || `Lab #${item.labId}`}</td><td><Status value={item.status} /></td></tr> })}
         </Table> : <Empty>No entry logs have been recorded for this lab.</Empty>}
       </Panel>
+      <RecordDetails title={`Entry log #${selectedLog?.id ?? ''}`} record={selectedLog} onClose={() => setSelectedLog(null)} fields={selectedLog ? [['Log ID', `#${selectedLog.id}`], ['Event time', dateText(selectedLog.eventTime)], ['Decision', enumName(selectedLog.status, ['Rejected', 'Accepted'])], ['Visitor', selectedLog.visitorName || 'Unidentified'], ['Visitor ID', selectedLog.visitorId ? `#${selectedLog.visitorId}` : '—'], ['Member ID', resolveLogMemberId(selectedLog) != null && resolveLogMemberId(selectedLog) !== '' ? `#${resolveLogMemberId(selectedLog)}` : '—'], ['Lab', selectedLog.labName || record.name || `Lab #${selectedLog.labId}`]] : []} images={selectedLog ? [['Face image', selectedLog.faceImage]] : []} />
     </>}
   </>
 }
@@ -456,15 +469,11 @@ function Logs({ request, apiBase, refresh, selectedLab, setSelectedLab, preset, 
   const labs = useLoad(() => request('/lab/Active?pageNumber=1&pageSize=1000'), [request, refresh])
   const visitors = useLoad(() => request('/visitor/Active?pageNumber=1&pageSize=1000'), [request, refresh])
   const inactiveVisitors = useLoad(() => request('/visitor/inactive?pageNumber=1&pageSize=1000'), [request, refresh])
-  const memberIdsByVisitorId = useMemo(() => {
-    const byId = new Map()
-    for (const visitor of [...(visitors.data?.items ?? []), ...(inactiveVisitors.data?.items ?? [])]) {
-      const id = visitor.id ?? visitor.Id
-      if (id != null) byId.set(String(id), getMemberId(visitor))
-    }
-    return byId
-  }, [visitors.data, inactiveVisitors.data])
-  const resolveLogMemberId = log => getMemberId(log) ?? memberIdsByVisitorId.get(String(log?.visitorId ?? log?.VisitorId)) ?? null
+  const memberIdsByVisitorId = useMemo(
+    () => buildMemberIdsByVisitorId(visitors.data?.items, inactiveVisitors.data?.items),
+    [visitors.data, inactiveVisitors.data]
+  )
+  const resolveLogMemberId = log => resolveEntryLogMemberId(log, memberIdsByVisitorId)
   const load = useLoad(() => {
     const hasDateFilter = Boolean(range.from || range.to)
     const hasVisitorFilter = Boolean(appliedVisitorFilters.memberId || appliedVisitorFilters.fullName.trim() || appliedVisitorFilters.email.trim() || appliedVisitorFilters.academicYear)
@@ -928,20 +937,26 @@ function Accounts({ request, refresh, notify, askConfirm }) {
 }
 function AccountModal({ item, onClose, request, onSaved, onError }) {
   const [busy, setBusy] = useState(false)
+  const [role, setRole] = useState(Number(item?.role ?? 2))
   const [selectedLabIds, setSelectedLabIds] = useState([])
   const labs = useLoad(() => request('/lab/Active?pageNumber=1&pageSize=1000'), [request])
+  const isEditingAdmin = Boolean(item && Number(item.role) === 1)
+  const isCreatingAdmin = !item && role === 1
+  const activeLabIds = useMemo(() => (labs.data?.items ?? []).map(lab => lab.id), [labs.data])
+  const effectiveLabIds = isCreatingAdmin ? activeLabIds : selectedLabIds
+
   async function submit(e) {
     e.preventDefault(); setBusy(true); const data = new FormData(e.currentTarget)
-    const fields = { fullName: data.get('fullName'), email: data.get('email'), role: Number(data.get('role')) }
-    if (!item) fields.labIds = selectedLabIds
+    const fields = { fullName: data.get('fullName'), email: data.get('email'), role: isEditingAdmin ? Number(item.role) : role }
+    if (!item) fields.labIds = effectiveLabIds
     if (data.get('password')) fields.password = data.get('password')
-    if (!item && selectedLabIds.length === 0) { setBusy(false); onError(new Error('Select at least one lab for this account.')); return }
+    if (!item && effectiveLabIds.length === 0) { setBusy(false); onError(new Error('Select at least one lab for this account.')); return }
     try {
       await request(item ? `/dashboardAccount/${item.id}` : '/dashboardAccount/create', { method: item ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) })
       onSaved()
     } catch (error) { onError(error) } finally { setBusy(false) }
   }
-  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><div><span className="eyebrow">ACCOUNT ACCESS</span><h2>{item ? 'Edit account' : 'Add an account'}</h2></div><button className="icon-button" onClick={onClose}><Icon name="close" size={16} /></button></div><form onSubmit={submit} className="form-stack"><label>Full name<input name="fullName" required defaultValue={item?.fullName || ''} /></label><label>Email address<input name="email" type="email" required defaultValue={item?.email || ''} /></label><label>{item ? 'New password (optional)' : 'Password'}<input name="password" type="password" required={!item} minLength="8" /></label><label>Role<select name="role" defaultValue={item?.role ?? 2}><option value="1">Admin</option><option value="2">User</option></select></label>{!item && <div className="form-field"><strong>Assigned labs</strong><small>Select at least one lab. The backend requires a lab assignment when creating an account.</small>{labs.loading ? <div className="loading">Loading active labs…</div> : labs.error ? <ErrorBox message={labs.error} retry={labs.refresh} /> : labs.data?.items?.length ? <div className="check-list">{labs.data.items.map(lab => <label className="check-row" key={lab.id}><input type="checkbox" checked={selectedLabIds.includes(lab.id)} onChange={e => setSelectedLabIds(ids => e.target.checked ? [...ids, lab.id] : ids.filter(id => id !== lab.id))} /><span><strong>{lab.name}</strong><small>{lab.capacity} seats · Lab #{lab.id}</small></span></label>)}</div> : <Empty>No active labs available. Add or restore a lab before creating an account.</Empty>}</div>}<div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy || (!item && (labs.loading || !labs.data?.items?.length || selectedLabIds.length === 0))}>{busy ? 'Saving…' : item ? 'Save changes' : 'Create account'}</button></div></form></section></div>
+  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><section className="modal"><div className="modal-heading"><div><span className="eyebrow">ACCOUNT ACCESS</span><h2>{item ? 'Edit account' : 'Add an account'}</h2></div><button className="icon-button" onClick={onClose}><Icon name="close" size={16} /></button></div><form onSubmit={submit} className="form-stack"><label>Full name<input name="fullName" required defaultValue={item?.fullName || ''} /></label><label>Email address<input name="email" type="email" required defaultValue={item?.email || ''} /></label><label>{item ? 'New password (optional)' : 'Password'}<input name="password" type="password" required={!item} minLength="8" /></label>{!isEditingAdmin && <label>Role<select name="role" value={role} onChange={e => setRole(Number(e.target.value))}><option value="1">Admin</option><option value="2">User</option></select></label>}{!item && <div className="form-field"><strong>Assigned labs</strong><small>{isCreatingAdmin ? 'All active labs are automatically assigned and locked for Admin accounts.' : 'Select at least one lab. The backend requires a lab assignment when creating an account.'}</small>{labs.loading ? <div className="loading">Loading active labs…</div> : labs.error ? <ErrorBox message={labs.error} retry={labs.refresh} /> : labs.data?.items?.length ? <div className="check-list">{labs.data.items.map(lab => <label className={`check-row ${isCreatingAdmin ? 'is-locked' : ''}`} key={lab.id}><input type="checkbox" checked={isCreatingAdmin ? true : selectedLabIds.includes(lab.id)} disabled={isCreatingAdmin} onChange={e => { if (isCreatingAdmin) return; setSelectedLabIds(ids => e.target.checked ? [...ids, lab.id] : ids.filter(id => id !== lab.id)) }} /><span><strong>{lab.name}</strong><small>{lab.capacity} seats · Lab #{lab.id}</small></span></label>)}</div> : <Empty>No active labs available. Add or restore a lab before creating an account.</Empty>}</div>}<div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={busy || (!item && (labs.loading || !labs.data?.items?.length || effectiveLabIds.length === 0))}>{busy ? 'Saving…' : item ? 'Save changes' : 'Create account'}</button></div></form></section></div>
 }
 
 function Requests({ request, refresh, notify, askConfirm }) {
