@@ -12,6 +12,7 @@ namespace Application.Interfaces.Repositories
 
 
         Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? criteria = null);
+        Task<IEnumerable<T>> GetAllTrackedAsync(Expression<Func<T, bool>>? criteria = null);
 
         Task<PagedResult<T>> GetPagedAsync(int pageNumber, int pageSize, Expression<Func<T, bool>>? criteria = null);
 
@@ -40,5 +41,7 @@ namespace Application.Interfaces.Repositories
 
         public Task<T?> GetEntityWithSpecAsync(
             ISpecification<T> specification);
+
+        Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
     }
 }

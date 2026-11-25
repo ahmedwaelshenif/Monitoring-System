@@ -38,7 +38,13 @@ namespace MonitoringSystemApp.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateAccount(DashboardAccountRequestDto acc)
         {
-            await _DashboardAccountService.CreateAsync(acc);
+            try
+            {
+                await _DashboardAccountService.CreateAsync(acc);
+            }
+            catch (Exception ex) { 
+                return BadRequest(new { message = ex.Message });
+            }
             return NoContent();
         }
 

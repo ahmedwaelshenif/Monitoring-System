@@ -122,12 +122,12 @@ namespace MonitoringSystemApp.Controllers
         }
 
 
-        [HttpPost("{labId}/visitors/{visitorId}")]
-        public async Task<IActionResult> AddVisitor(int labId, int visitorId)
+        [HttpPost("{labId}/visitors/{memberId}")]
+        public async Task<IActionResult> AddVisitor(int labId, int memberId)
         {
             try
             {
-                await _labService.AddVisitorAsync(labId, visitorId);
+                await _labService.AddVisitorAsync(labId, memberId);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
@@ -141,12 +141,12 @@ namespace MonitoringSystemApp.Controllers
         }
 
 
-        [HttpDelete("{labId}/visitors/{visitorId}")]
-        public async Task<IActionResult> RemoveVisitor(int labId, int visitorId)
+        [HttpDelete("{labId}/visitors/{memberId}")]
+        public async Task<IActionResult> RemoveVisitor(int labId, int memberId)
         {
             try
             {
-                await _labService.RemoveVisitorAsync(labId, visitorId);
+                await _labService.RemoveVisitorAsync(labId, memberId);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)

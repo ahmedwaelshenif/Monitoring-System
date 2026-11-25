@@ -17,7 +17,7 @@ namespace Application.DTOs.RequestDtos
         public DateTime? EndDate { get; set; }
         public string? FullName { get; set; }
 
-     
+        public int? MemberId { get; set; }
         public string? Email { get; set; }
 
         public int? AcademicYear { get; set; }

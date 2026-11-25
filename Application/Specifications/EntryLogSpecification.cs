@@ -15,6 +15,10 @@ namespace Application.Specifications
                 (!filter.Status.HasValue ||
                     e.Status == filter.Status.Value) &&
 
+
+                (!filter.MemberId.HasValue ||
+                    e.Visitor.MemberId == filter.MemberId.Value) &&
+
                 (!filter.StartDate.HasValue ||
                     e.EventTime >= filter.StartDate.Value) &&
 

@@ -44,6 +44,11 @@ namespace Application.Services
             if (exist)
                 throw new InvalidOperationException("This member already has access to the permitted labs.");
 
+            exist = await _unitOfWork.Repository<Visitor>().AnyAsync(v => v.Email == request.Email);
+            if (exist)
+                throw new InvalidOperationException("This Email already has access to the permitted labs.");
+
+
             var requests = await _unitOfWork.Repository<Registration_Request>().GetAllAsync(r => r.MemberId == request.MemberId && r.status== RequestStatus.Pending);
             foreach(var item in requests){
                 _unitOfWork.Repository<Registration_Request>().Delete(item);
@@ -250,7 +255,7 @@ namespace Application.Services
             var distinctLabIds = labIds.Distinct().ToList();
 
             var labs = await _unitOfWork.Repository<Lab>()
-                .GetAllAsync(l => distinctLabIds.Contains(l.Id) && l.Active);
+                .GetAllTrackedAsync(l => distinctLabIds.Contains(l.Id) && l.Active);
 
             if (labs.Count() != distinctLabIds.Count)
                 throw new InvalidOperationException(

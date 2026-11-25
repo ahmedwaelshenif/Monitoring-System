@@ -38,8 +38,17 @@ namespace Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
+        public async Task<IEnumerable<T>> GetAllTrackedAsync(
+                Expression<Func<T, bool>>? criteria = null)
+        {
+            IQueryable<T> query = _dbSet;
 
-       
+            if (criteria != null)
+                query = query.Where(criteria);
+
+            return await query.ToListAsync();
+        }
+
         public async Task<PagedResult<T>> GetPagedAsync(int pageNumber,int pageSize,Expression<Func<T, bool>>? criteria = null)
         {
             var query = _dbSet.AsNoTracking();
@@ -141,6 +150,11 @@ namespace Infrastructure.Repositories
                 applyPaging: false);
 
             return await query.FirstOrDefaultAsync();
+        }
+
+        public async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.FirstOrDefaultAsync(predicate);
         }
     }
 }

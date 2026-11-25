@@ -31,6 +31,10 @@ namespace Application.Services
 
         public async Task CreateAsync(DashboardAccountRequestDto account)
         {
+            bool exist= await _unitOfWork.Repository<DashboardAccount>().AnyAsync(d=>d.Email == account.Email);
+            if (exist)
+                throw new InvalidOperationException("Email already registered");
+
             DashboardAccount entity = await ToEntity(account);
             await _unitOfWork.Repository<DashboardAccount>().AddAsync(entity);
             await _unitOfWork.SaveChangesAsync();
@@ -148,7 +152,7 @@ namespace Application.Services
             if (dto.LabIds == null || !dto.LabIds.Any())
                 throw new InvalidOperationException("At least one lab must be assigned.");
 
-            var labs = await _unitOfWork.Repository<Lab>().GetAllAsync(l => dto.LabIds.Contains(l.Id) &&l.Active);
+            var labs = await _unitOfWork.Repository<Lab>().GetAllTrackedAsync(l => dto.LabIds.Contains(l.Id) &&l.Active);
 
             if (labs.Count() != dto.LabIds.Distinct().Count())
                 throw new KeyNotFoundException("One or more selected labs do not exist or are inactive.");

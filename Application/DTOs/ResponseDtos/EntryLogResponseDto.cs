@@ -7,6 +7,7 @@ namespace Application.DTOs.ResponseDtos
         public int Id { get; set; }
 
         public int? VisitorId { get; set; }
+        public int? MemberId { get; set; }
         public string? VisitorName { get; set; }
 
         public int? LabId { get; set; }

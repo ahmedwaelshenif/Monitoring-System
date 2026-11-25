@@ -3,9 +3,11 @@ using Application.Interfaces.Services;
 using Application.Services;
 using Domain.Entities;
 using Infrastructure;
+using Infrastructure.Persistence;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MonitoringSystemApp.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -73,6 +75,17 @@ builder.Services.AddHostedService<
     LogRotationBackgroundService>();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment() && builder.Configuration.GetValue("SeedData:Enabled", true))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<DashboardAccount>>();
+    var demoPassword = builder.Configuration["SeedData:DemoPassword"] ?? "DevSeed!Only2026";
+    await DevelopmentDataSeeder.SeedAsync(db, passwordHasher, demoPassword);
+}
 
 if (app.Environment.IsDevelopment())
 {

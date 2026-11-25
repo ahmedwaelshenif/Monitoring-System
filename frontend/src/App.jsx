@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const API_KEY = 'monitoring-admin-api-base'
 const navItems = [
@@ -14,6 +14,8 @@ function Icon({ name, size = 18, strokeWidth = 1.8, className = '' }) {
   const base = { fill: 'none', stroke: 'currentColor', strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' }
   const shapes = {
     'layout-dashboard': <><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></>,
+    map: <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15m6-12v15"/></>,
+    network: <><circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="m10 10-3.5-3.5m7.5 3.5 3.5-3.5m-7.5 7.5L6.5 17m7.5-3 3.5 3"/></>,
     'flask-conical': <><path d="M9 3h6M10 3v6l-5.5 9.2A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.8L14 9V3"/><path d="M8 15h8"/></>,
     'door-open': <><path d="M4 21h16M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M14 12h.01"/></>,
     'user-round': <><circle cx="12" cy="8" r="4"/><path d="M5 21v-1a7 7 0 0 1 14 0v1"/></>,
@@ -34,6 +36,9 @@ function Icon({ name, size = 18, strokeWidth = 1.8, className = '' }) {
     'shield-check': <><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></>,
     'refresh': <><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 17 6l3 6M4 12l3 6a7 7 0 0 0 11.4-3"/></>,
     'download': <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></>,
+    instagram: <><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></>,
+    facebook: <path fill="currentColor" stroke="none" d="M13.6 21v-8h2.7l.4-3.2h-3.1v-2c0-.9.3-1.5 1.6-1.5h1.7V3.4c-.3 0-1.4-.1-2.6-.1-2.6 0-4.4 1.6-4.4 4.5v2H7v3.2h2.9v8h3.7Z"/>,
+    linkedin: <><path d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M7 10v7m0-10v.01M11 17v-7m0 3a3 3 0 0 1 6 0v4"/></>,
   }
   return <svg className={`ui-icon ${className}`} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...base}>{shapes[name] || shapes.activity}</svg>
 }
@@ -41,6 +46,8 @@ const localDateKey = (value) => `${value.getFullYear()}-${String(value.getMonth(
 const nextDateStart = (dateKey) => { const value = new Date(`${dateKey}T12:00:00`); value.setDate(value.getDate() + 1); return `${localDateKey(value)}T00:00:00` }
 const dateText = (value) => value ? new Date(value).toLocaleString() : '—'
 const enumName = (value, choices) => choices[value] ?? String(value ?? '—')
+const alertName = value => enumName(value, ['Food or drink detected', 'Crowded'])
+const getMemberId = record => record?.memberId ?? record?.MemberId ?? record?.memberID ?? record?.MemberID ?? null
 
 async function api(base, path, options = {}) {
   const root = base.trim().replace(/\/$/, '')
@@ -95,8 +102,7 @@ function App() {
   const initialRoute = readRoute()
   const [page, setPage] = useState(initialRoute.page)
   const [labDetailId, setLabDetailId] = useState(initialRoute.labId)
-  const [apiBase, setApiBase] = useState(localStorage.getItem(API_KEY) || '')
-  const [draftBase, setDraftBase] = useState(localStorage.getItem(API_KEY) || '')
+  const apiBase = localStorage.getItem(API_KEY) || ''
   const [refresh, setRefresh] = useState(0)
   const [notice, setNotice] = useState(null)
   const [modal, setModal] = useState(null)
@@ -132,24 +138,14 @@ function App() {
   }
   const askConfirm = (options, action) => setConfirmation({ options, action })
   const reload = () => setRefresh(x => x + 1)
-  const saveBase = (event) => {
-    event.preventDefault()
-    const value = draftBase.trim().replace(/\/$/, '')
-    localStorage.setItem(API_KEY, value)
-    setApiBase(value)
-    notify(value ? 'API address saved.' : 'Using the current page origin for the API.')
-  }
-
   return <div className="app-shell">
     <main className="main-area">
       <header className="topbar">
-        <button className="brand-lockup" onClick={() => goToPage('overview')} aria-label="Monitoring System home"><span className="brand-mark"><Icon name="activity" size={20} /></span><span className="brand-type"><strong>MONITOR</strong><small>CONTROL CENTER</small></span></button>
         <nav className="primary-nav" aria-label="Main navigation">{navItems.map(([id, label, icon]) => <button key={id} className={`nav-item ${page === id ? 'active' : ''}`} aria-current={page === id ? 'page' : undefined} onClick={() => { goToPage(id); if (id === 'logs') setLogsPreset('all') }}><Icon name={icon} className="nav-icon" /><span>{label}</span></button>)}</nav>
-        <details className="api-settings"><summary><i className="connection-dot" />API settings <span>{apiBase ? 'Custom' : 'Same origin'}</span></summary><form className="api-config" onSubmit={saveBase}><label htmlFor="api-base">API address</label><input id="api-base" value={draftBase} onChange={e => setDraftBase(e.target.value)} placeholder="Same origin" /><button className="button button-primary" type="submit">Save</button></form></details>
       </header>
       <div className="content">
         {notice && <div className={`notice ${notice.error ? 'notice-error' : ''}`}>{notice.message}<button aria-label="Dismiss" onClick={() => setNotice(null)}><Icon name="close" size={16} /></button></div>}
-        {page === 'overview' && <Overview request={request} refresh={refresh} setPage={goToPage} setLogsPreset={setLogsPreset} setSelectedLab={setSelectedLab} />}
+        {page === 'overview' && <><Overview request={request} refresh={refresh} setPage={goToPage} setLogsPreset={setLogsPreset} setSelectedLab={setSelectedLab} /><CampusPulse request={request} refresh={refresh} openLabDetails={openLabDetails} /></>}
         {page === 'labs' && <Labs request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} setSelectedLab={setSelectedLab} goToPage={goToPage} openModal={setModal} openLabDetails={openLabDetails} />}
         {page === 'lab-detail' && <LabDetails labId={labDetailId} request={request} refresh={refresh} goBack={() => goToPage('labs')} goToPage={goToPage} setSelectedLab={setSelectedLab} />}
         {page === 'logs' && <Logs request={request} apiBase={apiBase} refresh={refresh} selectedLab={selectedLab} setSelectedLab={setSelectedLab} preset={logsPreset} setPreset={setLogsPreset} askConfirm={askConfirm} notify={notify} />}
@@ -159,6 +155,18 @@ function App() {
         {page === 'warnings' && <Warnings request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} />}
       </div>
     </main>
+    <footer className="site-footer">
+      <div className="footer-inner">
+        <div className="footer-brand"><span className="footer-mark"><Icon name="activity" size={19} /></span><span><strong>MONITOR</strong><small>CONTROL CENTER</small></span></div>
+        <p>Monitoring System · Operations and access management</p>
+        <nav className="footer-socials" aria-label="Social media">
+          <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" aria-label="Instagram"><Icon name="instagram" size={20} /></a>
+          <a href="https://www.facebook.com/" target="_blank" rel="noreferrer" aria-label="Facebook"><Icon name="facebook" size={20} /></a>
+          <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" aria-label="LinkedIn"><Icon name="linkedin" size={20} /></a>
+        </nav>
+      </div>
+      <div className="footer-bottom">© {new Date().getFullYear()} Monitoring System</div>
+    </footer>
     {modal && <LabModal item={modal === 'new' ? null : modal} onClose={() => setModal(null)} request={request} onSaved={() => { setModal(null); reload(); notify(modal === 'new' ? 'Lab created.' : 'Lab updated.') }} onError={e => notify(e.message, true)} />}
     {confirmation && <ConfirmDialog options={confirmation.options} onClose={() => setConfirmation(null)} onConfirm={async () => { await confirmation.action(); setConfirmation(null) }} />}
   </div>
@@ -166,14 +174,25 @@ function App() {
 
 function useLoad(loader, deps) {
   const [state, setState] = useState({ data: null, loading: true, error: '' })
+  const requestVersion = useRef(0)
   const refresh = useCallback(async () => {
+    const version = ++requestVersion.current
     setState(s => ({ ...s, loading: true, error: '' }))
-    try { setState({ data: await loader(), loading: false, error: '' }) }
-    catch (e) { setState({ data: null, loading: false, error: e.message }) }
+    try {
+      const data = await loader()
+      if (version === requestVersion.current)
+        setState({ data, loading: false, error: '' })
+    } catch (e) {
+      if (version === requestVersion.current)
+        setState({ data: null, loading: false, error: e.message })
+    }
   // loader is stabilized by the caller and deps list describes its inputs.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
-  useEffect(() => { refresh() }, [refresh])
+  useEffect(() => {
+    refresh()
+    return () => { requestVersion.current += 1 }
+  }, [refresh])
   return { ...state, refresh }
 }
 
@@ -209,7 +228,6 @@ function imageSrc(data) { return typeof data === 'string' && data.startsWith('da
 
 function Overview({ request, refresh, setPage, setLogsPreset, setSelectedLab }) {
   const labs = useLoad(() => request('/lab/count'), [request, refresh])
-  const logs = useLoad(() => request('/entryLog?pageNumber=1&pageSize=10'), [request, refresh])
   const dateRange = useMemo(() => Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d }), [])
   const [daily, setDaily] = useState({ data: null, loading: true, error: '' })
   useEffect(() => {
@@ -226,7 +244,6 @@ function Overview({ request, refresh, setPage, setLogsPreset, setSelectedLab }) 
   }, [request, refresh, dateRange])
   const todayCounts = daily.data?.at(-1)
   const weekTotal = daily.data?.reduce((n, x) => n + x.accepted + x.rejected, 0) ?? 0
-  const recentLogs = logs.data?.items?.slice(0, 6) ?? []
   const todayTotal = (todayCounts?.accepted ?? 0) + (todayCounts?.rejected ?? 0)
   const acceptedRate = todayTotal ? (todayCounts.accepted / todayTotal) * 100 : 0
   return <>
@@ -235,7 +252,7 @@ function Overview({ request, refresh, setPage, setLogsPreset, setSelectedLab }) 
       <div className="hero-art" aria-hidden="true"><div className="hero-orbit orbit-one" /><div className="hero-orbit orbit-two" /><div className="hero-orbit orbit-three" /><div className="hero-center"><Icon name="activity" size={37} /></div><div className="hero-node node-one"><Icon name="shield-check" size={16} /></div><div className="hero-node node-two"><Icon name="building" size={16} /></div><div className="hero-node node-three"><Icon name="door-open" size={16} /></div><div className="hero-caption">ACCESS<br /><b>MONITORING</b></div></div>
       <div className="hero-date"><span>LOCAL DATE</span><strong>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</strong></div>
     </section>
-    {(labs.error || logs.error || daily.error) && <ErrorBox message={labs.error || logs.error || daily.error} />}
+    {(labs.error || daily.error) && <ErrorBox message={labs.error || daily.error} />}
     <div className="stats-grid">
       <StatCard title="Total labs" value={labs.data ?? '—'} hint="Labs in the system" icon="building" />
       <StatCard title="Accepted today" value={todayCounts?.accepted ?? (daily.loading ? '…' : '—')} hint="Successful entries · view logs" icon="shield-check" tone="green" onClick={() => { setSelectedLab(''); setLogsPreset('accepted'); setPage('logs') }} />
@@ -244,13 +261,8 @@ function Overview({ request, refresh, setPage, setLogsPreset, setSelectedLab }) 
     </div>
     <div className="dashboard-grid">
       <Panel title="Entry activity" subtitle="Daily entry totals for the last 7 days"><WeekChart data={daily.data} loading={daily.loading} /><div className="chart-legend"><span><i className="legend-dot accepted" />Accepted</span><span><i className="legend-dot rejected" />Rejected</span><small>Hover a day to see its counts</small></div></Panel>
-      <Panel title="Today at a glance" subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}><div className="today-summary"><div className="ring" style={{ background: `conic-gradient(#4382eb ${acceptedRate}%, #e7eef8 ${acceptedRate}% 100%)` }}><div><strong>{todayTotal}</strong><small>total entries</small></div></div><div className="legend"><span><i className="legend-dot accepted" />Accepted <b>{todayCounts?.accepted ?? (daily.loading ? '…' : 0)}</b></span><span><i className="legend-dot rejected" />Rejected <b>{todayCounts?.rejected ?? (daily.loading ? '…' : 0)}</b></span></div></div></Panel>
+      <Panel title="Today at a glance" subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}><div className="today-summary"><div className="ring" style={{ background: `conic-gradient(#7436b9 ${acceptedRate}%, #ece7f1 ${acceptedRate}% 100%)` }}><div><strong>{todayTotal}</strong><small>total entries</small></div></div><div className="legend"><span><i className="legend-dot accepted" />Accepted <b>{todayCounts?.accepted ?? (daily.loading ? '…' : 0)}</b></span><span><i className="legend-dot rejected" />Rejected <b>{todayCounts?.rejected ?? (daily.loading ? '…' : 0)}</b></span></div></div></Panel>
     </div>
-    <Panel title="Recent entry logs" subtitle="Latest activity recorded by the system" action={<button className="text-button" onClick={() => setPage('logs')}>View all logs <span>→</span></button>}>
-      {logs.loading ? <div className="loading">Loading recent activity…</div> : recentLogs.length ? <Table headers={['Time', 'Member', 'Lab', 'Result']}>
-        {recentLogs.map(x => <tr key={x.id}><td>{dateText(x.eventTime)}</td><td>{x.visitorName || (x.visitorId ? `#${x.visitorId}` : 'Unidentified')}</td><td>{x.labName || `Lab #${x.labId}`}</td><td><Status value={x.status} /></td></tr>)}
-      </Table> : <Empty>No entry logs are available.</Empty>}
-    </Panel>
   </>
 }
 function StatCard({ title, value, hint, icon, tone = 'navy', onClick }) { const contents = <><div className="stat-top"><span>{title}</span><i><Icon name={icon} size={17} /></i></div><strong>{value}</strong><small>{hint}</small></>; return onClick ? <button className={`stat-card tone-${tone} stat-card-button`} onClick={onClick}>{contents}</button> : <div className={`stat-card tone-${tone}`}>{contents}</div> }
@@ -259,6 +271,75 @@ function WeekChart({ data, loading }) {
   if (!data) return <div className="empty-state">Activity chart is unavailable.</div>
   const max = Math.max(1, ...data.map(x => x.accepted + x.rejected))
   return <div className="chart" aria-label="Accepted and rejected entry counts over the last seven days"><div className="chart-y"><span>{max}</span><span>{Math.round(max / 2)}</span><span>0</span></div><div className="chart-bars">{data.map(row => { const a = row.accepted / max * 100, r = row.rejected / max * 100; const label = new Date(`${row.day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); return <div className="chart-day" key={row.day}><div className="chart-hover-info"><strong>{label}</strong><span>Accepted: {row.accepted}</span><span>Rejected: {row.rejected}</span><b>Total: {row.accepted + row.rejected}</b></div><div className="bar-stack"><div className="bar rejected-bar" style={{ height: `${r}%` }} /><div className="bar accepted-bar" style={{ height: `${a}%` }} /></div><span>{label.split(',')[0]}</span></div> })}</div></div>
+}
+
+function CampusPulse({ request, refresh, openLabDetails }) {
+  const [page, setPage] = useState(1)
+  const pageSize = 4
+  const labs = useLoad(() => request(`/lab/Active?pageNumber=${page}&pageSize=${pageSize}`), [request, refresh, page])
+  const warnings = useLoad(() => request('/warning?pageNumber=1&pageSize=100'), [request, refresh])
+  const activity = useLoad(() => request('/entryLog?pageNumber=1&pageSize=6'), [request, refresh])
+  const rooms = labs.data?.items ?? []
+  const warningItems = warnings.data?.items ?? []
+  const recentLogs = activity.data?.items ?? []
+  const memberCounts = useLoad(async () => Promise.all(rooms.map(async lab => {
+    try {
+      const result = await request(`/visitor/${lab.id}?PageNumber=1&PageSize=1`)
+      return [lab.id, Number(result?.totalCount ?? 0)]
+    } catch { return [lab.id, null] }
+  })), [request, refresh, labs.data, page])
+  const memberCountByLab = Object.fromEntries(memberCounts.data ?? [])
+  const warningsForLab = labId => warningItems.filter(item => Number(item.labId) === Number(labId)).length
+  const totalMembers = Object.values(memberCountByLab).reduce((total, count) => total + (Number.isFinite(count) ? count : 0), 0)
+  // Four cardinal positions leave the campus hub centered and keep every
+  // connector endpoint aligned with the center of its lab card.
+  const positions = [[2, 1], [3, 2], [2, 3], [1, 2]]
+  const refreshAll = () => { labs.refresh(); warnings.refresh(); activity.refresh(); memberCounts.refresh() }
+  return <>
+    <section className="campus-pulse-section">
+    <div className="campus-pulse-heading"><div><h2>Facility network</h2><p>Lab access, warnings, and recent activity in one view.</p></div><button className="button button-light" onClick={refreshAll}><Icon name="refresh" size={15} /> Refresh</button></div>
+    <div className="map-stats">
+      <article><span>Active labs</span><strong>{labs.data?.totalCount ?? '—'}</strong><small>Current facilities</small></article>
+      <article><span>Permitted members</span><strong>{memberCounts.loading ? '…' : totalMembers}</strong><small>Across labs on this page</small></article>
+      <article><span>Reported warnings</span><strong className={warnings.data?.totalCount ? 'has-map-warnings' : ''}>{warnings.data?.totalCount ?? '—'}</strong><small>Latest warning records</small></article>
+    </div>
+    {(labs.error || warnings.error || activity.error) && <ErrorBox message={labs.error || warnings.error || activity.error} retry={refreshAll} />}
+    {labs.loading ? <div className="loading">Loading campus pulse…</div> : rooms.length ? <div className="campus-pulse-layout">
+      <section className="pulse-network-card">
+        <div className="campus-map-card-heading"><div><span className="eyebrow">CAMPUS NETWORK</span><h2>Lab connections</h2></div><span className="schematic-tag"><i /> Operations view</span></div>
+        <div className="pulse-network-canvas">
+          <svg className="pulse-connectors" viewBox="0 0 300 300" preserveAspectRatio="none" aria-hidden="true">{rooms.map((lab, index) => { const [column, row] = positions[index]; const x = (column - 1) * 100 + 50; const y = (row - 1) * 100 + 50; return <line key={lab.id} x1="150" y1="150" x2={x} y2={y} className={warningsForLab(lab.id) ? 'connector-warning' : ''} /> })}</svg>
+          <div className="pulse-network-grid">
+            {rooms.map((lab, index) => {
+              const [column, row] = positions[index]
+              const warningCount = warningsForLab(lab.id)
+              const members = memberCountByLab[lab.id]
+              return <button type="button" key={lab.id} style={{ gridColumn: column, gridRow: row }} className={`pulse-lab-node ${warningCount ? 'has-warning' : ''}`} onClick={() => openLabDetails(lab.id)} aria-label={`Open ${lab.name}, capacity ${lab.capacity}, ${warningCount} warnings`}>
+                <span className="pulse-node-top"><span className="pulse-node-icon"><Icon name="building" size={17} /></span><span className="pulse-node-state"><i />{warningCount ? `${warningCount} warning${warningCount === 1 ? '' : 's'}` : 'Clear'}</span></span>
+                <strong>{lab.name}</strong><span className="pulse-node-id">Lab #{lab.id}</span>
+                <span className="pulse-node-metrics"><span><small>Capacity</small><b>{lab.capacity}</b></span><span><small>Permitted</small><b>{members == null ? '—' : members}</b></span></span>
+                <span className="pulse-node-open">Open details <Icon name="arrow-up-right" size={13} /></span>
+              </button>
+            })}
+            <div className="pulse-campus-hub"><span className="hub-orbit hub-orbit-one"/><span className="hub-orbit hub-orbit-two"/><span className="hub-icon"><Icon name="network" size={23} /></span><strong>CAMPUS</strong><small>{labs.data?.totalCount ?? rooms.length} ACTIVE LABS</small></div>
+          </div>
+        </div>
+        {labs.data?.totalPages > 1 && <Pager page={page} total={labs.data.totalPages} onPage={setPage} />}
+      </section>
+      <aside className="pulse-side-column">
+        <section className="pulse-side-card"><div className="pulse-side-heading"><div><span className="eyebrow">LATEST ACTIVITY</span><h2>Recent entries</h2></div><Icon name="activity" size={18} /></div>
+          {activity.loading ? <div className="loading">Loading activity…</div> : recentLogs.length ? <div className="pulse-feed">{recentLogs.map(log => {
+            const lab = rooms.find(item => Number(item.id) === Number(log.labId))
+            return <button key={log.id} className="pulse-feed-row" onClick={() => log.labId && openLabDetails(log.labId)} disabled={!log.labId}><span className={`pulse-feed-status ${Number(log.status) === 1 ? 'is-accepted' : 'is-rejected'}`}><Icon name={Number(log.status) === 1 ? 'check' : 'close'} size={13} /></span><span className="pulse-feed-copy"><strong>{log.visitorName || (log.visitorId ? `Visitor #${log.visitorId}` : 'Unidentified visitor')}</strong><small>{lab?.name || `Lab #${log.labId}`} · {dateText(log.eventTime)}</small></span><Icon name="arrow-up-right" size={14} /></button>
+          })}</div> : <Empty>No recent entry activity.</Empty>}
+        </section>
+        <section className="pulse-side-card"><div className="pulse-side-heading"><div><span className="eyebrow">NEEDS ATTENTION</span><h2>Warnings</h2></div><span className="map-alert-count">{warnings.data?.totalCount ?? '—'}</span></div>
+          {warnings.loading ? <div className="loading">Loading warnings…</div> : warningItems.length ? <div className="pulse-feed">{warningItems.slice(0, 5).map(warning => <button key={warning.id} className="pulse-feed-row" onClick={() => warning.labId && openLabDetails(warning.labId)} disabled={!warning.labId}><span className="pulse-warning-icon"><Icon name="triangle-alert" size={15} /></span><span className="pulse-feed-copy"><strong>{alertName(warning.warning)}</strong><small>{rooms.find(lab => Number(lab.id) === Number(warning.labId))?.name || `Lab #${warning.labId}`}</small></span><Icon name="arrow-up-right" size={14} /></button>)}</div> : <Empty>No warnings reported.</Empty>}
+        </section>
+      </aside>
+    </div> : labs.error ? null : <Empty>No active labs are available.</Empty>}
+    </section>
+  </>
 }
 
 function Labs({ request, refresh, notify, askConfirm, setSelectedLab, goToPage, openModal, openLabDetails }) {
@@ -370,12 +451,23 @@ function Logs({ request, apiBase, refresh, selectedLab, setSelectedLab, preset, 
   const [rotationOpen, setRotationOpen] = useState(false)
   const [cleanupOpen, setCleanupOpen] = useState(false)
   const [range, setRange] = useState({ from: '', to: '', status: '' })
-  const [visitorFilters, setVisitorFilters] = useState({ fullName: '', email: '', academicYear: '' })
+  const [visitorFilters, setVisitorFilters] = useState({ memberId: '', fullName: '', email: '', academicYear: '' })
+  const [appliedVisitorFilters, setAppliedVisitorFilters] = useState({ memberId: '', fullName: '', email: '', academicYear: '' })
   const labs = useLoad(() => request('/lab/Active?pageNumber=1&pageSize=1000'), [request, refresh])
   const visitors = useLoad(() => request('/visitor/Active?pageNumber=1&pageSize=1000'), [request, refresh])
+  const inactiveVisitors = useLoad(() => request('/visitor/inactive?pageNumber=1&pageSize=1000'), [request, refresh])
+  const memberIdsByVisitorId = useMemo(() => {
+    const byId = new Map()
+    for (const visitor of [...(visitors.data?.items ?? []), ...(inactiveVisitors.data?.items ?? [])]) {
+      const id = visitor.id ?? visitor.Id
+      if (id != null) byId.set(String(id), getMemberId(visitor))
+    }
+    return byId
+  }, [visitors.data, inactiveVisitors.data])
+  const resolveLogMemberId = log => getMemberId(log) ?? memberIdsByVisitorId.get(String(log?.visitorId ?? log?.VisitorId)) ?? null
   const load = useLoad(() => {
     const hasDateFilter = Boolean(range.from || range.to)
-    const hasVisitorFilter = Boolean(visitorFilters.fullName.trim() || visitorFilters.email.trim() || visitorFilters.academicYear)
+    const hasVisitorFilter = Boolean(appliedVisitorFilters.memberId || appliedVisitorFilters.fullName.trim() || appliedVisitorFilters.email.trim() || appliedVisitorFilters.academicYear)
     if (range.from && range.to && range.to < range.from) throw new Error('The end date must be on or after the start date.')
     if (range.from && range.to && !selectedLab && range.status === '' && !hasVisitorFilter) {
       return request(`/entryLog/date-range?fromDate=${encodeURIComponent(`${range.from}T00:00:00`)}&toDate=${encodeURIComponent(nextDateStart(range.to))}&pageNumber=${page}&pageSize=10`)
@@ -387,9 +479,10 @@ function Logs({ request, apiBase, refresh, selectedLab, setSelectedLab, preset, 
       if (range.from) query.set('StartDate', `${range.from}T00:00:00`)
       if (range.to) query.set('EndDate', nextDateStart(range.to))
       if (range.status !== '') query.set('Status', range.status)
-      if (visitorFilters.fullName.trim()) query.set('FullName', visitorFilters.fullName.trim())
-      if (visitorFilters.email.trim()) query.set('Email', visitorFilters.email.trim())
-      if (visitorFilters.academicYear) query.set('AcademicYear', visitorFilters.academicYear)
+      if (appliedVisitorFilters.memberId) query.set('MemberId', appliedVisitorFilters.memberId)
+      if (appliedVisitorFilters.fullName.trim()) query.set('FullName', appliedVisitorFilters.fullName.trim())
+      if (appliedVisitorFilters.email.trim()) query.set('Email', appliedVisitorFilters.email.trim())
+      if (appliedVisitorFilters.academicYear) query.set('AcademicYear', appliedVisitorFilters.academicYear)
       return request(`/entryLog/search?${query}`)
     }
     if (preset === 'accepted' || preset === 'rejected') {
@@ -401,27 +494,28 @@ function Logs({ request, apiBase, refresh, selectedLab, setSelectedLab, preset, 
       return request(`/entryLog/date-range?fromDate=${encodeURIComponent(from)}&toDate=${encodeURIComponent(to)}&status=${status}&pageNumber=${page}&pageSize=10`)
     }
     return request(`/entryLog?pageNumber=${page}&pageSize=10`)
-  }, [request, refresh, selectedLab, preset, page, range.from, range.to, range.status, visitorFilters.fullName, visitorFilters.email, visitorFilters.academicYear])
+  }, [request, refresh, selectedLab, preset, page, range.from, range.to, range.status, appliedVisitorFilters.memberId, appliedVisitorFilters.fullName, appliedVisitorFilters.email, appliedVisitorFilters.academicYear])
   const filterLabel = preset === 'accepted' ? 'Accepted today' : preset === 'rejected' ? 'Rejected today' : selectedLab ? `Lab ${selectedLab}` : 'All labs'
   const deleteLog = log => askConfirm({ title: 'Delete this entry log?', message: `Entry log #${log.id} will be permanently deleted.`, confirmText: 'Delete log', danger: true }, async () => { try { await request(`/entryLog/${log.id}`, { method: 'DELETE' }); notify('Entry log deleted.'); load.refresh() } catch (e) { notify(e.message, true) } })
-  async function openLog(log) { try { setRecord(await request(`/entryLog/${log.id}`)) } catch (e) { setRecord(log) } }
+  function openLog(log) { setRecord(log) }
   return <><PageTitle eyebrow="ACTIVITY" title="Entry logs" description="Review entry decisions across all labs or focus on a single location." action={<div className="panel-controls"><button className="button button-light" onClick={() => setExportOpen(true)}><Icon name="download" size={15} /> Export Excel</button><button className="button button-light" onClick={() => setRotationOpen(true)}><Icon name="refresh" size={15} /> Log rotation</button><button className="button button-light" onClick={() => setCleanupOpen(true)}><Icon name="trash" size={15} /> Cleanup</button><button className="button button-primary" onClick={() => setCreateOpen(true)}><Icon name="plus" size={15} /> Add log</button></div>} />
     <Panel title="Entry history" subtitle={load.data ? `${load.data.totalCount} records · ${filterLabel}` : 'Most recent records appear first'}>
-      <div className="logs-filters">
+      <form className="logs-filters" onSubmit={e => { e.preventDefault(); setAppliedVisitorFilters({ ...visitorFilters }); setPage(1) }}>
         <label className="logs-filter-field"><span>Lab</span><select value={selectedLab} onChange={e => { setSelectedLab(e.target.value); setPreset('all'); setPage(1) }}><option value="">All labs</option>{labs.data?.items?.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label>
+        <label className="logs-filter-field"><span>Member ID</span><input type="number" min="1" inputMode="numeric" placeholder="Search member ID" value={visitorFilters.memberId} onChange={e => setVisitorFilters(s => ({ ...s, memberId: e.target.value }))} /></label>
         <label className="logs-filter-field"><span>From date</span><div className="date-input-wrap"><Icon name="calendar-days" size={16} /><input type="date" aria-label="From date" value={range.from} onChange={e => { setRange(s => ({ ...s, from: e.target.value })); setPage(1) }} /></div></label>
         <label className="logs-filter-field"><span>To date</span><div className="date-input-wrap"><Icon name="calendar-days" size={16} /><input type="date" aria-label="To date" value={range.to} onChange={e => { setRange(s => ({ ...s, to: e.target.value })); setPage(1) }} /></div></label>
         <label className="logs-filter-field"><span>Decision</span><select value={range.status} onChange={e => { setRange(s => ({ ...s, status: e.target.value })); setPage(1) }}><option value="">Any decision</option><option value="0">Rejected</option><option value="1">Accepted</option></select></label>
-        <label className="logs-filter-field"><span>Visitor name</span><input type="search" placeholder="Search visitor name" value={visitorFilters.fullName} onChange={e => { setVisitorFilters(s => ({ ...s, fullName: e.target.value })); setPage(1) }} /></label>
-        <label className="logs-filter-field"><span>Visitor email</span><input type="search" placeholder="Search visitor email" value={visitorFilters.email} onChange={e => { setVisitorFilters(s => ({ ...s, email: e.target.value })); setPage(1) }} /></label>
-        <label className="logs-filter-field"><span>Academic year</span><select value={visitorFilters.academicYear} onChange={e => { setVisitorFilters(s => ({ ...s, academicYear: e.target.value })); setPage(1) }}><option value="">Any year</option>{[1, 2, 3, 4].map(year => <option key={year} value={year}>Year {year}</option>)}</select></label>
-        <button type="button" className="button button-light logs-clear-filters" onClick={() => { setSelectedLab(''); setRange({ from: '', to: '', status: '' }); setVisitorFilters({ fullName: '', email: '', academicYear: '' }); setPreset('all'); setPage(1) }}>Clear all filters</button>
-      </div>
-      {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading entry logs…</div> : load.data?.items?.length ? <><Table headers={['Time', 'Member', 'Face image', 'Lab', 'Decision', 'Actions']}>
-        {load.data.items.map(x => <tr key={x.id} className="clickable-row" tabIndex="0" onClick={() => openLog(x)} onKeyDown={e => e.key === 'Enter' && openLog(x)}><td>{dateText(x.eventTime)}</td><td>{x.visitorName || (x.visitorId ? `#${x.visitorId}` : 'Unidentified')}</td><td>{x.faceImage ? avatar(x.faceImage, x.visitorName) : <span className="muted">—</span>}</td><td>{x.labName || `Lab #${x.labId}`}</td><td><Status value={x.status} /></td><td><button className="icon-button danger" title="Delete entry log" onClick={e => { e.stopPropagation(); deleteLog(x) }}><Icon name="trash" size={16} /></button></td></tr>)}
+        <label className="logs-filter-field"><span>Visitor name</span><input type="search" placeholder="Search visitor name" value={visitorFilters.fullName} onChange={e => setVisitorFilters(s => ({ ...s, fullName: e.target.value }))} /></label>
+        <label className="logs-filter-field"><span>Visitor email</span><input type="search" placeholder="Search visitor email" value={visitorFilters.email} onChange={e => setVisitorFilters(s => ({ ...s, email: e.target.value }))} /></label>
+        <label className="logs-filter-field"><span>Academic year</span><select value={visitorFilters.academicYear} onChange={e => setVisitorFilters(s => ({ ...s, academicYear: e.target.value }))}><option value="">Any year</option>{[1, 2, 3, 4].map(year => <option key={year} value={year}>Year {year}</option>)}</select></label>
+        <div className="logs-filter-actions"><button type="submit" className="button button-primary">Search</button><button type="button" className="button button-light logs-clear-filters" onClick={() => { const empty = { memberId: '', fullName: '', email: '', academicYear: '' }; setSelectedLab(''); setRange({ from: '', to: '', status: '' }); setVisitorFilters(empty); setAppliedVisitorFilters(empty); setPreset('all'); setPage(1) }}>Clear all filters</button></div>
+      </form>
+      {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading entry logs…</div> : load.data?.items?.length ? <><Table headers={['Time', 'Member', 'Member ID', 'Face image', 'Lab', 'Decision', 'Actions']}>
+        {load.data.items.map(x => { const memberId = resolveLogMemberId(x); return <tr key={x.id} className="clickable-row" tabIndex="0" onClick={() => openLog(x)} onKeyDown={e => e.key === 'Enter' && openLog(x)}><td>{dateText(x.eventTime)}</td><td>{x.visitorName || (x.visitorId ? `#${x.visitorId}` : 'Unidentified')}</td><td>{memberId != null && memberId !== '' ? `#${memberId}` : '—'}</td><td>{x.faceImage ? avatar(x.faceImage, x.visitorName) : <span className="muted">—</span>}</td><td>{x.labName || `Lab #${x.labId}`}</td><td><Status value={x.status} /></td><td><button className="icon-button danger" title="Delete entry log" onClick={e => { e.stopPropagation(); deleteLog(x) }}><Icon name="trash" size={16} /></button></td></tr> })}
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No logs match this selection.</Empty>}
     </Panel>
-    <RecordDetails title={`Entry log #${record?.id ?? ''}`} record={record} onClose={() => setRecord(null)} fields={record ? [['Log ID', `#${record.id}`], ['Event time', dateText(record.eventTime)], ['Decision', enumName(record.status, ['Rejected', 'Accepted'])], ['Visitor', record.visitorName || 'Unidentified'], ['Visitor ID', record.visitorId ? `#${record.visitorId}` : '—'], ['Lab', record.labName || `Lab #${record.labId}`]] : []} images={record ? [['Face image', record.faceImage]] : []} />
+    <RecordDetails title={`Entry log #${record?.id ?? ''}`} record={record} onClose={() => setRecord(null)} fields={record ? [['Log ID', `#${record.id}`], ['Event time', dateText(record.eventTime)], ['Decision', enumName(record.status, ['Rejected', 'Accepted'])], ['Visitor', record.visitorName || 'Unidentified'], ['Visitor ID', record.visitorId ? `#${record.visitorId}` : '—'], ['Member ID', resolveLogMemberId(record) != null && resolveLogMemberId(record) !== '' ? `#${resolveLogMemberId(record)}` : '—'], ['Lab', record.labName || `Lab #${record.labId}`]] : []} images={record ? [['Face image', record.faceImage]] : []} />
     {createOpen && <EntryLogModal labs={labs.data?.items || []} visitors={visitors.data?.items || []} request={request} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); load.refresh(); notify('Entry log created.') }} onError={e => notify(e.message, true)} />}
     {exportOpen && <ExportExcelModal labs={labs.data?.items || []} apiBase={apiBase} onClose={() => setExportOpen(false)} notify={notify} onError={e => notify(e.message, true)} />}
     {rotationOpen && <LogRotationModal request={request} onClose={() => setRotationOpen(false)} notify={notify} onError={e => notify(e.message, true)} />}
@@ -612,7 +706,7 @@ function CleanupLogsModal({ request, onClose, onCleaned, askConfirm, notify, onE
     askConfirm({
       title: `Delete oldest ${cnt} logs?`,
       message: `The oldest ${cnt} entry logs in the system will be permanently deleted. This cannot be undone.`,
-      confirmText: 'Delete oldest',
+      confirmText: `Delete ${cnt} oldest logs`,
       danger: true
     }, async () => {
       setBusy(true)
@@ -637,7 +731,7 @@ function CleanupLogsModal({ request, onClose, onCleaned, askConfirm, notify, onE
     askConfirm({
       title: 'Delete logs in date range?',
       message: `All entry logs between ${range.start} and ${range.end} will be permanently deleted. This cannot be undone.`,
-      confirmText: 'Delete range',
+      confirmText: 'Delete logs in date range',
       danger: true
     }, async () => {
       setBusy(true)
@@ -654,6 +748,16 @@ function CleanupLogsModal({ request, onClose, onCleaned, askConfirm, notify, onE
     })
   }
 
+  function handleTabKeyDown(event) {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const nextTab = event.key === 'Home' ? 'oldest'
+      : event.key === 'End' ? 'range'
+      : tab === 'oldest' ? 'range' : 'oldest'
+    setTab(nextTab)
+    document.getElementById(`cleanup-tab-${nextTab}`)?.focus()
+  }
+
   return (
     <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}>
       <section className="modal">
@@ -664,26 +768,39 @@ function CleanupLogsModal({ request, onClose, onCleaned, askConfirm, notify, onE
           </div>
           <button className="icon-button" onClick={onClose}><Icon name="close" size={16} /></button>
         </div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div className="cleanup-tabs" role="tablist" aria-label="Log deletion method">
           <button
             type="button"
-            className={`button ${tab === 'oldest' ? 'button-primary' : 'button-light'}`}
+            id="cleanup-tab-oldest"
+            role="tab"
+            aria-selected={tab === 'oldest'}
+            aria-controls="cleanup-panel-oldest"
+            tabIndex={tab === 'oldest' ? 0 : -1}
+            className={`cleanup-tab ${tab === 'oldest' ? 'active' : ''}`}
             onClick={() => setTab('oldest')}
+            onKeyDown={handleTabKeyDown}
           >
-            Delete oldest
+            By number of oldest logs
           </button>
           <button
             type="button"
-            className={`button ${tab === 'range' ? 'button-primary' : 'button-light'}`}
+            id="cleanup-tab-range"
+            role="tab"
+            aria-selected={tab === 'range'}
+            aria-controls="cleanup-panel-range"
+            tabIndex={tab === 'range' ? 0 : -1}
+            className={`cleanup-tab ${tab === 'range' ? 'active' : ''}`}
             onClick={() => setTab('range')}
+            onKeyDown={handleTabKeyDown}
           >
-            Delete by date range
+            By date range
           </button>
         </div>
 
         {tab === 'oldest' ? (
+          <div id="cleanup-panel-oldest" role="tabpanel" aria-labelledby="cleanup-tab-oldest">
           <form className="form-stack" onSubmit={deleteOldest}>
-            <label>Number of oldest records to delete
+            <label>How many oldest logs should be deleted?
               <input
                 type="number"
                 min="1"
@@ -699,11 +816,13 @@ function CleanupLogsModal({ request, onClose, onCleaned, askConfirm, notify, onE
             <div className="modal-actions">
               <button type="button" className="button button-light" onClick={onClose}>Cancel</button>
               <button className="button button-danger" disabled={busy}>
-                {busy ? 'Deleting…' : 'Delete oldest'}
+                {busy ? 'Deleting…' : `Delete ${cnt || 0} oldest logs`}
               </button>
             </div>
           </form>
+          </div>
         ) : (
+          <div id="cleanup-panel-range" role="tabpanel" aria-labelledby="cleanup-tab-range">
           <form className="form-stack" onSubmit={deleteRange}>
             <label>Start date & time
               <input
@@ -724,10 +843,11 @@ function CleanupLogsModal({ request, onClose, onCleaned, askConfirm, notify, onE
             <div className="modal-actions">
               <button type="button" className="button button-light" onClick={onClose}>Cancel</button>
               <button className="button button-danger" disabled={busy}>
-                {busy ? 'Deleting…' : 'Delete range'}
+                {busy ? 'Deleting…' : 'Delete logs in date range'}
               </button>
             </div>
           </form>
+          </div>
         )}
       </section>
     </div>
@@ -741,7 +861,7 @@ function Visitors({ request, refresh, notify, askConfirm }) {
   const [filters, setFilters] = useState({})
   const [record, setRecord] = useState(null)
   const params = new URLSearchParams({ PageNumber: String(page), PageSize: '10' })
-  Object.entries(filters).forEach(([key, value]) => { if (value !== '') params.set(key, value) })
+  Object.entries(filters).forEach(([key, value]) => { if (value !== '' && value != null) params.set(key, String(value).trim()) })
   const query = params.toString()
   const hasCriteria = Object.entries(filters).some(([key, value]) => key !== 'Active' && value !== '')
   const selectedActive = filters.Active === 'false' ? false : true
@@ -751,12 +871,12 @@ function Visitors({ request, refresh, notify, askConfirm }) {
   const permanentDelete = visitor => askConfirm({ title: 'Permanently delete this visitor?', message: `This permanently removes ${visitor.fullName} and cannot be undone.`, confirmText: 'Permanently delete', danger: true }, async () => { try { await request(`/visitor/${visitor.id}/permanent`, { method: 'DELETE' }); notify('Visitor permanently deleted.'); load.refresh() } catch (e) { notify(e.message, true) } })
   return <><PageTitle eyebrow="DIRECTORY" title="Visitors" description="Browse people with monitoring access and review their profile details." />
     <Panel title="All visitors" subtitle={load.data ? `${load.data.totalCount} matching visitors` : 'Registered visitor access'}>
-      <FilterBar fields={[{ name: 'MemberId', label: 'Student ID', type: 'number', min: 1 }, { name: 'FullName', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'AcademicYear', label: 'Academic year', options: [['1', 'Year 1'], ['2', 'Year 2'], ['3', 'Year 3'], ['4', 'Year 4']] }, { name: 'Active', label: 'Status', options: [['true', 'Active'], ['false', 'Inactive']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft }) }} onClear={() => { const cleared = { MemberId: '', FullName: '', Email: '', AcademicYear: '', Active: 'true' }; setDraft(cleared); setFilters(cleared); setPage(1) }} />
-      {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading visitors…</div> : load.data?.items?.length ? <><Table headers={['Visitor', 'Email', 'Academic year', 'Student ID', 'Actions']}>
-        {load.data.items.map(m => <tr key={m.id} className="clickable-row" tabIndex="0" onClick={() => setRecord(m)} onKeyDown={e => e.key === 'Enter' && setRecord(m)}><td><div className="person-cell">{avatar(m.faceImage, m.fullName)}<strong>{m.fullName}</strong></div></td><td>{m.email}</td><td>Year {m.academicYear}</td><td className="muted">#{m.memberId || m.id}</td><td>{m.active ? <div className="row-actions"><button className="button button-light small" onClick={e => { e.stopPropagation(); setLabAssignmentVisitor(m) }}><Icon name="building" size={14} /> Add lab</button><button className="icon-button danger" title="Deactivate visitor" onClick={e => { e.stopPropagation(); remove(m) }}><Icon name="trash" size={16} /></button></div> : <div className="row-actions"><button className="button button-light" onClick={e => { e.stopPropagation(); restore(m) }}>Restore</button><button className="button button-danger small" onClick={e => { e.stopPropagation(); permanentDelete(m) }}>Delete permanently</button></div>}</td></tr>)}
+      <FilterBar fields={[{ name: 'MemberId', label: 'Member ID', type: 'number', min: 1 }, { name: 'FullName', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'AcademicYear', label: 'Academic year', options: [['1', 'Year 1'], ['2', 'Year 2'], ['3', 'Year 3'], ['4', 'Year 4']] }, { name: 'Active', label: 'Status', options: [['true', 'Active'], ['false', 'Inactive']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft, MemberId: draft.MemberId.trim() }) }} onClear={() => { const cleared = { MemberId: '', FullName: '', Email: '', AcademicYear: '', Active: 'true' }; setDraft(cleared); setFilters(cleared); setPage(1) }} />
+      {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading visitors…</div> : load.data?.items?.length ? <><Table headers={['Visitor', 'Email', 'Academic year', 'Member ID', 'Actions']}>
+        {load.data.items.map(m => <tr key={m.id} className="clickable-row" tabIndex="0" onClick={() => setRecord(m)} onKeyDown={e => e.key === 'Enter' && setRecord(m)}><td><div className="person-cell">{avatar(m.faceImage, m.fullName)}<strong>{m.fullName}</strong></div></td><td>{m.email}</td><td>Year {m.academicYear}</td><td className="muted">{m.memberId != null ? `#${m.memberId}` : '—'}</td><td>{m.active ? <div className="row-actions"><button className="button button-light small" onClick={e => { e.stopPropagation(); setLabAssignmentVisitor(m) }}><Icon name="building" size={14} /> Add lab</button><button className="icon-button danger" title="Deactivate visitor" onClick={e => { e.stopPropagation(); remove(m) }}><Icon name="trash" size={16} /></button></div> : <div className="row-actions"><button className="button button-light" onClick={e => { e.stopPropagation(); restore(m) }}>Restore</button><button className="button button-danger small" onClick={e => { e.stopPropagation(); permanentDelete(m) }}>Delete permanently</button></div>}</td></tr>)}
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No visitors found.</Empty>}
     </Panel>
-    <RecordDetails title={record?.fullName || 'Visitor'} record={record} onClose={() => setRecord(null)} fields={record ? [['Visitor ID', `#${record.id}`], ['Student ID', record.memberId ? `#${record.memberId}` : '—'], ['Full name', record.fullName], ['Email', record.email], ['Academic year', `Year ${record.academicYear}`], ['Access status', record.active ? 'Active' : 'Inactive']] : []} images={record ? [['Face image', record.faceImage], ['ID image', record.idImage]] : []} />
+    <RecordDetails title={record?.fullName || 'Visitor'} record={record} onClose={() => setRecord(null)} fields={record ? [['Visitor ID', `#${record.id}`], ['Member ID', record.memberId != null ? `#${record.memberId}` : '—'], ['Full name', record.fullName], ['Email', record.email], ['Academic year', `Year ${record.academicYear}`], ['Access status', record.active ? 'Active' : 'Inactive']] : []} images={record ? [['Face image', record.faceImage], ['ID image', record.idImage]] : []} />
     {labAssignmentVisitor && <VisitorLabModal visitor={labAssignmentVisitor} request={request} onClose={() => setLabAssignmentVisitor(null)} onAdded={labId => { setLabAssignmentVisitor(null); notify(`Lab #${labId} added for ${labAssignmentVisitor.fullName}.`) }} onError={error => notify(error.message, true)} />}
   </>
 }
@@ -770,7 +890,7 @@ function VisitorLabModal({ visitor, request, onClose, onAdded, onError }) {
     if (!Number.isInteger(labId) || labId < 1) return
     setBusy(true)
     try {
-      await request(`/visitor/${visitor.id}/labs/${labId}`, { method: 'POST' })
+      await request(`/lab/${labId}/visitors/${visitor.id}`, { method: 'POST' })
       onAdded(labId)
     } catch (error) { onError(error) }
     finally { setBusy(false) }
@@ -897,7 +1017,6 @@ function Warnings({ request, refresh, notify, askConfirm }) {
     }
     return request(`/warning?pageNumber=${page}&pageSize=10`)
   }, [request, refresh, page, filterType, filterValue, advanced])
-  const alertName = value => enumName(value, ['Food or drink detected', 'Crowded'])
   const deleteWarning = warning => askConfirm({ title: 'Delete this warning?', message: `Warning #${warning.id} for ${warning.lab?.name || `lab #${warning.labId}`} will be permanently removed.`, confirmText: 'Delete warning', danger: true }, async () => {
     try { await request(`/warning/${warning.id}`, { method: 'DELETE' }); notify('Warning deleted.'); load.refresh() }
     catch (e) { notify(e.message, true) }

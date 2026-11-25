@@ -266,6 +266,7 @@ namespace Application.Services
             res.LabId = entity.LabId;
             res.LabName=entity.Lab?.Name;
             res.VisitorId = entity.VisitorId;
+            res.MemberId = entity.Visitor?.MemberId;
             res.VisitorName = entity.Visitor?.FullName;
             res.Status = entity.Status;
             res.FaceImage = entity.Visitor?.FaceImage;
