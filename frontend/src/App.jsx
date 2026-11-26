@@ -19,13 +19,19 @@ function Icon({ name, size = 18, strokeWidth = 1.8, className = '' }) {
     'flask-conical': <><path d="M9 3h6M10 3v6l-5.5 9.2A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.8L14 9V3"/><path d="M8 15h8"/></>,
     'door-open': <><path d="M4 21h16M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M14 12h.01"/></>,
     'user-round': <><circle cx="12" cy="8" r="4"/><path d="M5 21v-1a7 7 0 0 1 14 0v1"/></>,
+    'user-round-x': <><circle cx="10" cy="8" r="4"/><path d="M3 21v-1a7 7 0 0 1 14 0v1M17 8l5 5m0-5-5 5"/></>,
     'users-round': <><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
     'clipboard-check': <><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5h6a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1ZM8 13l2.5 2.5L16 10"/></>,
     'triangle-alert': <><path d="m10.3 4.3-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-2.7l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></>,
     'activity': <><path d="M3 12h4l3-8 4 16 3-8h4"/></>,
     'brand-eye': <><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M5.5 12S8.2 7.5 12 7.5 18.5 12 18.5 12 15.8 16.5 12 16.5 5.5 12 5.5 12Z"/><circle cx="12" cy="12" r="2.2"/></>,
+    camera: <><path d="M3 8h12.5a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H3z"/><path d="m17.5 10 3.5-2v8l-3.5-2M7 16v2a2 2 0 0 0 2 2h3"/><path d="M9 8V6h4v2"/><circle cx="8" cy="12" r="1.6"/></>,
     'check': <><path d="m5 12 4 4L19 6"/></>,
+    'circle-check': <><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16.5 9"/></>,
+    'circle-alert': <><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></>,
+    'search-x': <><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5m-12-11 4 4m0-4-4 4"/></>,
     'building': <><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 21v-4h6v4M8 7h2m4 0h2M8 11h2m4 0h2"/></>,
+    'building-x': <><path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7V3Z"/><path d="M8 7h1m-1 4h1m-1 4h1m-1 6v-4h3m5-7 5 5m0-5-5 5"/></>,
     'arrow-up-right': <><path d="M7 17 17 7M7 7h10v10"/></>,
     'arrow-right': <><path d="M5 12h14m-6-6 6 6-6 6"/></>,
     'plus': <><path d="M12 5v14M5 12h14"/></>,
@@ -73,7 +79,14 @@ async function api(base, path, options = {}) {
   }
   if (!response.ok) {
     const detail = await response.text()
-    throw new Error(`${response.status} ${response.statusText}${detail ? `: ${detail}` : ''}`)
+    let payload
+    try { payload = detail ? JSON.parse(detail) : null } catch { payload = null }
+    const serverMessage = payload && typeof payload === 'object'
+      ? payload.message || payload.detail || payload.title
+      : detail
+    throw new Error(typeof serverMessage === 'string' && serverMessage.trim()
+      ? serverMessage.trim()
+      : 'The request could not be completed. Please try again.')
   }
   if (response.status === 204) return null
   const body = await response.text()
@@ -142,9 +155,15 @@ function App() {
     window.addEventListener('hashchange', syncPage)
     return () => { window.removeEventListener('popstate', syncPage); window.removeEventListener('hashchange', syncPage) }
   }, [])
+  useEffect(() => {
+    if (!notice) return
+    const timer = window.setTimeout(() => {
+      setNotice(current => current?.id === notice.id ? null : current)
+    }, 5000)
+    return () => window.clearTimeout(timer)
+  }, [notice])
   const notify = (message, error = false) => {
-    setNotice({ message, error })
-    window.setTimeout(() => setNotice(null), 5000)
+    setNotice({ id: `${Date.now()}-${Math.random()}`, message, error })
   }
   const askConfirm = (options, action) => setConfirmation({ options, action })
   const reload = () => setRefresh(x => x + 1)
@@ -154,7 +173,6 @@ function App() {
         <nav className="primary-nav" aria-label="Main navigation">{navItems.map(([id, label, icon]) => <button key={id} className={`nav-item ${page === id ? 'active' : ''}`} aria-current={page === id ? 'page' : undefined} onClick={() => { goToPage(id); if (id === 'logs') setLogsPreset('all') }}><Icon name={icon} className="nav-icon" /><span>{label}</span></button>)}</nav>
       </header>
       <div className="content">
-        {notice && <div className={`notice ${notice.error ? 'notice-error' : ''}`}>{notice.message}<button aria-label="Dismiss" onClick={() => setNotice(null)}><Icon name="close" size={16} /></button></div>}
         {page === 'overview' && <><Overview request={request} refresh={refresh} setPage={goToPage} setLogsPreset={setLogsPreset} setSelectedLab={setSelectedLab} /><CampusPulse request={request} refresh={refresh} openLabDetails={openLabDetails} goToPage={goToPage} /></>}
         {page === 'labs' && <Labs request={request} refresh={refresh} notify={notify} askConfirm={askConfirm} setSelectedLab={setSelectedLab} goToPage={goToPage} openModal={setModal} openLabDetails={openLabDetails} />}
         {page === 'lab-detail' && <LabDetails labId={labDetailId} request={request} refresh={refresh} goBack={() => goToPage('labs')} goToPage={goToPage} setSelectedLab={setSelectedLab} />}
@@ -167,13 +185,29 @@ function App() {
     </main>
     <footer className="site-footer">
       <div className="footer-inner">
-        <div className="footer-brand"><span className="footer-mark"><Icon name="brand-eye" size={19} /></span><span><strong>MONITOR</strong><small>CONTROL CENTER</small></span></div>
+        <div className="footer-brand"><span><strong>MONITOR</strong><small>CONTROL CENTER</small></span></div>
         <p>Monitoring System · Operations and access management</p>
       </div>
       <div className="footer-bottom">© {new Date().getFullYear()} Monitoring System</div>
     </footer>
+    {notice && <MessageToast notice={notice} onClose={() => setNotice(null)} />}
     {modal && <LabModal item={modal === 'new' ? null : modal} onClose={() => setModal(null)} request={request} onSaved={() => { setModal(null); reload(); notify(modal === 'new' ? 'Lab created.' : 'Lab updated.') }} onError={e => notify(e.message, true)} />}
     {confirmation && <ConfirmDialog options={confirmation.options} onClose={() => setConfirmation(null)} onConfirm={async () => { await confirmation.action(); setConfirmation(null) }} />}
+  </div>
+}
+
+function MessageToast({ notice, onClose }) {
+  const message = String(notice.message || '')
+  const lower = message.toLowerCase()
+  let icon = notice.error ? 'circle-alert' : 'circle-check'
+  if (notice.error && /lab.*inactive|inactive.*lab/.test(lower)) icon = 'building-x'
+  else if (notice.error && /member|visitor.*inactive|inactive.*visitor/.test(lower)) icon = 'user-round-x'
+  else if (notice.error && /not found|doesn.t exist|does not exist/.test(lower)) icon = 'search-x'
+  return <div className={`message-toast ${notice.error ? 'is-error' : 'is-success'}`} role={notice.error ? 'alert' : 'status'} aria-live={notice.error ? 'assertive' : 'polite'}>
+    <span className="message-toast-icon"><Icon name={icon} size={21} /></span>
+    <span className="message-toast-copy">{message}</span>
+    <button className="message-toast-close" aria-label="Close message" onClick={onClose}><Icon name="close" size={16} /></button>
+    <span className="message-toast-progress" />
   </div>
 }
 
@@ -254,7 +288,7 @@ function Overview({ request, refresh, setPage, setLogsPreset, setSelectedLab }) 
   return <>
     <section className="overview-hero">
       <div className="overview-copy"><h1>Your operations,<br /><em>in clear view.</em></h1></div>
-      <div className="hero-art" aria-hidden="true"><div className="hero-orbit orbit-one" /><div className="hero-orbit orbit-two" /><div className="hero-orbit orbit-three" /><div className="hero-center"><Icon name="brand-eye" size={37} /></div><div className="hero-node node-one"><Icon name="shield-check" size={16} /></div><div className="hero-node node-two"><Icon name="building" size={16} /></div><div className="hero-node node-three"><Icon name="door-open" size={16} /></div><div className="hero-caption">ACCESS<br /><b>MONITORING</b></div></div>
+      <div className="hero-art" aria-hidden="true"><div className="hero-orbit orbit-one" /><div className="hero-orbit orbit-two" /><div className="hero-orbit orbit-three" /><svg className="hero-flow-lines" viewBox="0 0 320 320" preserveAspectRatio="none"><path className="flow-base" d="M12 96C61 36 91 47 128 83s84 67 180 7"/><path className="flow-trail flow-trail-one" d="M12 96C61 36 91 47 128 83s84 67 180 7"/><path className="flow-base flow-base-two" d="M8 232c58-60 92 27 145 14s85-78 159-18"/><path className="flow-trail flow-trail-two" d="M8 232c58-60 92 27 145 14s85-78 159-18"/><path className="flow-base flow-base-three" d="M24 164c27 69 58 104 112 80s91-97 163-70"/><path className="flow-trail flow-trail-three" d="M24 164c27 69 58 104 112 80s91-97 163-70"/></svg><div className="hero-center"><div className="access-credential"><div className="credential-avatar"><i /><b /></div><div className="credential-lines"><i /><i /><i /></div><div className="credential-status"><i /><span>ACCESS VERIFIED</span></div><span className="credential-scanline" /></div></div><div className="hero-node node-one"><Icon name="shield-check" size={16} /></div><div className="hero-node node-two"><Icon name="building" size={16} /></div><div className="hero-node node-three"><Icon name="door-open" size={16} /></div><div className="hero-node node-four"><Icon name="camera" size={16} /></div><div className="hero-node node-five"><Icon name="activity" size={16} /></div><div className="hero-node node-six"><Icon name="user-round" size={16} /></div></div>
     </section>
     {(labs.error || daily.error) && <ErrorBox message={labs.error || daily.error} />}
     <div className="stats-grid">
@@ -281,6 +315,8 @@ function CampusPulse({ request, refresh, openLabDetails, goToPage }) {
   const [page, setPage] = useState(1)
   const pageSize = 4
   const labs = useLoad(() => request(`/lab/Active?pageNumber=${page}&pageSize=${pageSize}`), [request, refresh, page])
+  const activeLabCount = useLoad(() => request('/lab/count/active'), [request, refresh])
+  const inactiveLabCount = useLoad(() => request('/lab/count/inactive'), [request, refresh])
   const warnings = useLoad(() => request('/warning?pageNumber=1&pageSize=100'), [request, refresh])
   const activity = useLoad(() => request('/entryLog?pageNumber=1&pageSize=6'), [request, refresh])
   const rooms = labs.data?.items ?? []
@@ -294,20 +330,19 @@ function CampusPulse({ request, refresh, openLabDetails, goToPage }) {
   })), [request, refresh, labs.data, page])
   const memberCountByLab = Object.fromEntries(memberCounts.data ?? [])
   const warningsForLab = labId => warningItems.filter(item => Number(item.labId) === Number(labId)).length
-  const totalMembers = Object.values(memberCountByLab).reduce((total, count) => total + (Number.isFinite(count) ? count : 0), 0)
   // Four cardinal positions leave the campus hub centered and keep every
   // connector endpoint aligned with the center of its lab card.
   const positions = [[2, 1], [3, 2], [2, 3], [1, 2]]
-  const refreshAll = () => { labs.refresh(); warnings.refresh(); activity.refresh(); memberCounts.refresh() }
+  const refreshAll = () => { labs.refresh(); activeLabCount.refresh(); inactiveLabCount.refresh(); warnings.refresh(); activity.refresh(); memberCounts.refresh() }
   return <>
     <section className="campus-pulse-section">
-    <div className="campus-pulse-heading"><div><h2>Facility network</h2><p>Lab access, warnings, and recent activity in one view.</p></div><button className="button button-light" onClick={refreshAll}><Icon name="refresh" size={15} /> Refresh</button></div>
+    <div className="campus-pulse-heading"><div><h2>Facility network</h2><p>Lab access, warnings, and recent activity in one view.</p></div></div>
     <div className="map-stats">
-      <button type="button" className="map-stat-card" onClick={() => goToPage('labs')}><span>Active labs</span><strong>{labs.data?.totalCount ?? '—'}</strong><small>Current facilities · view labs</small></button>
-      <button type="button" className="map-stat-card" onClick={() => goToPage('visitors')}><span>Permitted members</span><strong>{memberCounts.loading ? '…' : totalMembers}</strong><small>Across labs on this page · view visitors</small></button>
+      <button type="button" className="map-stat-card" onClick={() => goToPage('labs')}><span>Active labs</span><strong>{activeLabCount.data ?? '—'}</strong><small>Current facilities · view labs</small></button>
+      <button type="button" className="map-stat-card" onClick={() => goToPage('labs')}><span>Inactive labs</span><strong>{inactiveLabCount.data ?? '—'}</strong><small>Archived facilities · view labs</small></button>
       <button type="button" className="map-stat-card" onClick={() => goToPage('warnings')}><span>Reported warnings</span><strong className={warnings.data?.totalCount ? 'has-map-warnings' : ''}>{warnings.data?.totalCount ?? '—'}</strong><small>Latest warning records · view warnings</small></button>
     </div>
-    {(labs.error || warnings.error || activity.error) && <ErrorBox message={labs.error || warnings.error || activity.error} retry={refreshAll} />}
+    {(labs.error || activeLabCount.error || inactiveLabCount.error || warnings.error || activity.error) && <ErrorBox message={labs.error || activeLabCount.error || inactiveLabCount.error || warnings.error || activity.error} retry={refreshAll} />}
     {labs.loading ? <div className="loading">Loading campus pulse…</div> : rooms.length ? <div className="campus-pulse-layout">
       <section className="pulse-network-card">
         <div className="campus-map-card-heading"><div><span className="eyebrow">CAMPUS NETWORK</span><h2>Lab connections</h2></div><span className="schematic-tag"><i /> Operations view</span></div>
@@ -362,7 +397,7 @@ function Labs({ request, refresh, notify, askConfirm, setSelectedLab, goToPage, 
     <PageTitle eyebrow="FACILITIES" title="Labs" description="Create and manage labs, then inspect the entry activity for each one." action={<button className="button button-primary" onClick={() => openModal('new')}><Icon name="plus" size={15} /> Add lab</button>} />
     <Panel title={active ? 'Active labs' : 'Inactive labs'} subtitle={load.data ? `${load.data.totalCount} labs in the system` : 'Manage lab details and activity'} action={<div className="panel-controls"><input className="select-control" aria-label="Search lab name" placeholder="Search lab name" value={search.Name} onChange={e => { setSearch(s => ({ ...s, Name: e.target.value })); setPage(1) }} /><input className="select-control" aria-label="Search lab ID" placeholder="Lab ID" type="number" value={search.Id} onChange={e => { setSearch(s => ({ ...s, Id: e.target.value })); setPage(1) }} /><button className="button button-light" onClick={() => { setActive(x => !x); setPage(1) }}>{active ? 'Show inactive' : 'Show active'}</button></div>}>
       {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading labs…</div> : load.data?.items?.length ? <><Table headers={['Lab', 'Capacity', 'ID', 'Actions']}>
-        {load.data.items.map(lab => <tr key={lab.id} className="clickable-row lab-row" tabIndex="0" aria-label={`Open ${lab.name} details`} onClick={() => openLabDetails(lab.id)} onKeyDown={e => e.key === 'Enter' && openLabDetails(lab.id)}><td><div className="lab-cell"><span className="lab-avatar"><Icon name="building" size={17} /></span><strong>{lab.name}</strong></div></td><td>{lab.capacity} people</td><td className="muted">#{lab.id}</td><td><div className="row-actions">{active && <><button className="button button-light" onClick={e => { e.stopPropagation(); setSelectedLab(String(lab.id)); goToPage('logs') }}>View logs</button><button className="icon-button" title="Edit lab" onClick={e => { e.stopPropagation(); openModal(lab) }}><Icon name="edit" size={16} /></button><button className="icon-button danger" title="Deactivate lab" onClick={e => { e.stopPropagation(); remove(lab) }}><Icon name="trash" size={16} /></button></>}{!active && <><button className="button button-light" onClick={e => { e.stopPropagation(); restore(lab) }}>Restore</button><button className="button button-danger small" onClick={e => { e.stopPropagation(); permanentDelete(lab) }}>Delete permanently</button></>}</div></td></tr>)}
+        {load.data.items.map(lab => <tr key={lab.id} className="clickable-row lab-row" tabIndex="0" aria-label={`Open ${lab.name} details`} onClick={() => openLabDetails(lab.id)} onKeyDown={e => e.key === 'Enter' && openLabDetails(lab.id)}><td><div className="lab-cell"><span className="lab-avatar"><Icon name="building" size={17} /></span><strong>{lab.name}</strong></div></td><td>{lab.capacity} people</td><td className="muted">#{lab.id}</td><td><div className="row-actions">{active && <><button className="button button-light" onClick={e => { e.stopPropagation(); setSelectedLab(String(lab.id)); goToPage('logs') }}>View logs</button><button className="icon-button" title="Edit lab" onClick={e => { e.stopPropagation(); openModal(lab) }}><Icon name="edit" size={16} /></button><button className="button button-light small deactivate-action" onClick={e => { e.stopPropagation(); remove(lab) }}><Icon name="building-x" size={14} /> Deactivate</button></>}{!active && <><button className="button button-light" onClick={e => { e.stopPropagation(); restore(lab) }}>Restore</button><button className="button button-danger small" onClick={e => { e.stopPropagation(); permanentDelete(lab) }}>Delete permanently</button></>}</div></td></tr>)}
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No labs yet. Add a lab to begin.</Empty>}
     </Panel>
   </>
@@ -882,7 +917,7 @@ function Visitors({ request, refresh, notify, askConfirm }) {
     <Panel title="All visitors" subtitle={load.data ? `${load.data.totalCount} matching visitors` : 'Registered visitor access'}>
       <FilterBar fields={[{ name: 'MemberId', label: 'Member ID', type: 'number', min: 1 }, { name: 'FullName', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'AcademicYear', label: 'Academic year', options: [['1', 'Year 1'], ['2', 'Year 2'], ['3', 'Year 3'], ['4', 'Year 4']] }, { name: 'Active', label: 'Status', options: [['true', 'Active'], ['false', 'Inactive']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft, MemberId: draft.MemberId.trim() }) }} onClear={() => { const cleared = { MemberId: '', FullName: '', Email: '', AcademicYear: '', Active: 'true' }; setDraft(cleared); setFilters(cleared); setPage(1) }} />
       {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading visitors…</div> : load.data?.items?.length ? <><Table headers={['Visitor', 'Email', 'Academic year', 'Member ID', 'Actions']}>
-        {load.data.items.map(m => <tr key={m.id} className="clickable-row" tabIndex="0" onClick={() => setRecord(m)} onKeyDown={e => e.key === 'Enter' && setRecord(m)}><td><div className="person-cell">{avatar(m.faceImage, m.fullName)}<strong>{m.fullName}</strong></div></td><td>{m.email}</td><td>Year {m.academicYear}</td><td className="muted">{m.memberId != null ? `#${m.memberId}` : '—'}</td><td>{m.active ? <div className="row-actions"><button className="button button-light small" onClick={e => { e.stopPropagation(); setLabAssignmentVisitor(m) }}><Icon name="building" size={14} /> Add lab</button><button className="icon-button danger" title="Deactivate visitor" onClick={e => { e.stopPropagation(); remove(m) }}><Icon name="trash" size={16} /></button></div> : <div className="row-actions"><button className="button button-light" onClick={e => { e.stopPropagation(); restore(m) }}>Restore</button><button className="button button-danger small" onClick={e => { e.stopPropagation(); permanentDelete(m) }}>Delete permanently</button></div>}</td></tr>)}
+        {load.data.items.map(m => <tr key={m.id} className="clickable-row" tabIndex="0" onClick={() => setRecord(m)} onKeyDown={e => e.key === 'Enter' && setRecord(m)}><td><div className="person-cell">{avatar(m.faceImage, m.fullName)}<strong>{m.fullName}</strong></div></td><td>{m.email}</td><td>Year {m.academicYear}</td><td className="muted">{m.memberId != null ? `#${m.memberId}` : '—'}</td><td>{m.active ? <div className="row-actions"><button className="button button-light small" onClick={e => { e.stopPropagation(); setLabAssignmentVisitor(m) }}><Icon name="building" size={14} /> Add lab</button><button className="button button-light small deactivate-action" onClick={e => { e.stopPropagation(); remove(m) }}><Icon name="user-round-x" size={14} /> Deactivate</button></div> : <div className="row-actions"><button className="button button-light" onClick={e => { e.stopPropagation(); restore(m) }}>Restore</button><button className="button button-danger small" onClick={e => { e.stopPropagation(); permanentDelete(m) }}>Delete permanently</button></div>}</td></tr>)}
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No visitors found.</Empty>}
     </Panel>
     <RecordDetails title={record?.fullName || 'Visitor'} record={record} onClose={() => setRecord(null)} fields={record ? [['Visitor ID', `#${record.id}`], ['Member ID', record.memberId != null ? `#${record.memberId}` : '—'], ['Full name', record.fullName], ['Email', record.email], ['Academic year', `Year ${record.academicYear}`], ['Access status', record.active ? 'Active' : 'Inactive']] : []} images={record ? [['Face image', record.faceImage], ['ID image', record.idImage]] : []} />
@@ -892,6 +927,7 @@ function Visitors({ request, refresh, notify, askConfirm }) {
 
 function VisitorLabModal({ visitor, request, onClose, onAdded, onError }) {
   const [busy, setBusy] = useState(false)
+  const labs = useLoad(() => request('/lab/Active?pageNumber=1&pageSize=1000'), [request])
   async function submit(event) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
@@ -899,12 +935,12 @@ function VisitorLabModal({ visitor, request, onClose, onAdded, onError }) {
     if (!Number.isInteger(labId) || labId < 1) return
     setBusy(true)
     try {
-      await request(`/lab/${labId}/visitors/${visitor.id}`, { method: 'POST' })
+      await request(`/visitor/${visitor.id}/labs/${labId}`, { method: 'POST' })
       onAdded(labId)
     } catch (error) { onError(error) }
     finally { setBusy(false) }
   }
-  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && !busy && onClose()}><section className="modal" role="dialog" aria-modal="true" aria-label={`Add lab for ${visitor.fullName}`}><div className="modal-heading"><div><span className="eyebrow">VISITOR ACCESS</span><h2>Add a lab</h2></div><button className="icon-button" aria-label="Close" onClick={onClose} disabled={busy}><Icon name="close" size={16} /></button></div><p className="modal-copy">Assign a lab to <strong>{visitor.fullName}</strong> (Visitor #{visitor.id}).</p><form className="form-stack" onSubmit={submit}><label>Lab ID<input name="labId" type="number" min="1" required autoFocus placeholder="Enter lab ID" /></label><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose} disabled={busy}>Cancel</button><button className="button button-primary" disabled={busy}><Icon name="building" size={15} />{busy ? 'Adding…' : 'Add lab'}</button></div></form></section></div>
+  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && !busy && onClose()}><section className="modal" role="dialog" aria-modal="true" aria-label={`Add lab for ${visitor.fullName}`}><div className="modal-heading"><div><span className="eyebrow">VISITOR ACCESS</span><h2>Add a lab</h2></div><button className="icon-button" aria-label="Close" onClick={onClose} disabled={busy}><Icon name="close" size={16} /></button></div><p className="modal-copy">Assign a lab to <strong>{visitor.fullName}</strong> (Visitor #{visitor.id}).</p>{labs.loading ? <div className="loading">Loading active labs…</div> : labs.error ? <ErrorBox message={labs.error} retry={labs.refresh} /> : labs.data?.items?.length ? <form className="form-stack" onSubmit={submit}><label>Choose lab<select name="labId" required autoFocus defaultValue=""><option value="" disabled>Select an active lab</option>{labs.data.items.map(lab => <option key={lab.id} value={lab.id}>{lab.name} · Lab #{lab.id} · Capacity {lab.capacity}</option>)}</select></label><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose} disabled={busy}>Cancel</button><button className="button button-primary" disabled={busy}><Icon name="building" size={15} />{busy ? 'Adding…' : 'Add lab'}</button></div></form> : <><Empty>No active labs are available.</Empty><div className="modal-actions"><button type="button" className="button button-light" onClick={onClose}>Close</button></div></>}</section></div>
 }
 function avatar(bytes, name) { return <span className="person-avatar">{bytes ? <img src={`data:image/jpeg;base64,${bytes}`} alt="" /> : name?.slice(0, 1)?.toUpperCase()}</span> }
 
@@ -929,7 +965,7 @@ function Accounts({ request, refresh, notify, askConfirm }) {
     <Panel title="All accounts" subtitle={load.data ? `${load.data.totalCount} matching dashboard accounts` : 'Account access and roles'}>
       <FilterBar fields={[{ name: 'Name', label: 'Full name', placeholder: 'Search by name' }, { name: 'Email', label: 'Email', placeholder: 'Search by email' }, { name: 'role', label: 'Role', options: [['1', 'Admin'], ['2', 'User']] }, { name: 'IsActive', label: 'Access status', options: [['true', 'Active'], ['false', 'Inactive']] }]} values={draft} onChange={(key, value) => setDraft(s => ({ ...s, [key]: value }))} onSubmit={e => { e.preventDefault(); setPage(1); setFilters({ ...draft }) }} onClear={() => { setDraft({ Name: '', Email: '', role: '', IsActive: '' }); setFilters({}); setPage(1) }} />
       {load.error ? <ErrorBox message={load.error} retry={load.refresh} /> : load.loading ? <div className="loading">Loading accounts…</div> : load.data?.items?.length ? <><Table headers={['Account', 'Email', 'Role', 'Status', 'Actions']}>
-        {load.data.items.map(a => <tr key={a.id}><td><div className="account-cell"><span className="initial-avatar">{a.fullName?.slice(0, 1)?.toUpperCase()}</span><strong>{a.fullName}</strong></div></td><td>{a.email}</td><td><span className="role-pill">{enumName(a.role, { 1: 'Admin', 2: 'User' })}</span></td><td><span className={`access-state ${a.isActive ? 'is-active' : 'is-inactive'}`}><i />{a.isActive ? 'Active' : 'Inactive'}</span></td><td><div className="row-actions"><button className="button button-light" onClick={() => setEditing(a)}>Edit</button>{a.role !== 1 && <><button className="button button-light" onClick={() => toggle(a)}>{a.isActive ? 'Deactivate' : 'Activate'}</button><button className="icon-button danger" title="Delete account" onClick={() => remove(a)}><Icon name="trash" size={16} /></button></>}</div></td></tr>)}
+        {load.data.items.map(a => <tr key={a.id}><td><div className="account-cell"><span className="initial-avatar">{a.fullName?.slice(0, 1)?.toUpperCase()}</span><strong>{a.fullName}</strong></div></td><td>{a.email}</td><td><span className="role-pill">{enumName(a.role, { 1: 'Admin', 2: 'User' })}</span></td><td><span className={`access-state ${a.isActive ? 'is-active' : 'is-inactive'}`}><i />{a.isActive ? 'Active' : 'Inactive'}</span></td><td><div className="row-actions"><button className="button button-light" onClick={() => setEditing(a)}>Edit</button>{a.role !== 1 && <>{a.isActive ? <button className="button button-light small deactivate-action" onClick={() => toggle(a)}><Icon name="user-round-x" size={14} />Deactivate</button> : <button className="button button-light" onClick={() => toggle(a)}>Activate</button>}<button className="icon-button danger" title="Delete account" onClick={() => remove(a)}><Icon name="trash" size={16} /></button></>}</div></td></tr>)}
       </Table><Pager page={page} total={load.data.totalPages} onPage={setPage} /></> : <Empty>No dashboard accounts found.</Empty>}
     </Panel>
     {(create || editing) && <AccountModal item={editing} onClose={() => { setCreate(false); setEditing(null) }} request={request} onSaved={() => { setCreate(false); setEditing(null); notify(editing ? 'Account updated.' : 'Account created.'); load.refresh() }} onError={e => notify(e.message, true)} />}

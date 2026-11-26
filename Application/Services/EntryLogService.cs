@@ -28,6 +28,12 @@ namespace Application.Services
 
         public async Task CreateAsync(EntryLogRequestDto request)
         {
+            var lab = await _unitOfWork.Repository<Lab>().GetByIdAsync(request.LabId);
+            if (lab == null)
+                throw new KeyNotFoundException("Lab not found");
+            if(!lab.Active)
+                throw new InvalidOperationException("Lab isn't active");
+
             await _unitOfWork.Repository<EntryLog>().AddAsync(ToEntity(request));
             await _unitOfWork.SaveChangesAsync();
         }
@@ -89,7 +95,7 @@ namespace Application.Services
         public async Task<PagedResponseDto<EntryLogResponseDto>> GetByDateRangeAsync(DateTime fromDate, DateTime toDate, int pageNumber, int pageSize,EntryStatus? status= null)
         {
             if (toDate < fromDate)
-                throw new ArgumentException("End date cannot be earlier than start date.");
+                throw new ArgumentException("End date can't be earlier than start date.");
 
             return await SearchAsync(new EntryLogFilterDto {
                             StartDate = fromDate,
@@ -151,7 +157,7 @@ namespace Application.Services
         public async Task<byte[]> ExportAttendanceToExcelAsync(DateTime fromDate, DateTime toDate, int? labId = null)
         {
             if (toDate < fromDate)
-                throw new ArgumentException ("toDate cannot be earlier than fromDate.");
+                throw new ArgumentException ("toDate can't be earlier than fromDate.");
 
             var spec = new AttendanceExportSpecification(fromDate, toDate, labId);
             var logs = await _unitOfWork.Repository<EntryLog>().ListAsync(spec);
@@ -260,17 +266,18 @@ namespace Application.Services
 
         public EntryLogResponseDto ToDto(EntryLog entity)
         {
-            EntryLogResponseDto res = new();
-            res.Id = entity.Id;
-            res.EventTime = entity.EventTime;
-            res.LabId = entity.LabId;
-            res.LabName=entity.Lab?.Name;
-            res.VisitorId = entity.VisitorId;
-            res.MemberId = entity.Visitor?.MemberId;
-            res.VisitorName = entity.Visitor?.FullName;
-            res.Status = entity.Status;
-            res.FaceImage = entity.Visitor?.FaceImage;
-            return res;
-        }    
+            return new EntryLogResponseDto
+            {
+                Id = entity.Id,
+                EventTime = entity.EventTime,
+                LabId = entity.LabId,
+                LabName = entity.Lab?.Name,
+                VisitorId = entity.VisitorId,
+                MemberId = entity.Visitor?.MemberId,
+                VisitorName = entity.Visitor?.FullName,
+                Status = entity.Status,
+                FaceImage = entity.Visitor?.FaceImage
+            };
+        }
     }
 }

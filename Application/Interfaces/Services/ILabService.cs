@@ -14,7 +14,9 @@ namespace Application.Interfaces.Services
         Task<PagedResponseDto<LabResponseDto>> GetAllAsync(int pageNumber, int pageSize,bool active);
         Task UpdateAsync(int id, UpdateLabDto update);
 
-        Task<int> CountAsync();
+        Task<int> CountAllAsync();
+
+        Task<int> CountByStatus(bool status);
 
         Task SoftDeleteAsync(int id);
         Task RestoreAsync(int id);

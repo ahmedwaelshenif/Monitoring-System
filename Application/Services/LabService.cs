@@ -116,9 +116,13 @@ namespace Application.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<int> CountAsync()
+        public async Task<int> CountAllAsync()
         {
-            return await _unitOfWork.Repository<Lab>().CountAsync(l=> l.Active);
+            return await _unitOfWork.Repository<Lab>().CountAsync();
+        }
+        public async Task<int>CountByStatus(bool status)
+        {
+            return await _unitOfWork.Repository<Lab>().CountAsync(l => l.Active==status);
         }
 
 

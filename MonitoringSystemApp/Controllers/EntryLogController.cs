@@ -26,9 +26,13 @@ namespace MonitoringSystemApp.Controllers
                 await _entryLogService.CreateAsync(request);
                 return Ok("Entry log created successfully.");
             }
-            catch (Exception)
+            catch (InvalidOperationException ex)
             {
-                return StatusCode(500, "An error occurred while creating the entry log.");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
             }
         }
 

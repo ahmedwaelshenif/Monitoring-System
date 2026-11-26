@@ -3,8 +3,8 @@ using Domain.Specifications;
 
 public class VisitorWithLabsSpecification : BaseSpecification<Visitor>
 {
-    public VisitorWithLabsSpecification(int memberId)
-        : base(m => m.MemberId == memberId)
+    public VisitorWithLabsSpecification(int visitorId)
+        : base(visitor => visitor.Id == visitorId)
     {
         AddInclude(m => m.Labs);
     }

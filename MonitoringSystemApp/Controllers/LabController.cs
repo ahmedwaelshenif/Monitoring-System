@@ -40,12 +40,24 @@ namespace MonitoringSystemApp.Controllers
         }
 
         [HttpGet ("count")]
-        public async Task<IActionResult> Count()
+        public async Task<IActionResult> CountAll()
         {
-            int cnt = await _labService.CountAsync();
+            int cnt = await _labService.CountAllAsync();
             return Ok(cnt);
         }
 
+        [HttpGet("count/active")]
+        public async Task<IActionResult> CountActive()
+        {
+            int cnt = await _labService.CountByStatus(true);
+            return Ok(cnt);
+        }
+        [HttpGet("count/inactive")]
+        public async Task<IActionResult> CountInactive()
+        {
+            int cnt = await _labService.CountByStatus(false);
+            return Ok(cnt);
+        }
 
         [HttpGet("search")]
         public async Task<ActionResult<PagedResponseDto<LabResponseDto>>> Search([FromQuery] LabFilterDto request)

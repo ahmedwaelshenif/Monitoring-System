@@ -105,24 +105,6 @@ namespace Application.Services
             };
         }
 
-        // Helper Methods
-        private VisitorResponseDto ToDto(Visitor entity)
-        {
-            if (entity == null)
-                return null;
-
-            VisitorResponseDto ret = new();
-            ret.Id = entity.Id;
-            ret.MemberId = entity.MemberId;
-            ret.AcademicYear = entity.AcademicYear;
-            ret.FullName = entity.FullName;
-            ret.FaceImage = entity.FaceImage;
-            ret.IdImage = entity.IdImage;
-            ret.Email = entity.Email;
-            ret.Active = entity.Active;
-            return ret;
-        }
-
         public async Task AddLabAsync(int visitorId, int labId)
         {
 
@@ -159,7 +141,7 @@ namespace Application.Services
             var lab = await _unitOfWork.Repository<Lab>().GetByIdAsync(labId);
             if (lab == null)
                 throw new KeyNotFoundException("Lab doesn't exist");
-           
+
 
             if (!visitor.Labs.Any(l => l.Id == lab.Id))
                 throw new InvalidOperationException("Member isn't registered in lab");
@@ -167,6 +149,26 @@ namespace Application.Services
             visitor.Labs.Remove(lab);
             await _unitOfWork.SaveChangesAsync();
         }
+
+        // Helper Methods
+        private VisitorResponseDto ToDto(Visitor entity)
+        {
+            if (entity == null)
+                return null;
+
+            return new VisitorResponseDto
+            {
+                Id = entity.Id,
+                MemberId = entity.MemberId,
+                AcademicYear = entity.AcademicYear,
+                FullName = entity.FullName,
+                FaceImage = entity.FaceImage,
+                IdImage = entity.IdImage,
+                Email = entity.Email,
+                Active = entity.Active
+            };
+        }
+
 
 
     }
